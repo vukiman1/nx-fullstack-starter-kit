@@ -1,4 +1,4 @@
-import { SimpleHeader } from '../components/layout/simple-header';
+import { SimpleHeader } from '@/components/layout/simple-header';
 
 export function HomePage() {
   return (

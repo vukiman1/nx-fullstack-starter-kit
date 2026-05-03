@@ -2,6 +2,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig(() => ({
@@ -15,7 +16,13 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    tanstackRouter({
+      target: 'react',
+    }),
+    react(),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

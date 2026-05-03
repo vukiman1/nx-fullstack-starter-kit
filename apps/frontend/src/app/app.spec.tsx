@@ -30,4 +30,14 @@ describe('App', () => {
     expect(await findByLabelText(/password/i)).toBeTruthy();
     expect(await findByRole('button', { name: /sign in/i })).toBeTruthy();
   });
+
+  it('validates login input before submit', async () => {
+    const { findByRole, findByText } = render(<App />);
+
+    fireEvent.click(await findByRole('link', { name: /login/i }));
+    fireEvent.click(await findByRole('button', { name: /sign in/i }));
+
+    expect(await findByText('Enter a valid email address.')).toBeTruthy();
+    expect(await findByText('Enter your password.')).toBeTruthy();
+  });
 });

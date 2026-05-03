@@ -11,11 +11,15 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { loginSchema, type LoginFormValues } from './schemas';
 
-type LoginFormValues = {
-  email: string;
-  password: string;
-};
+function getErrorMessage(error: unknown) {
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String(error.message);
+  }
+
+  return String(error);
+}
 
 export function LoginForm() {
   const form = useForm({
@@ -23,6 +27,9 @@ export function LoginForm() {
       email: '',
       password: '',
     } as LoginFormValues,
+    validators: {
+      onSubmit: loginSchema,
+    },
     onSubmit: () => undefined,
   });
 
@@ -50,6 +57,10 @@ export function LoginForm() {
           <CardContent className="grid gap-5">
             <form.Field
               name="email"
+              validators={{
+                onBlur: loginSchema.shape.email,
+                onSubmit: loginSchema.shape.email,
+              }}
               children={(field) => (
                 <div className="grid gap-2">
                   <Label htmlFor={field.name}>Email</Label>
@@ -60,8 +71,14 @@ export function LoginForm() {
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
                     placeholder="you@example.com"
+                    aria-describedby={`${field.name}-error`}
+                    aria-invalid={field.state.meta.errors.length > 0}
                     type="email"
                     value={field.state.value}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors}
+                    id={`${field.name}-error`}
                   />
                 </div>
               )}
@@ -69,6 +86,10 @@ export function LoginForm() {
 
             <form.Field
               name="password"
+              validators={{
+                onBlur: loginSchema.shape.password,
+                onSubmit: loginSchema.shape.password,
+              }}
               children={(field) => (
                 <div className="grid gap-2">
                   <Label htmlFor={field.name}>Password</Label>
@@ -79,8 +100,14 @@ export function LoginForm() {
                     onBlur={field.handleBlur}
                     onChange={(event) => field.handleChange(event.target.value)}
                     placeholder="Enter your password"
+                    aria-describedby={`${field.name}-error`}
+                    aria-invalid={field.state.meta.errors.length > 0}
                     type="password"
                     value={field.state.value}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors}
+                    id={`${field.name}-error`}
                   />
                 </div>
               )}
@@ -107,5 +134,22 @@ export function LoginForm() {
         </form>
       </Card>
     </main>
+  );
+}
+
+type FieldErrorProps = {
+  errors: Array<unknown>;
+  id: string;
+};
+
+function FieldError({ errors, id }: FieldErrorProps) {
+  if (errors.length === 0) {
+    return null;
+  }
+
+  return (
+    <p className="text-sm font-medium text-destructive" id={id} role="alert">
+      {getErrorMessage(errors[0])}
+    </p>
   );
 }

@@ -24,7 +24,7 @@ export default defineConfig({
   },
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm exec nx run @org/frontend:preview -- --port 4300 --strictPort',
+    command: 'pnpm nx run @org/frontend:preview -- --port 4300 --strictPort',
     url: baseURL,
     reuseExistingServer: true,
     cwd: workspaceRoot,
