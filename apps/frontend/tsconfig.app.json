@@ -5,6 +5,10 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "lib": ["dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "types": [
       "node",
       "@nx/react/typings/cssmodule.d.ts",

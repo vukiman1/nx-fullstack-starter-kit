@@ -1,5 +1,8 @@
 {
   "name": "@org/frontend",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "radix-ui": "^1.4.3"
+  }
 }

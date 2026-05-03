@@ -1,26 +1,33 @@
-import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { fireEvent, render } from '@testing-library/react';
 
 import App from './app';
 
 describe('App', () => {
-  it('should render successfully', () => {
-    const { baseElement } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>,
-    );
-    expect(baseElement).toBeTruthy();
+  beforeEach(() => {
+    window.history.pushState({}, '', '/');
   });
 
-  it('should have a greeting as the title', () => {
-    const { getAllByText } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>,
+  it('renders the home page header with auth navigation', async () => {
+    const { findByRole, findByText } = render(<App />);
+
+    expect(await findByText('My Workspace')).toBeTruthy();
+    expect((await findByRole('link', { name: /login/i })).getAttribute('href')).toBe(
+      '/login',
     );
     expect(
-      getAllByText(new RegExp('Welcome @org/frontend', 'gi')).length > 0,
-    ).toBeTruthy();
+      (await findByRole('link', { name: /register/i })).getAttribute('href'),
+    ).toBe('/register');
+  });
+
+  it('navigates to the login page', async () => {
+    const { findByLabelText, findByRole, findByText } = render(<App />);
+
+    fireEvent.click(await findByRole('link', { name: /login/i }));
+
+    expect(await findByRole('heading', { name: /sign in/i })).toBeTruthy();
+    expect(await findByText(/enter your credentials/i)).toBeTruthy();
+    expect(await findByLabelText(/email/i)).toBeTruthy();
+    expect(await findByLabelText(/password/i)).toBeTruthy();
+    expect(await findByRole('button', { name: /sign in/i })).toBeTruthy();
   });
 });
