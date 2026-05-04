@@ -16,10 +16,6 @@ module.exports = {
   transform: {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
-  testPathIgnorePatterns: [
-    '<rootDir>/src/api/user/user.controller.spec.ts',
-    '<rootDir>/src/api/user/user.service.spec.ts',
-  ],
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: 'test-output/jest/coverage',
 };
