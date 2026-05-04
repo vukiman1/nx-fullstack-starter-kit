@@ -12,6 +12,7 @@ import {
 } from './base.swagger';
 
 export function BaseController<Entity extends BaseEntity>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   $ref: any,
   name?: string,
 ) {

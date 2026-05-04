@@ -10,9 +10,9 @@ import { CryptoService } from '@app/crypto';
 import { UserEntity } from 'src/api/user/entities/user.entity';
 import { JwtService } from '@app/jwt';
 import { UserService } from 'src/api/user/user.service';
-import { SetCookieRFToken } from '@app/helpers/setCookieRFToken';
+import { clearCookie, CookieName, setCookie } from '@app/helpers';
 import { RedisService } from '@app/redis';
-import { LoginResponse, UserType } from '../interfaces/auth.interface';
+import { UserType } from '../interfaces/auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -27,21 +27,20 @@ export class AuthService {
       message: 'Auth me',
     };
   }
-  async login(user: UserEntity, response: Response): Promise<LoginResponse> {
+  async login(user: UserEntity, response: Response) {
     const { id, role, email, avatar } = user;
     const payload = { id };
-    // // Generate accessToken
     const accessToken = await this.jwtService.signJwt(payload);
     const refreshToken = await this.jwtService.signJwt(payload, true);
 
-    // // Cache token
     this.redisService.setRefreshToken(id, refreshToken);
     this.redisService.setAccessToken(id, accessToken);
 
-    // // Encrypt cookie
     const encryptId = this.cryptoService.encryptData(id);
-    SetCookieRFToken(response, encryptId);
-    const result = {
+    setCookie(response, CookieName.SESSION, encryptId);
+    setCookie(response, CookieName.ACCESS_TOKEN, accessToken);
+
+    return {
       user: {
         id,
         role,
@@ -50,9 +49,7 @@ export class AuthService {
         balance: user.balance,
         token: user.token,
       },
-      accessToken,
     };
-    return result;
   }
 
   async register({ email, password, confirmPassword }: RegisterDto) {
@@ -75,26 +72,36 @@ export class AuthService {
       email,
     };
   }
-  async logout(user: UserEntity) {
+  async logout(user: UserEntity, response: Response) {
     const { id } = user;
     await this.redisService.delRFToken(id);
     await this.redisService.delAccessToken(id);
+    clearCookie(response, CookieName.ACCESS_TOKEN);
+    clearCookie(response, CookieName.SESSION);
     return {
       message: 'Logout successfully',
     };
   }
 
-  async refreshToken(request: Request, userType: UserType) {
+  async refreshToken(
+    request: Request,
+    response: Response,
+    userType: UserType,
+  ) {
     const { sub } = request.cookies;
+    if (!sub) {
+      throw new NotFoundException('Refresh token not found');
+    }
 
     const decryptData = this.cryptoService.decryptData(sub);
     const refreshToken = await this.redisService.getRefreshToken(decryptData);
-    // Get Token from refresh token
     const user = await this.getUser(refreshToken, userType);
     const { id } = user;
     const accessToken = await this.jwtService.signJwt({ id });
-    const result = { user, accessToken };
-    return result;
+    this.redisService.setAccessToken(id, accessToken);
+    setCookie(response, CookieName.ACCESS_TOKEN, accessToken);
+
+    return { user };
   }
 
   async getUser(refreshToken: string, userType: UserType) {

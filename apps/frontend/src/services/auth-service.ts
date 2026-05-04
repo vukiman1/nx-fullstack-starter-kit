@@ -3,6 +3,7 @@ import type {
   LoginPayload,
   LoginResponse,
   LogoutResponse,
+  RefreshTokenResponse,
   RegisterPayload,
   RegisterResponse,
 } from './interfaces/service.interfaces';
@@ -16,6 +17,9 @@ export const authService = {
   },
   logout() {
     return httpRequest.post<LogoutResponse>('/auth/logout');
+  },
+  refreshToken() {
+    return httpRequest.get<RefreshTokenResponse>('/auth/refresh-token');
   },
 };
 

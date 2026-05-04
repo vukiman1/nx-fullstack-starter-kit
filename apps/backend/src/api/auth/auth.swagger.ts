@@ -37,3 +37,17 @@ export function ApiLogin(userType: UserType) {
     OkResponse(null, false, loginResponse(userType)),
   );
 }
+
+export function ApiRefreshToken(userType: UserType) {
+  return applyDecorators(
+    ApiOperation({ summary: 'Refresh token for ' + userType }),
+    OkResponse(null, false, loginResponse(userType)),
+  );
+}
+
+export function ApiChangePassword(userType: UserType) {
+  return applyDecorators(
+    ApiOperation({ summary: 'Change password for ' + userType }),
+    OkResponse(getRef(userType)),
+  );
+}
