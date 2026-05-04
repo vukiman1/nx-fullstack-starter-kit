@@ -1,0 +1,5 @@
+app:
+  environment: production
+
+api:
+  baseUrl: /api

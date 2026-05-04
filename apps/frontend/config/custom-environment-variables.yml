@@ -1,0 +1,6 @@
+app:
+  name: VITE_APP_NAME
+  environment: VITE_APP_ENVIRONMENT
+
+api:
+  baseUrl: VITE_API_BASE_URL

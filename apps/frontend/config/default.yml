@@ -1,0 +1,6 @@
+app:
+  name: My Workspace
+  environment: development
+
+api:
+  baseUrl: http://localhost:3000/api
