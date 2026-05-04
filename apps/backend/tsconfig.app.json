@@ -3,16 +3,31 @@
   "compilerOptions": {
     "outDir": "dist",
     "types": ["node"],
-    "rootDir": "src",
+    "rootDir": ".",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "noImplicitAny": false,
+    "noImplicitOverride": false,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "strict": false,
+    "strictBindCallApply": false,
+    "strictNullChecks": true,
     "target": "es2021"
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "libs/**/*.ts",
+    "ormconfigs.ts"
+  ],
   "exclude": [
     "out-tsc",
     "dist",
+    "libs/**/*.spec.ts",
+    "libs/**/*.test.ts",
     "jest.config.ts",
     "jest.config.cts",
     "src/**/*.spec.ts",

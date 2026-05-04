@@ -1,0 +1,9 @@
+app:
+  nodeEnv: test
+  logLevels:
+    - error
+    - warn
+
+db:
+  log:
+    enabled: false

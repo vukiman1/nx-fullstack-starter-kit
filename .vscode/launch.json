@@ -4,20 +4,59 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug @org/backend with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "@org/backend"],
+      "name": "Debug Backend (Direct)",
+      "preLaunchTask": "build backend development",
+      "program": "${workspaceFolder}/apps/backend/dist/main.js",
+      "cwd": "${workspaceFolder}",
       "env": {
-        "NODE_OPTIONS": "--inspect=9229"
+        "NODE_ENV": "development"
       },
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true,
-      "outFiles": [
-        "${workspaceFolder}/apps/backend/dist/**/*.(m|c|)js",
-        "!**/node_modules/**"
-      ]
+      "outFiles": ["${workspaceFolder}/apps/backend/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack://@org/backend/./*": "${workspaceFolder}/apps/backend/*",
+        "webpack://@org/backend/*": "${workspaceFolder}/apps/backend/*"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Backend (Nx)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "@org/backend:serve",
+        "--inspect=inspect",
+        "--port=9229"
+      ],
+      "autoAttachChildProcesses": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/apps/backend/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack://@org/backend/./*": "${workspaceFolder}/apps/backend/*",
+        "webpack://@org/backend/*": "${workspaceFolder}/apps/backend/*"
+      }
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach Backend (Nx)",
+      "port": 9229,
+      "restart": true,
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/apps/backend/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "webpack://@org/backend/./*": "${workspaceFolder}/apps/backend/*",
+        "webpack://@org/backend/*": "${workspaceFolder}/apps/backend/*"
+      }
     }
   ]
 }

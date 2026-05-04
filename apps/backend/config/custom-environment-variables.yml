@@ -1,0 +1,45 @@
+app:
+  port:
+    __name: PORT
+    __format: number
+  nodeEnv: NODE_ENV
+  logLevels: LOG_LEVELS
+
+db:
+  primary:
+    host: DB_HOST
+    port:
+      __name: DB_PORT
+      __format: number
+  username: DB_USERNAME
+  password: DB_PASSWORD
+  database: DB_NAME
+  tls:
+    __name: DB_TLS
+    __format: boolean
+  log:
+    enabled:
+      __name: DB_LOG_ENABLED
+      __format: boolean
+
+redis:
+  host: REDIS_HOST
+  port:
+    __name: REDIS_PORT
+    __format: number
+  password: REDIS_PASSWORD
+  db:
+    __name: REDIS_DB
+    __format: number
+  tls:
+    __name: REDIS_TLS
+    __format: boolean
+
+jwt:
+  secret: JWT_SECRET
+  refreshTokenExpiresIn: JWT_REFRESH_TOKEN_EXPIRES_IN
+  accessTokenExpiresIn: JWT_ACCESS_TOKEN_EXPIRES_IN
+
+crypto:
+  secretKey: SECRET_KEY
+  secretKeyIv: SECRET_KEY_IV

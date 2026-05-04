@@ -1,0 +1,38 @@
+app:
+  port: 3000
+  nodeEnv: development
+  logLevels:
+    - error
+    - warn
+    - log
+    - debug
+    - verbose
+
+db:
+  username: postgres
+  password: password
+  database: nestdb
+  tls: false
+  primary:
+    host: localhost
+    port: 5432
+  replicas: []
+  log:
+    enabled: true
+
+redis:
+  cluster: false
+  password: ''
+  tls: false
+  host: localhost
+  port: 6379
+  db: 0
+
+jwt:
+  secret: super-secret-key
+  refreshTokenExpiresIn: 7d
+  accessTokenExpiresIn: 15m
+
+crypto:
+  secretKey: yoursecretkeymustbe32characters!!
+  secretKeyIv: yoursecretkeyiv!

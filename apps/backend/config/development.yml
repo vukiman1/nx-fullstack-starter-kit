@@ -1,0 +1,24 @@
+app:
+  nodeEnv: development
+  logLevels:
+    - error
+    - warn
+
+db:
+  primary:
+    host: localhost
+    port: 5432
+  username: postgres
+  password: password
+  database: nestdb
+  tls: false
+  replicas: []
+  log:
+    enabled: true
+
+redis:
+  host: localhost
+  port: 6379
+  password: ''
+  tls: false
+  db: 0
