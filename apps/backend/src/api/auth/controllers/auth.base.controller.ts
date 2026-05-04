@@ -38,6 +38,17 @@ export const AuthBaseController = <Entity extends UserEntity>(
       return this.authService.refreshToken(request, response, userType);
     }
 
+    @Get('me')
+    @HttpCode(200)
+    @UseGuards(
+      AuthGuard(
+        StrategyKey.JWT[userType.toUpperCase() as keyof typeof StrategyKey.JWT],
+      ),
+    )
+    async me(@User() user: Entity) {
+      return this.authService.me(user);
+    }
+
     @Post('logout')
     @HttpCode(200)
     @UseGuards(

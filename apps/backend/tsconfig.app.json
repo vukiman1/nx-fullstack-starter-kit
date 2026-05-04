@@ -18,11 +18,7 @@
     "strictNullChecks": true,
     "target": "es2021"
   },
-  "include": [
-    "src/**/*.ts",
-    "libs/**/*.ts",
-    "ormconfigs.ts"
-  ],
+  "include": ["src/**/*.ts", "libs/**/*.ts", "ormconfigs.ts"],
   "exclude": [
     "out-tsc",
     "dist",

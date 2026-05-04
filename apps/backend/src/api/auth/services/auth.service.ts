@@ -22,13 +22,14 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly redisService: RedisService,
   ) {}
-  findAll() {
+  me(user: UserEntity) {
+    const { email, avatar, balance } = user;
     return {
-      message: 'Auth me',
+      user: { email, avatar, balance },
     };
   }
   async login(user: UserEntity, response: Response) {
-    const { id, role, email, avatar } = user;
+    const { id, email, avatar, balance } = user;
     const payload = { id };
     const accessToken = await this.jwtService.signJwt(payload);
     const refreshToken = await this.jwtService.signJwt(payload, true);
@@ -41,14 +42,7 @@ export class AuthService {
     setCookie(response, CookieName.ACCESS_TOKEN, accessToken);
 
     return {
-      user: {
-        id,
-        role,
-        email,
-        avatar,
-        balance: user.balance,
-        token: user.token,
-      },
+      user: { email, avatar, balance },
     };
   }
 
@@ -96,12 +90,14 @@ export class AuthService {
     const decryptData = this.cryptoService.decryptData(sub);
     const refreshToken = await this.redisService.getRefreshToken(decryptData);
     const user = await this.getUser(refreshToken, userType);
-    const { id } = user;
+    const { id, email, avatar, balance } = user;
     const accessToken = await this.jwtService.signJwt({ id });
     this.redisService.setAccessToken(id, accessToken);
     setCookie(response, CookieName.ACCESS_TOKEN, accessToken);
 
-    return { user };
+    return {
+      user: { email, avatar, balance },
+    };
   }
 
   async getUser(refreshToken: string, userType: UserType) {

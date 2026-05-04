@@ -3,6 +3,7 @@ import type {
   LoginPayload,
   LoginResponse,
   LogoutResponse,
+  MeResponse,
   RefreshTokenResponse,
   RegisterPayload,
   RegisterResponse,
@@ -20,6 +21,9 @@ export const authService = {
   },
   refreshToken() {
     return httpRequest.get<RefreshTokenResponse>('/auth/refresh-token');
+  },
+  getMe() {
+    return httpRequest.get<MeResponse>('/auth/me');
   },
 };
 

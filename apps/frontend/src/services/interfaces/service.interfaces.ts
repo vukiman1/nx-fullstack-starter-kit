@@ -1,11 +1,40 @@
+// API envelope (must match backend ResponseTransformInterceptor + exception filters)
+export interface PaginationMetadata {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface ApiSuccessEnvelope<T> {
+  statusCode: number;
+  success: true;
+  data: T;
+  metadata?: PaginationMetadata;
+}
+
+export type ApiErrorPayload =
+  | Record<string, string>
+  | { message: string; [key: string]: unknown };
+
+export interface ApiErrorEnvelope {
+  statusCode: number;
+  success: false;
+  errors: ApiErrorPayload;
+}
+
+export type ApiEnvelope<T> = ApiSuccessEnvelope<T> | ApiErrorEnvelope;
+
+export interface PaginatedResult<T> {
+  items: T[];
+  metadata: PaginationMetadata;
+}
+
 // Auth
 export interface User {
-  id: string | number;
   email: string;
-  role?: string;
   avatar?: string | null;
   balance?: number | string;
-  token?: string;
 }
 
 export interface LoginPayload {
@@ -18,6 +47,10 @@ export interface LoginResponse {
 }
 
 export interface RefreshTokenResponse {
+  user: User;
+}
+
+export interface MeResponse {
   user: User;
 }
 
@@ -34,4 +67,10 @@ export interface RegisterResponse {
 
 export interface LogoutResponse {
   message: string;
+}
+
+// User
+export interface UserCredit {
+  balance: number | string;
+  token?: number | string;
 }

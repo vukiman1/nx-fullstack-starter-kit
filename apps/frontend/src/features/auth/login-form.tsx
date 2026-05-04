@@ -1,4 +1,5 @@
-import { Link } from '@tanstack/react-router';
+import { useState } from 'react';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useForm } from '@tanstack/react-form';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +12,10 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ApiError } from '@/lib/api-error';
+import { authService } from '@/services/auth-service';
+import { useAuthStore } from '@/stores/auth-store';
+import { isInternalPath } from './route-guards';
 import { loginSchema, type LoginFormValues } from './schemas';
 
 function getErrorMessage(error: unknown) {
@@ -22,15 +27,34 @@ function getErrorMessage(error: unknown) {
 }
 
 export function LoginForm() {
+  const navigate = useNavigate();
+  const search = useSearch({ from: '/(auth)/login' });
+  const redirectTo = isInternalPath(search.redirect) ? search.redirect : '/';
+  const setUser = useAuthStore((state) => state.setUser);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const form = useForm({
     defaultValues: {
-      email: '',
-      password: '',
+      email: 'user@example.com',
+      password: 'yourpassword',
     } as LoginFormValues,
     validators: {
       onSubmit: loginSchema,
     },
-    onSubmit: () => undefined,
+    onSubmit: async ({ value }) => {
+      setSubmitError(null);
+      try {
+        const result = await authService.login(value);
+        setUser(result.user);
+        await navigate({ to: redirectTo as never });
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setSubmitError(error.message);
+        } else {
+          setSubmitError('Could not reach the server. Please try again.');
+        }
+      }
+    },
   });
 
   return (
@@ -55,6 +79,15 @@ export function LoginForm() {
           }}
         >
           <CardContent className="grid gap-5">
+            {submitError && (
+              <p
+                className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive"
+                role="alert"
+              >
+                {submitError}
+              </p>
+            )}
+
             <form.Field
               name="email"
               validators={{

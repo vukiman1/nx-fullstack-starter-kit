@@ -5,6 +5,13 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { appConfig } from '@/config/app-config';
+import type {
+  ApiSuccessEnvelope,
+  PaginatedResult,
+  PaginationMetadata,
+} from '@/services/interfaces/service.interfaces';
+import { useAuthStore } from '@/stores/auth-store';
+import { ApiError, isApiErrorEnvelope } from './api-error';
 
 const REFRESH_PATH = '/auth/refresh-token';
 const LOGIN_PATH = '/auth/login';
@@ -39,38 +46,79 @@ instance.interceptors.response.use(
       url.startsWith(REFRESH_PATH);
 
     if (
-      status !== 401 ||
-      !originalRequest ||
-      originalRequest._retry ||
-      isAuthEndpoint
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
     ) {
-      return Promise.reject(error);
+      originalRequest._retry = true;
+      try {
+        refreshPromise = refreshPromise ?? refreshAccessToken();
+        await refreshPromise;
+        return instance(originalRequest);
+      } catch (refreshError) {
+        useAuthStore.getState().clearUser();
+        return Promise.reject(toApiError(refreshError));
+      } finally {
+        refreshPromise = null;
+      }
     }
 
-    originalRequest._retry = true;
-    try {
-      refreshPromise = refreshPromise ?? refreshAccessToken();
-      await refreshPromise;
-      return instance(originalRequest);
-    } catch (refreshError) {
-      return Promise.reject(refreshError);
-    } finally {
-      refreshPromise = null;
-    }
+    return Promise.reject(toApiError(error));
   },
 );
 
+function toApiError(error: unknown): unknown {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+    if (isApiErrorEnvelope(data)) {
+      return new ApiError(data);
+    }
+  }
+  return error;
+}
+
+function unwrap<T>(envelope: ApiSuccessEnvelope<T>): T {
+  return envelope.data;
+}
+
+function unwrapPaginated<T>(
+  envelope: ApiSuccessEnvelope<T[]>,
+): PaginatedResult<T> {
+  const metadata: PaginationMetadata = envelope.metadata ?? {
+    page: 1,
+    limit: envelope.data.length,
+    totalItems: envelope.data.length,
+    totalPages: 1,
+  };
+  return { items: envelope.data, metadata };
+}
+
 export const httpRequest = {
   get: <T>(url: string, config?: AxiosRequestConfig) =>
-    instance.get<T, T>(url, config),
+    instance
+      .get<unknown, ApiSuccessEnvelope<T>>(url, config)
+      .then(unwrap<T>),
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    instance.post<T, T>(url, data, config),
+    instance
+      .post<unknown, ApiSuccessEnvelope<T>>(url, data, config)
+      .then(unwrap<T>),
   put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    instance.put<T, T>(url, data, config),
+    instance
+      .put<unknown, ApiSuccessEnvelope<T>>(url, data, config)
+      .then(unwrap<T>),
   patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    instance.patch<T, T>(url, data, config),
+    instance
+      .patch<unknown, ApiSuccessEnvelope<T>>(url, data, config)
+      .then(unwrap<T>),
   delete: <T>(url: string, config?: AxiosRequestConfig) =>
-    instance.delete<T, T>(url, config),
+    instance
+      .delete<unknown, ApiSuccessEnvelope<T>>(url, config)
+      .then(unwrap<T>),
+  getPaginated: <T>(url: string, config?: AxiosRequestConfig) =>
+    instance
+      .get<unknown, ApiSuccessEnvelope<T[]>>(url, config)
+      .then(unwrapPaginated<T>),
 };
 
 export default httpRequest;
