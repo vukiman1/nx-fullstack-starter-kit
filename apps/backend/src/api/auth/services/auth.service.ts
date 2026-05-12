@@ -77,11 +77,7 @@ export class AuthService {
     };
   }
 
-  async refreshToken(
-    request: Request,
-    response: Response,
-    userType: UserType,
-  ) {
+  async refreshToken(request: Request, response: Response, userType: UserType) {
     const { sub } = request.cookies;
     if (!sub) {
       throw new NotFoundException('Refresh token not found');
