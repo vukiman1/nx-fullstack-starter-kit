@@ -1,6 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
-import configuration from '@app/config';
-import { UserEntity } from 'src/api/user/entities/user.entity';
+import configuration from '@org/backend-config';
+import { UserEntity } from './src/api/user/entities/user.entity';
 
 //ok
 interface DatabaseConfig {

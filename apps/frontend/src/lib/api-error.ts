@@ -1,7 +1,4 @@
-import type {
-  ApiErrorEnvelope,
-  ApiErrorPayload,
-} from '@/services/interfaces/service.interfaces';
+import type { ApiErrorEnvelope, ApiErrorPayload } from '@org/shared-contracts';
 
 function extractMessage(errors: ApiErrorPayload): string {
   if (errors && typeof errors === 'object' && 'message' in errors) {

@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "nx": {
+    "tags": [
+      "scope:e2e",
+      "type:e2e"
+    ],
     "implicitDependencies": [
       "@org/frontend"
     ]

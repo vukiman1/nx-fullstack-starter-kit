@@ -1,5 +1,5 @@
-import { BaseEntity } from '@app/base';
-import { Roles } from '@app/enum';
+import { BaseEntity } from '@org/backend-base';
+import { Roles } from '@org/backend-enum';
 import { Exclude } from 'class-transformer';
 import { BeforeInsert, Column, Entity, Index, Unique } from 'typeorm';
 import * as argon2 from 'argon2';

@@ -1,12 +1,12 @@
-import { StrategyKey } from '@app/constants';
-import { User } from '@app/decorators/user.decorator';
+import { StrategyKey } from '@org/backend-constants';
+import { User } from '@org/backend-decorators';
 import { Body, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { ApiLogin, ApiRefreshToken } from '../auth.swagger';
 import { UserType } from '../interfaces/auth.interface';
 import { AuthService } from '../services/auth.service';
-import { UserEntity } from 'src/api/user/entities/user.entity';
+import { UserEntity } from '../../user/entities/user.entity';
 import { LoginDto } from '../dto/login.dto';
 
 export const AuthBaseController = <Entity extends UserEntity>(

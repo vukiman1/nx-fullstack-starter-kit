@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "nx": {
+    "tags": [
+      "scope:backend",
+      "type:app"
+    ],
     "targets": {
       "build": {
         "executor": "nx:run-commands",
@@ -86,11 +90,25 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@org/backend-base": "workspace:*",
+    "@org/backend-config": "workspace:*",
+    "@org/backend-constants": "workspace:*",
+    "@org/backend-crypto": "workspace:*",
+    "@org/backend-database": "workspace:*",
+    "@org/backend-decorators": "workspace:*",
+    "@org/backend-enum": "workspace:*",
+    "@org/backend-filters": "workspace:*",
+    "@org/backend-helpers": "workspace:*",
+    "@org/backend-interceptors": "workspace:*",
+    "@org/backend-jwt": "workspace:*",
+    "@org/backend-redis": "workspace:*",
+    "express": "5.2.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.0.0"
+    "@nestjs/testing": "^11.0.0",
+    "@types/express": "^5.0.6"
   }
 }

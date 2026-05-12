@@ -9,7 +9,7 @@ import type {
   ApiSuccessEnvelope,
   PaginatedResult,
   PaginationMetadata,
-} from '@/services/interfaces/service.interfaces';
+} from '@org/shared-contracts';
 import { useAuthStore } from '@/stores/auth-store';
 import { ApiError, isApiErrorEnvelope } from './api-error';
 
@@ -96,9 +96,7 @@ function unwrapPaginated<T>(
 
 export const httpRequest = {
   get: <T>(url: string, config?: AxiosRequestConfig) =>
-    instance
-      .get<unknown, ApiSuccessEnvelope<T>>(url, config)
-      .then(unwrap<T>),
+    instance.get<unknown, ApiSuccessEnvelope<T>>(url, config).then(unwrap<T>),
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
     instance
       .post<unknown, ApiSuccessEnvelope<T>>(url, data, config)

@@ -6,12 +6,12 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { RegisterDto } from '../dto/register.dto';
-import { CryptoService } from '@app/crypto';
-import { UserEntity } from 'src/api/user/entities/user.entity';
-import { JwtService } from '@app/jwt';
-import { UserService } from 'src/api/user/user.service';
-import { clearCookie, CookieName, setCookie } from '@app/helpers';
-import { RedisService } from '@app/redis';
+import { CryptoService } from '@org/backend-crypto';
+import { UserEntity } from '../../user/entities/user.entity';
+import { JwtService } from '@org/backend-jwt';
+import { UserService } from '../../user/user.service';
+import { clearCookie, CookieName, setCookie } from '@org/backend-helpers';
+import { RedisService } from '@org/backend-redis';
 import { UserType } from '../interfaces/auth.interface';
 
 @Injectable()

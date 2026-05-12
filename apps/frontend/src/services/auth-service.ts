@@ -7,7 +7,7 @@ import type {
   RefreshTokenResponse,
   RegisterPayload,
   RegisterResponse,
-} from './interfaces/service.interfaces';
+} from '@org/shared-contracts';
 
 export const authService = {
   login(payload: LoginPayload) {

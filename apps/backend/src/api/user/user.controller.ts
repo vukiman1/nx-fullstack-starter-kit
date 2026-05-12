@@ -1,10 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { UserService } from './user.service';
-import { BaseController } from '@app/base';
+import { BaseController } from '@org/backend-base';
 import { UserEntity } from './entities/user.entity';
-import { User } from '@app/decorators';
+import { User } from '@org/backend-decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { StrategyKey } from '@app/constants';
+import { StrategyKey } from '@org/backend-constants';
 import { UseGuards } from '@nestjs/common';
 
 @UseGuards(AuthGuard(StrategyKey.JWT.USER))

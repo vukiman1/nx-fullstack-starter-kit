@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "types": ["node"],
-    "rootDir": ".",
+    "rootDir": "../..",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -18,12 +18,10 @@
     "strictNullChecks": true,
     "target": "es2021"
   },
-  "include": ["src/**/*.ts", "libs/**/*.ts", "ormconfigs.ts"],
+  "include": ["src/**/*.ts", "ormconfigs.ts"],
   "exclude": [
     "out-tsc",
     "dist",
-    "libs/**/*.spec.ts",
-    "libs/**/*.test.ts",
     "jest.config.ts",
     "jest.config.cts",
     "src/**/*.spec.ts",
@@ -31,5 +29,43 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs"
+  ],
+  "references": [
+    {
+      "path": "../../packages/backend/redis/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/jwt/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/interceptors/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/helpers/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/filters/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/enum/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/decorators/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/database/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/crypto/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/constants/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/base/tsconfig.lib.json"
+    },
+    {
+      "path": "../../packages/backend/config/tsconfig.lib.json"
+    }
   ]
 }

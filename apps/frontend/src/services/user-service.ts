@@ -1,5 +1,5 @@
 import { httpRequest } from '@/lib/http-request';
-import type { UserCredit } from './interfaces/service.interfaces';
+import type { UserCredit } from '@org/shared-contracts';
 
 export const userService = {
   getCredit() {

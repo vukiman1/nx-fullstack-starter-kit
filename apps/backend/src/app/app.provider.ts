@@ -1,5 +1,8 @@
-import { HttpExceptionFilter, TypeormExceptionFilter } from '@app/filters';
-import { ResponseTransformInterceptor } from '@app/interceptors';
+import {
+  HttpExceptionFilter,
+  TypeormExceptionFilter,
+} from '@org/backend-filters';
+import { ResponseTransformInterceptor } from '@org/backend-interceptors';
 import {
   BadRequestException,
   ClassSerializerInterceptor,

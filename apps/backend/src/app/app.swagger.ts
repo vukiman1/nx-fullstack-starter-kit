@@ -1,6 +1,6 @@
 import { INestApplication, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import configuration from '@app/config';
+import configuration from '@org/backend-config';
 
 interface SwaggerOperation {
   get(key: 'method'): string;

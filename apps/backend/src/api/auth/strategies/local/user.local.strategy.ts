@@ -1,9 +1,9 @@
-import { StrategyKey } from '@app/constants';
+import { StrategyKey } from '@org/backend-constants';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import * as argon2 from 'argon2';
-import { UserService } from 'src/api/user/user.service';
-import { UserEntity } from 'src/api/user/entities/user.entity';
+import { UserEntity } from '../../../user/entities/user.entity';
+import { UserService } from '../../../user/user.service';
 import { Strategy } from 'passport-local';
 
 @Injectable()

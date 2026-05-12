@@ -1,11 +1,12 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-
+  - 'apps/*'
+  - 'packages/*'
+  - 'packages/backend/*'
+  - 'packages/shared/*'
 onlyBuiltDependencies:
-  - "@nestjs/core"
-  - "@parcel/watcher"
-  - "@swc/core"
-  - "less"
-  - "nx"
-  - "unrs-resolver"
+  - '@nestjs/core'
+  - '@parcel/watcher'
+  - '@swc/core'
+  - 'less'
+  - 'nx'
+  - 'unrs-resolver'

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { appConfig } from '@/config/app-config';
 import { authService } from '@/services/auth-service';
 import { userService } from '@/services/user-service';
-import type { UserCredit } from '@/services/interfaces/service.interfaces';
+import type { UserCredit } from '@org/shared-contracts';
 import {
   selectIsInitializing,
   selectUser,

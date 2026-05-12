@@ -2,7 +2,14 @@
   "name": "@org/frontend",
   "version": "0.0.1",
   "private": true,
+  "nx": {
+    "tags": [
+      "scope:frontend",
+      "type:app"
+    ]
+  },
   "dependencies": {
+    "@org/shared-contracts": "workspace:*",
     "radix-ui": "^1.4.3"
   }
 }

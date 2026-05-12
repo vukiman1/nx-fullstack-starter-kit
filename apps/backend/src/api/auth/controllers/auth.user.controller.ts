@@ -1,9 +1,9 @@
-import { StrategyKey } from '@app/constants';
+import { StrategyKey } from '@org/backend-constants';
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { AuthBaseController } from './auth.base.controller';
-import { UserEntity } from 'src/api/user/entities/user.entity';
+import { UserEntity } from '../../user/entities/user.entity';
 import { RegisterDto } from '../dto/register.dto';
 
 @ApiTags('Auth API For User')

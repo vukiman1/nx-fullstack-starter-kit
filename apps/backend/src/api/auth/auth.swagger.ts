@@ -1,4 +1,4 @@
-import { OkResponse } from '@app/base/base.swagger';
+import { OkResponse } from '@org/backend-base';
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, getSchemaPath } from '@nestjs/swagger';
 import { UserType } from './interfaces/auth.interface';

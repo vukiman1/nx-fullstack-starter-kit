@@ -14,6 +14,48 @@
     },
     {
       "path": "./apps/frontend"
+    },
+    {
+      "path": "./packages/backend/base"
+    },
+    {
+      "path": "./packages/backend/config"
+    },
+    {
+      "path": "./packages/backend/constants"
+    },
+    {
+      "path": "./packages/backend/crypto"
+    },
+    {
+      "path": "./packages/backend/database"
+    },
+    {
+      "path": "./packages/backend/decorators"
+    },
+    {
+      "path": "./packages/backend/enum"
+    },
+    {
+      "path": "./packages/backend/filters"
+    },
+    {
+      "path": "./packages/backend/helpers"
+    },
+    {
+      "path": "./packages/backend/interceptors"
+    },
+    {
+      "path": "./packages/backend/jwt"
+    },
+    {
+      "path": "./packages/backend/redis"
+    },
+    {
+      "path": "./packages/backend/interfaces"
+    },
+    {
+      "path": "./packages/shared/contracts"
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { appConfig } from '@/config/app-config';
-import type { User } from '@/services/interfaces/service.interfaces';
+import type { User } from '@org/shared-contracts';
 
 interface AuthState {
   user: User | null;
