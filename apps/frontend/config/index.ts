@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import dotenv from 'dotenv';
+import { z } from 'zod';
 import type { FrontendPublicConfig } from '../src/config/types';
 
 interface NodeConfig {
@@ -8,6 +9,21 @@ interface NodeConfig {
 }
 
 type RequireFn = (id: string) => unknown;
+
+const frontendPublicConfigSchema = z.object({
+  app: z.object({
+    name: z.string().min(1),
+    environment: z.enum(['development', 'test', 'production']),
+  }),
+  api: z.object({
+    baseUrl: z
+      .string()
+      .refine(
+        (value) => value.startsWith('/') || URL.canParse(value),
+        'api.baseUrl must be an absolute URL or same-origin path',
+      ),
+  }),
+});
 
 function resolveFrontendRoot() {
   const candidates = [
@@ -48,5 +64,7 @@ export function loadFrontendConfig(
 
   const nodeConfig = requireFn('config') as NodeConfig;
 
-  return nodeConfig.util.toObject() as unknown as FrontendPublicConfig;
+  return frontendPublicConfigSchema.parse(
+    nodeConfig.util.toObject(),
+  ) as FrontendPublicConfig;
 }

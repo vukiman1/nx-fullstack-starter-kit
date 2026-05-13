@@ -1,4 +1,4 @@
-import { applyDecorators } from '@nestjs/common';
+import { Type, applyDecorators } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
@@ -10,8 +10,10 @@ import {
   SchemaObject,
 } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 
+type SwaggerModel = Type<unknown> | string;
+
 export function OkResponse(
-  $ref: any,
+  $ref: SwaggerModel | null,
   isPagination = false,
   data?: SchemaObject | ReferenceObject,
 ) {
@@ -53,7 +55,7 @@ export function OkResponse(
   });
 }
 
-export function CreatedResponse($ref: any) {
+export function CreatedResponse($ref: SwaggerModel) {
   return ApiCreatedResponse({
     schema: {
       properties: {
@@ -73,35 +75,35 @@ export function CreatedResponse($ref: any) {
   });
 }
 
-export function ApiCreate($ref: any, name?: string) {
+export function ApiCreate($ref: SwaggerModel, name?: string) {
   return applyDecorators(
     ApiOperation({ summary: 'Create new ' + name }),
     CreatedResponse($ref),
   );
 }
 
-export function ApiGetAll($ref: any, name?: string) {
+export function ApiGetAll($ref: SwaggerModel, name?: string) {
   return applyDecorators(
     ApiOperation({ summary: 'Get all ' + name }),
     OkResponse($ref, true),
   );
 }
 
-export function ApiGetDetail($ref: any, name?: string) {
+export function ApiGetDetail($ref: SwaggerModel, name?: string) {
   return applyDecorators(
     ApiOperation({ summary: 'Get detail ' + name }),
     OkResponse($ref),
   );
 }
 
-export function ApiUpdate($ref: any, name?: string) {
+export function ApiUpdate($ref: SwaggerModel, name?: string) {
   return applyDecorators(
     ApiOperation({ summary: 'Update ' + name }),
     OkResponse($ref),
   );
 }
 
-export function ApiDelete($ref: any, name?: string) {
+export function ApiDelete($ref: SwaggerModel, name?: string) {
   return applyDecorators(
     ApiOperation({ summary: 'Delete ' + name }),
     OkResponse($ref),

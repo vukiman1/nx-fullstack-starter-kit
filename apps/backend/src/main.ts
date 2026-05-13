@@ -5,6 +5,7 @@
 
 import { ClassSerializerInterceptor, Logger } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
+import configuration from '@org/backend-config';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app/app.module';
 import { useSwagger } from './app/app.swagger';
@@ -15,8 +16,9 @@ async function bootstrap() {
   app.setGlobalPrefix(globalPrefix);
   app.use(cookieParser());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  const { cors } = configuration();
   app.enableCors({
-    origin: true,
+    origin: cors.origins,
     credentials: true,
   });
   useSwagger(app);

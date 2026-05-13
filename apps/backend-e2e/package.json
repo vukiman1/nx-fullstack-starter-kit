@@ -21,8 +21,7 @@
           "passWithNoTests": true
         },
         "dependsOn": [
-          "@org/backend:build",
-          "@org/backend:serve"
+          "@org/backend:build"
         ]
       }
     }

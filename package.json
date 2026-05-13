@@ -9,7 +9,7 @@
     "dev:backend": "pnpm nx serve @org/backend",
     "build": "pnpm nx run-many -t build",
     "test": "pnpm nx run-many -t test",
-    "lint": "pnpm nx run-many -t lint",
+    "lint": "pnpm nx run-many -t lint -- --max-warnings=0",
     "typecheck": "pnpm nx run-many -t typecheck",
     "e2e": "pnpm nx run-many -t e2e",
     "format": "pnpm nx format:write",

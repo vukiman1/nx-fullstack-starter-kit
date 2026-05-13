@@ -6,17 +6,21 @@ import {
 } from 'typeorm';
 import { PaginationToQuery } from './paginationToQuery';
 import { BaseEntity } from './base.entity';
+import { PaginationDto } from './base.dto';
+
+type SortDirection = 'ASC' | 'DESC';
 
 export function getQueryBuilder<Entity extends BaseEntity>(
   repo: Repository<Entity>,
-  query: any,
+  query: PaginationDto,
   where?: FindOptionsWhere<Entity> | FindOptionsWhere<Entity>[],
   order?: FindOptionsOrder<Entity>,
   ...relations: string[]
 ) {
   const { skip, take } = PaginationToQuery(query);
-  delete query.limit;
-  delete query.page;
+  const queryRecord = query as Record<string, unknown>;
+  delete queryRecord.limit;
+  delete queryRecord.page;
   let queryBuilder = repo.createQueryBuilder('entity');
   queryBuilder = addRelations(queryBuilder, relations);
   if (where) {
@@ -25,7 +29,8 @@ export function getQueryBuilder<Entity extends BaseEntity>(
   }
   queryBuilder.skip(skip).take(take);
   for (const orderKey in order) {
-    queryBuilder.orderBy(`entity.${orderKey}`, order[orderKey] as any);
+    const direction = String(order[orderKey]).toUpperCase() as SortDirection;
+    queryBuilder.orderBy(`entity.${orderKey}`, direction);
   }
   return queryBuilder;
 }
@@ -61,12 +66,13 @@ function addWhere<Entity extends BaseEntity>(
 function addQuery<Entity extends BaseEntity>(
   queryBuilder: SelectQueryBuilder<Entity>,
   where: FindOptionsWhere<Entity> | FindOptionsWhere<Entity>[],
-  query: any,
+  query: PaginationDto,
 ) {
   const whereKeys = Object.keys(where);
   const queryKeys = Object.keys(query);
+  const queryRecord = query as Record<string, unknown>;
   queryKeys.forEach((key) => {
-    const value: string = query[key];
+    const value = String(queryRecord[key] ?? '');
     const queryObjects = key.split('.');
     let queryString = `entity.${key} LIKE '%${value}%'`;
     let whereMethod = 'andWhere';

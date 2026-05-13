@@ -429,6 +429,9 @@ importers:
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      zod:
+        specifier: ^4.4.2
+        version: 4.4.2
 
   apps/frontend-e2e: {}
 
@@ -449,6 +452,9 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      zod:
+        specifier: ^4.4.2
+        version: 4.4.2
 
   packages/backend/constants: {}
 

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@org/shared-contracts": "workspace:*",
-    "radix-ui": "^1.4.3"
+    "radix-ui": "^1.4.3",
+    "zod": "^4.4.2"
   }
 }

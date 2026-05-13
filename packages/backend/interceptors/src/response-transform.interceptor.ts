@@ -40,7 +40,9 @@ export class ResponseTransformInterceptor implements NestInterceptor {
   }
 }
 
-const isPagination = (data: any): boolean => {
+type PaginationResult = [unknown[], number];
+
+const isPagination = (data: unknown): data is PaginationResult => {
   if (!Array.isArray(data)) return false;
   if (data.length !== 2) return false;
   const [entities, count] = data;
@@ -50,7 +52,7 @@ const isPagination = (data: any): boolean => {
   return true;
 };
 
-const getMetadata = (req: Request, data: any[]) => {
+const getMetadata = (req: Request, data: PaginationResult) => {
   const { page: pageQuery, limit: limitQuery } = req.query;
   const page = pageQuery ? +pageQuery : 1;
   const limit = limitQuery ? +limitQuery : 10;

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { z } from 'zod';
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const backendRoot = resolveBackendRoot();
@@ -73,6 +74,64 @@ interface CryptoConfig {
   secretKeyIv: string;
 }
 
+const stringListSchema = z.preprocess(
+  (value) =>
+    typeof value === 'string'
+      ? value
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : value,
+  z.array(z.string().min(1)),
+);
+
+const backendConfigSchema = z.object({
+  app: z.object({
+    port: z.coerce.number().int().positive(),
+    nodeEnv: z.string().min(1),
+    logLevels: stringListSchema,
+  }),
+  db: z.object({
+    username: z.string().min(1),
+    password: z.string(),
+    database: z.string().min(1),
+    tls: z.boolean(),
+    primary: z.object({
+      host: z.string().min(1),
+      port: z.coerce.number().int().positive(),
+    }),
+    replicas: z.array(
+      z.object({
+        host: z.string().min(1),
+        port: z.coerce.number().int().positive(),
+      }),
+    ),
+    log: z.object({
+      enabled: z.boolean(),
+    }),
+  }),
+  redis: z.object({
+    cluster: z.boolean(),
+    password: z.string().optional().default(''),
+    tls: z.boolean(),
+    host: z.string().min(1),
+    port: z.coerce.number().int().positive(),
+    db: z.coerce.number().int().min(0),
+  }),
+  cors: z.object({
+    origins: stringListSchema,
+  }),
+  jwt: z.object({
+    secret: z.string().min(1),
+    refreshTokenExpiresIn: z.string().min(1),
+    accessTokenExpiresIn: z.string().min(1),
+  }),
+  crypto: z.object({
+    secretKey: z.string().min(32),
+    secretKeyIv: z.string().min(16),
+  }),
+});
+
 function resolveBackendRoot() {
   const candidates = [
     join(process.cwd(), 'apps/backend'),
@@ -101,16 +160,20 @@ function toLogLevels(value: string[] | string) {
 }
 
 export default () => {
-  const app = nodeConfig.get<AppConfig>('app');
-  const db = nodeConfig.get<DatabaseConfig>('db');
-  const redis = nodeConfig.get<RedisConfig>('redis');
-  const jwt = nodeConfig.get<JwtConfig>('jwt');
-  const crypto = nodeConfig.get<CryptoConfig>('crypto');
+  const validated = backendConfigSchema.parse({
+    app: nodeConfig.get<AppConfig>('app'),
+    db: nodeConfig.get<DatabaseConfig>('db'),
+    redis: nodeConfig.get<RedisConfig>('redis'),
+    cors: nodeConfig.get<{ origins: string[] | string }>('cors'),
+    jwt: nodeConfig.get<JwtConfig>('jwt'),
+    crypto: nodeConfig.get<CryptoConfig>('crypto'),
+  });
+
+  const { app, db, redis, cors, jwt, crypto } = validated;
 
   return {
     app: {
       ...app,
-      port: toNumber(app.port),
       logLevels: toLogLevels(app.logLevels),
     },
     db: {
@@ -133,10 +196,9 @@ export default () => {
     },
     redis: {
       ...redis,
-      port: toNumber(redis.port),
-      db: toNumber(redis.db),
       password: redis.password || undefined,
     },
+    cors,
     jwt,
     crypto,
   };

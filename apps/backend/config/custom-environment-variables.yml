@@ -35,6 +35,9 @@ redis:
     __name: REDIS_TLS
     __format: boolean
 
+cors:
+  origins: CORS_ORIGINS
+
 jwt:
   secret: JWT_SECRET
   refreshTokenExpiresIn: JWT_REFRESH_TOKEN_EXPIRES_IN

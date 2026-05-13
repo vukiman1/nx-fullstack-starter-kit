@@ -28,6 +28,10 @@ redis:
   port: 6379
   db: 0
 
+cors:
+  origins:
+    - http://localhost:4200
+
 jwt:
   secret: super-secret-key
   refreshTokenExpiresIn: 7d

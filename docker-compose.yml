@@ -1,32 +1,32 @@
-name: nx-fullstack-starter
+name: ${COMPOSE_PROJECT_NAME:-nx-fullstack-starter}
 
 services:
   db:
     image: postgres:16-alpine
-    container_name: nx-starter-db
+    container_name: ${DB_CONTAINER_NAME:-nx-starter-db}
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: nestdb
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-nestdb}
     ports:
-      - '5432:5432'
+      - '${DB_HOST_PORT:-5432}:5432'
     volumes:
-      - ./.docker-data/postgres:/var/lib/postgresql/data
+      - ${DB_DATA_PATH:-./.docker-data/postgres}:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d nestdb']
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: nx-starter-redis
+    container_name: ${REDIS_CONTAINER_NAME:-nx-starter-redis}
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '${REDIS_HOST_PORT:-6379}:6379'
     volumes:
-      - ./.docker-data/redis:/data
+      - ${REDIS_DATA_PATH:-./.docker-data/redis}:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    container_name: nx-starter-backend
+    container_name: ${BACKEND_CONTAINER_NAME:-nx-starter-backend}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -52,6 +52,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ''
+      CORS_ORIGINS: http://localhost:4200
       JWT_SECRET: super-secret-key
       JWT_REFRESH_TOKEN_EXPIRES_IN: 7d
       JWT_ACCESS_TOKEN_EXPIRES_IN: 15m

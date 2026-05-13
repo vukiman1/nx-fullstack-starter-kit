@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService as NestJwtService } from '@nestjs/jwt';
+import { JwtService as NestJwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { JwtPayload } from './jwt.payload';
 import { ConfigService } from '@nestjs/config';
 
@@ -20,9 +20,12 @@ export class JwtService {
     const expiresIn = isRefreshToken
       ? refreshTokenExpiresIn
       : accessTokenExpiresIn;
-    console.log(refreshTokenExpiresIn, accessTokenExpiresIn);
+    const signOptions: JwtSignOptions = {};
+    if (expiresIn) {
+      signOptions.expiresIn = expiresIn as JwtSignOptions['expiresIn'];
+    }
     const token = await this.nestJwtService.signAsync(payload, {
-      expiresIn: expiresIn as any,
+      ...signOptions,
     });
 
     return token;
