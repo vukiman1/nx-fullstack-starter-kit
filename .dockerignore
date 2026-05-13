@@ -1,0 +1,13 @@
+node_modules
+dist
+out-tsc
+test-output
+coverage
+.nx/cache
+.nx/workspace-data
+.git
+.DS_Store
+apps/backend/docker/data
+.docker-data
+*.log
+vite.config.*.timestamp*

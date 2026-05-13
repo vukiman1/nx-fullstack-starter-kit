@@ -51,3 +51,4 @@ test-output
 
 vite.config.*.timestamp*
 apps/backend/docker/data
+.docker-data

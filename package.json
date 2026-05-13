@@ -16,7 +16,18 @@
     "format:check": "pnpm nx format:check",
     "sync": "pnpm nx sync",
     "sync:check": "pnpm nx sync:check",
-    "affected": "pnpm nx affected"
+    "affected": "pnpm nx affected",
+    "infra:up": "docker compose up -d db redis",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f db redis",
+    "docker:backend:build": "docker build -f apps/backend/Dockerfile -t nx-fullstack-starter-backend .",
+    "docker:backend:up": "docker compose --profile backend up -d backend",
+    "docker:backend:down": "docker compose --profile backend down",
+    "db:migration:create": "node tools/typeorm-migration.mjs create",
+    "db:migration:generate": "node tools/typeorm-migration.mjs generate",
+    "db:migration:run": "node tools/typeorm-migration.mjs run",
+    "db:migration:revert": "node tools/typeorm-migration.mjs revert",
+    "db:migration:show": "node tools/typeorm-migration.mjs show"
   },
   "private": true,
   "devDependencies": {

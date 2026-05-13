@@ -1,0 +1,66 @@
+name: nx-fullstack-starter
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nx-starter-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nestdb
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./.docker-data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d nestdb']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nx-starter-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - ./.docker-data/redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    profiles:
+      - backend
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: nx-starter-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      DB_NAME: nestdb
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+      JWT_SECRET: super-secret-key
+      JWT_REFRESH_TOKEN_EXPIRES_IN: 7d
+      JWT_ACCESS_TOKEN_EXPIRES_IN: 15m
+      SECRET_KEY: yoursecretkeymustbe32characters!!
+      SECRET_KEY_IV: yoursecretkeyiv!
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

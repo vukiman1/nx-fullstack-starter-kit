@@ -16,7 +16,10 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: ['./src/assets', { input: './config', glob: '**/*', output: './config' }],
+      assets: [
+        './src/assets',
+        { input: './config', glob: '**/*', output: './config' },
+      ],
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: false,
@@ -24,6 +27,11 @@ module.exports = {
     }),
   ],
   resolve: {
-    plugins: [new TsconfigPathsPlugin({ configFile: join(__dirname, 'tsconfig.app.json') })],
+    conditionNames: ['@org/source', 'import', 'require', 'node', 'default'],
+    plugins: [
+      new TsconfigPathsPlugin({
+        configFile: join(__dirname, 'tsconfig.app.json'),
+      }),
+    ],
   },
 };

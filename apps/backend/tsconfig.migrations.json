@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "noEmit": false,
+    "tsBuildInfoFile": "dist/tsconfig.migrations.tsbuildinfo"
+  },
+  "include": ["ormconfigs.ts", "src/**/*.entity.ts", "src/migrations/**/*.ts"],
+  "exclude": ["dist", "out-tsc", "src/**/*.spec.ts", "src/**/*.test.ts"]
+}

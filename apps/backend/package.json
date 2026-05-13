@@ -33,7 +33,7 @@
         "executor": "@nx/js:prune-lockfile",
         "outputs": [
           "{workspaceRoot}/apps/backend/dist/package.json",
-          "{workspaceRoot}/apps/backend/dist/package-lock.json"
+          "{workspaceRoot}/apps/backend/dist/pnpm-lock.yaml"
         ],
         "options": {
           "buildTarget": "build"
@@ -54,6 +54,7 @@
       },
       "prune": {
         "dependsOn": [
+          "build-migrations",
           "prune-lockfile",
           "copy-workspace-modules"
         ],
@@ -83,13 +84,58 @@
         "options": {
           "passWithNoTests": true
         }
+      },
+      "build-migrations": {
+        "dependsOn": [
+          "build",
+          "^build"
+        ],
+        "cache": true,
+        "executor": "nx:run-commands",
+        "outputs": [
+          "{workspaceRoot}/apps/backend/dist/ormconfigs.js",
+          "{workspaceRoot}/apps/backend/dist/src/migrations"
+        ],
+        "options": {
+          "command": "tsc -p apps/backend/tsconfig.migrations.json"
+        }
+      },
+      "docker-build": {
+        "dependsOn": [
+          "prune"
+        ],
+        "executor": "nx:noop"
+      },
+      "migration-run": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/typeorm-migration.mjs run"
+        }
+      },
+      "migration-revert": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/typeorm-migration.mjs revert"
+        }
+      },
+      "migration-show": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "node tools/typeorm-migration.mjs show"
+        }
       }
     }
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/serve-static": "^5.0.5",
+    "@nestjs/swagger": "^11.4.2",
+    "@nestjs/typeorm": "^11.0.1",
     "@org/backend-base": "workspace:*",
     "@org/backend-config": "workspace:*",
     "@org/backend-constants": "workspace:*",
@@ -102,13 +148,30 @@
     "@org/backend-interceptors": "workspace:*",
     "@org/backend-jwt": "workspace:*",
     "@org/backend-redis": "workspace:*",
+    "argon2": "^0.44.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "config": "^4.4.1",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
     "express": "5.2.1",
+    "ioredis": "^5.10.1",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "pg": "^8.20.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "typeorm": "^0.3.28"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
     "@types/express": "^5.0.6"
+  },
+  "scripts": {
+    "start": "node main.js",
+    "migration:run:prod": "node ./node_modules/typeorm/cli.js -d ./ormconfigs.js migration:run",
+    "migration:revert:prod": "node ./node_modules/typeorm/cli.js -d ./ormconfigs.js migration:revert",
+    "migration:show:prod": "node ./node_modules/typeorm/cli.js -d ./ormconfigs.js migration:show"
   }
 }
