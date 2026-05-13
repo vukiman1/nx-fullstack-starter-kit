@@ -1,0 +1,11 @@
+* @vukiman1
+
+/apps/backend/ @vukiman1
+/apps/backend-e2e/ @vukiman1
+/apps/frontend/ @vukiman1
+/apps/frontend-e2e/ @vukiman1
+/packages/ @vukiman1
+
+/.github/ @vukiman1
+/docker-compose.yml @vukiman1
+/apps/backend/Dockerfile @vukiman1
