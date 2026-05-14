@@ -130,7 +130,7 @@ updates:
 
 ---
 
-### [ ] `SECURITY.md`
+### [x] `SECURITY.md` ✅
 
 **Why**: hướng dẫn report vulnerability privately. GitHub UI hiện link tới file này.
 
