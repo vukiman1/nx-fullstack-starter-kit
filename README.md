@@ -1,108 +1,218 @@
-# New Nx Repository
+<div align="center">
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+# Nx Fullstack Starter Kit
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+A production-ready fullstack monorepo template — **NestJS backend** + **React frontend** + **Nx tooling**, batteries included.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+[![Nx](https://img.shields.io/badge/Nx-22.7-143055?logo=nx&logoColor=white)](https://nx.dev)
+[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![pnpm](https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
 
-## Finish your Nx platform setup
+</div>
 
-🚀 [Finish setting up your workspace](https://cloud.nx.app/connect/TDiE4qftHG) to get faster builds with remote caching, distributed task execution, and self-healing CI. [Learn more about Nx Cloud](https://nx.dev/ci/intro/why-nx-cloud).
+---
 
-## Generate a library
+## ✨ Highlights
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+- **Nx monorepo** — incremental build, computation caching, task graph, affected commands.
+- **NestJS 11** backend với TypeORM (Postgres), Redis, JWT auth, Swagger/OpenAPI.
+- **React 19** frontend với Vite, TanStack Router, Tailwind 4, shadcn/radix UI.
+- **Shared packages** — `@org/backend-*` cho infra reusable, `@org/shared-contracts` cho DTO chung.
+- **Docker compose** — Postgres + Redis + backend + frontend, profiles tách dev/prod.
+- **CI/CD** — GitHub Actions (pull-request + push-dev), Nx Cloud remote cache.
+- **Husky hooks** — pre-commit (lint-staged) + pre-push (`nx affected -t lint typecheck`).
+- **GitHub repo config-as-code** — Probot Settings cho labels, branch protection, release notes auto-grouping.
+- **Auto PR labels** — derive `type/*` + `scope/*` từ PR title (`feat(backend): ...`).
+
+## 📦 Stack
+
+### Backend (`apps/backend`)
+
+- **NestJS 11** với module-based architecture
+- **TypeORM** + **PostgreSQL 16** — migration-driven
+- **ioredis** + **Redis 7** — cache, session, queue-ready
+- **JWT** auth (access + refresh token) + Passport
+- **Swagger** auto docs ở `/api/docs`
+- **Webpack** build, **Docker** multi-stage image
+
+### Frontend (`apps/frontend`)
+
+- **React 19** + **Vite 7**
+- **TanStack Router** — file-based routing, type-safe
+- **Tailwind CSS 4** + **shadcn/ui** + **Radix UI**
+- **Zod** runtime validation
+- **Nginx** static serving cho production image
+
+### Shared (`packages/`)
+
+- `@org/backend-*` — base, config, constants, crypto, database, decorators, enum, filters, helpers, interceptors, interfaces, jwt, redis
+- `@org/shared-contracts` — DTO/type dùng chung 2 phía
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+| Tool   | Version | Cài đặt                                                  |
+| ------ | ------- | -------------------------------------------------------- |
+| Node   | 22.x    | https://nodejs.org / nvm                                 |
+| pnpm   | 10.x    | `corepack enable && corepack prepare pnpm@10 --activate` |
+| Docker | 20+     | https://docs.docker.com/get-docker/                      |
+| Git    | 2.40+   | `brew install git` / system package                      |
+
+### Install
+
+```bash
+git clone https://github.com/vukiman1/nx-fullstack-starter-kit.git
+cd nx-fullstack-starter-kit
+pnpm install                              # installs deps + sets up husky
+cp apps/backend/.env.example apps/backend/.env
+cp apps/frontend/.env.example apps/frontend/.env
 ```
 
-## Run tasks
+### Boot infrastructure (Postgres + Redis)
 
-To build the library use:
-
-```sh
-npx nx build pkg1
+```bash
+pnpm infra:up                             # docker compose up -d db redis
+pnpm db:migration:run                     # apply latest migrations
 ```
 
-To run any task with Nx use:
+### Run both apps in dev
 
-```sh
-npx nx <target> <project-name>
+```bash
+pnpm dev                                  # backend :3000 + frontend :4200, parallel
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+Hoặc chạy từng cái:
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Versioning and releasing
-
-To version and release the library use
-
-```
-npx nx release
+```bash
+pnpm dev:backend                          # http://localhost:3000
+pnpm dev:frontend                         # http://localhost:4200
 ```
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+Swagger API docs: http://localhost:3000/api/docs
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 🧰 Common Commands
 
-## Keep TypeScript project references up to date
+| Task               | Command                                |
+| ------------------ | -------------------------------------- |
+| Format check       | `pnpm format:check`                    |
+| Format write       | `pnpm format`                          |
+| Lint               | `pnpm lint`                            |
+| Typecheck          | `pnpm typecheck`                       |
+| Unit tests         | `pnpm test`                            |
+| E2E (Playwright)   | `pnpm e2e`                             |
+| Build all          | `pnpm build`                           |
+| Affected only      | `pnpm affected -t lint typecheck test` |
+| Docker backend up  | `pnpm docker:backend:up`               |
+| Infra logs         | `pnpm infra:logs`                      |
+| Migration create   | `pnpm db:migration:create <Name>`      |
+| Migration generate | `pnpm db:migration:generate <Name>`    |
+| Migration revert   | `pnpm db:migration:revert`             |
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+Nx native: `pnpm nx <target> <project>`. Project graph: `pnpm nx graph`.
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+## 🏗️ Project Structure
 
-```sh
-npx nx sync
+```
+.
+├── apps/
+│   ├── backend/             NestJS app
+│   ├── backend-e2e/         Jest + supertest e2e
+│   ├── frontend/            React SPA (Vite)
+│   └── frontend-e2e/        Playwright e2e
+├── packages/
+│   ├── backend/             Reusable backend modules (jwt, redis, crypto, ...)
+│   └── shared/contracts     DTO + types shared FE ⇄ BE
+├── tools/                   Helper scripts (migrations, seed, ...)
+├── docs/                    Setup roadmap + architecture notes
+├── .github/
+│   ├── workflows/           pull-request.yml, push-dev.yml, pr-auto-label.yml
+│   ├── settings.yml         Probot Settings (labels, repo config)
+│   └── release.yml          Release notes auto-grouping by label
+├── .husky/                  Git hooks
+├── docker-compose.yml       Postgres + Redis (+ optional backend/frontend profiles)
+└── nx.json                  Nx workspace config
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+## 🔧 Git Workflow
 
-```sh
-npx nx sync:check
+- **Default branch**: `dev`
+- **Commit convention**: `type(scope): description` — Conventional Commits.
+- Type: `feat`, `fix`, `chore`, `docs`, `refactor`, `perf`, `test`, `ci`, `build`.
+- Scope (gợi ý): `backend`, `frontend`, `ci`, `deps`, `infra`.
+- PR title cũng theo format này → **auto-label** workflow tự gắn `type/*` + `scope/*`.
+
+### Pre-commit hook
+
+- `lint-staged`: prettier + eslint trên file staged. Auto-fix.
+
+### Pre-push hook
+
+- `pnpm nx affected -t lint typecheck` — chỉ chạy project bị ảnh hưởng so với `origin/dev`. Fail → block push.
+
+Bypass khẩn cấp: `git commit --no-verify` (hoặc `--no-verify` cho push). Hạn chế dùng.
+
+## 🐳 Docker
+
+### Local infrastructure only
+
+```bash
+docker compose up -d db redis
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+### Full stack (backend + frontend qua nginx)
 
-## Nx Cloud
-
-Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Set up CI (non-Github Actions CI)
-
-**Note:** This is only required if your CI provider is not GitHub Actions.
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
+```bash
+docker compose --profile backend --profile frontend up --build
+# backend  :3000
+# frontend :4200 (nginx serving SPA)
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Build images
 
-## Install Nx Console
+```bash
+pnpm nx run-many -t docker-build         # Nx prep pipeline cho cả 2
+docker build -f apps/backend/Dockerfile -t starter-backend .
+docker build -f apps/frontend/Dockerfile -t starter-frontend .
+```
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+## 🤖 CI / CD
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+| Workflow            | Trigger          | Jobs                                                                                                    |
+| ------------------- | ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `pull-request.yml`  | PR → `dev`       | check-branch-up-to-date, format, lint, typecheck, test, build, backend-e2e, frontend-e2e, security-scan |
+| `push-dev.yml`      | push → `dev`     | format, lint, typecheck, test, build, security-scan (skip e2e + branch check)                           |
+| `pr-auto-label.yml` | PR opened/edited | derive `type/*` + `scope/*` labels từ PR title                                                          |
 
-## Useful links
+Nx Cloud remote cache đã wire-up (`nxCloudId` trong `nx.json`).
 
-Learn more:
+## 📐 Repository Configuration
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Quản lý bằng [Probot Settings](https://github.com/apps/settings) — file [`.github/settings.yml`](.github/settings.yml) sync về GitHub khi merge vào `dev`. Bao gồm:
 
-And join the Nx community:
+- Labels taxonomy (`type/*`, `scope/*`, `priority/*`, `status/*`)
+- Branch protection rules
+- Squash merge format (PR title → commit title)
+- Security flags (vulnerability alerts, secret scanning)
 
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Release notes auto-group theo label nhờ [`.github/release.yml`](.github/release.yml).
+
+## 🗺️ Roadmap
+
+Xem [`docs/setup-roadmap.md`](docs/setup-roadmap.md) — danh sách các hạng mục còn thiếu (commitlint, health check, throttler, helmet, pino, sentry, ...) sắp theo độ ưu tiên.
+
+## 📝 License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+Built with ❤️ on top of [Nx](https://nx.dev) · [NestJS](https://nestjs.com) · [React](https://react.dev)
+
+</div>
