@@ -12,7 +12,7 @@ Kế hoạch triển khai các hạng mục còn thiếu, sắp theo độ ưu t
 
 ## Đã có (baseline)
 
-- [x] Husky pre-commit (lint-staged) + pre-push (`nx affected -t lint typecheck`)
+- [x] Husky pre-commit (lint-staged) + pre-push (`nx affected -t lint typecheck`) + commit-msg (commitlint)
 - [x] ESLint, Prettier, TypeScript strict
 - [x] Jest unit tests, Playwright e2e
 - [x] GitHub Actions: `pull-request.yml`, `push-dev.yml`
@@ -28,7 +28,7 @@ Kế hoạch triển khai các hạng mục còn thiếu, sắp theo độ ưu t
 
 ## 🟢 Quick wins
 
-### [ ] commitlint + commit-msg hook
+### [x] commitlint + commit-msg hook ✅
 
 **Why**: enforce format `type(scope): desc` ở mức commit. Hiện chỉ tự kỷ luật, không có gì chặn commit sai format.
 
