@@ -84,7 +84,7 @@ pnpm exec commitlint --edit "$1"
 
 ---
 
-### [ ] `.github/ISSUE_TEMPLATE/`
+### [x] `.github/ISSUE_TEMPLATE/` ✅
 
 **Why**: structured bug report + feature request thay vì free-form.
 

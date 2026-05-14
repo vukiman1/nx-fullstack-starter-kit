@@ -1,0 +1,84 @@
+name: Bug report
+description: Something is not working as expected.
+title: 'fix(<scope>): <short description>'
+labels: ['type/fix']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in the fields below — the clearer the report, the faster the fix.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence describing what is broken.
+      placeholder: 'Login endpoint returns 500 instead of 401 on wrong password.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Minimal steps to reproduce. Include curl commands, code snippets, or screenshots if helpful.
+      placeholder: |
+        1. Run `pnpm dev`
+        2. POST /api/auth/login with wrong password
+        3. Observe response
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: 'Response should be 401 Unauthorized with body { error: "Invalid credentials" }.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: 'Response is 500 Internal Server Error, stack trace in logs shows TypeError.'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      multiple: true
+      options:
+        - backend
+        - frontend
+        - infra / docker
+        - ci / workflow
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Output of `git rev-parse HEAD`, or release tag.
+      placeholder: 'abc1234 or v0.2.0'
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Logs / screenshots / additional context
+      description: Paste relevant log lines, stack traces, or screenshots. Wrap log blocks in triple backticks.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I am running the latest commit on `dev` (or stated my version above).
+          required: true

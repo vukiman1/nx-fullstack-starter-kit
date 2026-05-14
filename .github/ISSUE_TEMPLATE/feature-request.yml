@@ -1,0 +1,64 @@
+name: Feature request
+description: Propose a new feature or enhancement.
+title: 'feat(<scope>): <short description>'
+labels: ['type/feat']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing an idea. Please describe the **problem first**, then the proposed solution — easier to evaluate trade-offs.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What user / developer pain are you trying to solve? Why is this worth doing now?
+      placeholder: 'Currently every team member writes their own seed script for local dev. Wasted time and inconsistent fixtures.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What should the feature do? API shape, UI flow, config keys, etc.
+      placeholder: |
+        Add `pnpm db:seed:dev` that inserts a default admin user, 3 sample customers, and 10 sample orders.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about and why you rejected them.
+      placeholder: 'Could use Postman / Bruno scripts, but harder to keep in sync with schema changes.'
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      multiple: true
+      options:
+        - backend
+        - frontend
+        - infra / docker
+        - ci / workflow
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, screenshots, related issues, prior art in other projects.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
