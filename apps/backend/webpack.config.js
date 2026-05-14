@@ -3,7 +3,12 @@ const { join } = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = {
-  externals: [{ '@nestjs/terminus': 'commonjs @nestjs/terminus' }],
+  externals: [
+    {
+      '@nestjs/terminus': 'commonjs @nestjs/terminus',
+      '@nestjs/throttler': 'commonjs @nestjs/throttler',
+    },
+  ],
   output: {
     path: join(__dirname, 'dist'),
     clean: true,

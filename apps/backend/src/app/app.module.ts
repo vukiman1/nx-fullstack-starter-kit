@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from '@org/backend-database';
 import { CryptoModule } from '@org/backend-crypto';
 import { JwtModule } from '@org/backend-jwt';
@@ -25,6 +26,12 @@ import { AppService } from './app.service';
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'client'),
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 60,
+      },
+    ]),
     DatabaseModule,
     JwtModule,
     CryptoModule,

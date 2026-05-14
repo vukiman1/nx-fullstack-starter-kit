@@ -161,7 +161,7 @@ Tạo `HealthModule` với `TypeOrmHealthIndicator`, `RedisHealthIndicator`. Exp
 
 ---
 
-### [ ] Rate limiting (`@nestjs/throttler`)
+### [x] Rate limiting (`@nestjs/throttler`) ✅
 
 **Why**: chống brute force login, scraping. Default 60 req/min/IP đủ cho hầu hết.
 

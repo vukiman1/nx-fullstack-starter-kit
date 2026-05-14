@@ -136,6 +136,7 @@
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/swagger": "^11.4.3",
     "@nestjs/terminus": "^11.1.1",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.1",
     "@org/backend-base": "workspace:*",
     "@org/backend-config": "workspace:*",

@@ -31,3 +31,27 @@ describe('GET /health', () => {
     expect(res.data.data.details.redis.status).toBe('up');
   });
 });
+
+describe('POST /api/auth/login', () => {
+  it('should rate limit login attempts after 5 requests per minute', async () => {
+    const login = () =>
+      axios.post(
+        '/api/auth/login',
+        {
+          email: 'missing@example.com',
+          password: 'invalid-password',
+        },
+        {
+          validateStatus: () => true,
+        },
+      );
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const res = await login();
+      expect(res.status).not.toBe(429);
+    }
+
+    const throttled = await login();
+    expect(throttled.status).toBe(429);
+  });
+});

@@ -1,7 +1,4 @@
-import {
-  HttpExceptionFilter,
-  TypeormExceptionFilter,
-} from '@org/backend-filters';
+import { HttpExceptionFilter, TypeormExceptionFilter } from '@org/backend-filters';
 import { ResponseTransformInterceptor } from '@org/backend-interceptors';
 import {
   BadRequestException,
@@ -10,7 +7,8 @@ import {
   ValidationError,
   ValidationPipe,
 } from '@nestjs/common';
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 const exceptionFactory = (errors: ValidationError[]) => {
   throw new BadRequestException(
@@ -36,6 +34,10 @@ const validationErrors = (err: ValidationError) => {
 };
 
 export const providers: Provider[] = [
+  {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  },
   {
     provide: APP_FILTER,
     useClass: HttpExceptionFilter,
