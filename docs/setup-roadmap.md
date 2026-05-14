@@ -120,7 +120,7 @@ updates:
 
 ---
 
-### [ ] `CONTRIBUTING.md`
+### [x] `CONTRIBUTING.md` ✅
 
 **Why**: onboarding teammate / future-self.
 
