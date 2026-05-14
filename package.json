@@ -92,7 +92,7 @@
     "jest-util": "^30.4.1",
     "jiti": "2.7.0",
     "jsdom": "~22.1.0",
-    "jsonc-eslint-parser": "^2.1.0",
+    "jsonc-eslint-parser": "^3.1.0",
     "lint-staged": "^17.0.4",
     "nx": "22.7.1",
     "prettier": "^3.8.1",
