@@ -48,17 +48,7 @@ export default {
     'type-enum': [
       2,
       'always',
-      [
-        'feat',
-        'fix',
-        'chore',
-        'docs',
-        'refactor',
-        'perf',
-        'test',
-        'ci',
-        'build',
-      ],
+      ['feat', 'fix', 'chore', 'docs', 'refactor', 'perf', 'test', 'ci', 'build'],
     ],
   },
 };
@@ -74,7 +64,7 @@ pnpm exec commitlint --edit "$1"
 
 ---
 
-### [ ] `.editorconfig`
+### [x] `.editorconfig` ✅
 
 **Why**: đồng bộ tab/space/EOL/charset giữa VS Code, WebStorm, Cursor.
 
