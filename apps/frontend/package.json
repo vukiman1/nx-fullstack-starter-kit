@@ -6,7 +6,15 @@
     "tags": [
       "scope:frontend",
       "type:app"
-    ]
+    ],
+    "targets": {
+      "docker-build": {
+        "dependsOn": [
+          "build"
+        ],
+        "executor": "nx:noop"
+      }
+    }
   },
   "dependencies": {
     "@org/shared-contracts": "workspace:*",

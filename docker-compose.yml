@@ -65,3 +65,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  frontend:
+    profiles:
+      - frontend
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: ${FRONTEND_CONTAINER_NAME:-nx-starter-frontend}
+    restart: unless-stopped
+    ports:
+      - '${FRONTEND_HOST_PORT:-4200}:80'
+    # depends_on:
+    #   backend:
+    #     condition: service_started

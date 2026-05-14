@@ -147,7 +147,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm nx run-many -t build
-      - run: pnpm nx run @org/backend:docker-build
+      - run: pnpm nx run-many -t docker-build
 
   backend-e2e:
     name: backend-e2e
