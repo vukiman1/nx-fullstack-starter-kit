@@ -142,7 +142,7 @@ updates:
 
 ## 🟡 Backend hardening
 
-### [ ] Health check endpoint
+### [x] Health check endpoint ✅
 
 **Why**: Cloudflare Tunnel / k8s / load balancer cần `/health` để biết container sống. Kiểm tra DB + Redis cùng lúc.
 

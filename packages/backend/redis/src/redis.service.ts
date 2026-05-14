@@ -19,6 +19,11 @@ export class RedisService {
   get(key: string): Promise<string | null> {
     return this.redis.get(key);
   }
+
+  ping(): Promise<string> {
+    return this.redis.ping();
+  }
+
   async getRefreshToken(sub: string) {
     const key = `RF_TOKEN:${sub}`;
     const getRfToken = await this.get(key);

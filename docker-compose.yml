@@ -59,12 +59,24 @@ services:
       SECRET_KEY: yoursecretkeymustbe32characters!!
       SECRET_KEY_IV: yoursecretkeyiv!
     ports:
-      - '3000:3000'
+      - '${BACKEND_HOST_PORT:-3000}:3000'
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health/readiness').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   frontend:
     profiles:

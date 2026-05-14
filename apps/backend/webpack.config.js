@@ -3,6 +3,7 @@ const { join } = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = {
+  externals: [{ '@nestjs/terminus': 'commonjs @nestjs/terminus' }],
   output: {
     path: join(__dirname, 'dist'),
     clean: true,
@@ -16,12 +17,11 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: [
-        './src/assets',
-        { input: './config', glob: '**/*', output: './config' },
-      ],
+      assets: ['./src/assets', { input: './config', glob: '**/*', output: './config' }],
       optimization: false,
       outputHashing: 'none',
+      externalDependencies: 'all',
+      mergeExternals: true,
       generatePackageJson: false,
       sourceMap: true,
     }),

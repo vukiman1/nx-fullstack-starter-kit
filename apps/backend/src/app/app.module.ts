@@ -9,6 +9,7 @@ import { RedisModule } from '@org/backend-redis';
 import { join } from 'path';
 import { AuthModule } from '../api/auth/auth.module';
 import { UserModule } from '../api/user/user.module';
+import { HealthModule } from '../health/health.module';
 import { AppController } from './app.controller';
 import { providers } from './app.provider';
 import { AppService } from './app.service';
@@ -30,6 +31,7 @@ import { AppService } from './app.service';
     AuthModule,
     UserModule,
     RedisModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService, ...providers],
