@@ -74,7 +74,7 @@ pnpm exec commitlint --edit "$1"
 
 ---
 
-### [ ] `.github/PULL_REQUEST_TEMPLATE.md`
+### [x] `.github/PULL_REQUEST_TEMPLATE.md` ✅
 
 **Why**: PR có sẵn checklist (test plan, screenshots, breaking changes) → đỡ phải nhớ.
 
