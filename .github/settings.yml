@@ -1,12 +1,80 @@
 repository:
   name: nx-fullstack-stater-kit
-  default_branch: main
+  default_branch: dev
   allow_squash_merge: true
   allow_merge_commit: false
   allow_rebase_merge: true
   delete_branch_on_merge: true
+  squash_merge_commit_title: PR_TITLE
+  squash_merge_commit_message: PR_BODY
+  vulnerability_alerts: true
+  security_and_analysis:
+    secret_scanning:
+      status: enabled
+    secret_scanning_push_protection:
+      status: enabled
+
+labels:
+  - name: type/feat
+    color: '0e8a16'
+    description: New feature
+  - name: type/fix
+    color: 'd73a4a'
+    description: Bug fix
+  - name: type/chore
+    color: 'cfd3d7'
+    description: Maintenance / no production impact
+  - name: type/docs
+    color: '0075ca'
+    description: Documentation
+  - name: type/refactor
+    color: 'fbca04'
+    description: Code refactor without behavior change
+  - name: type/perf
+    color: 'd4c5f9'
+    description: Performance improvement
+  - name: type/test
+    color: 'c2e0c6'
+    description: Tests only
+  - name: scope/backend
+    color: '1d76db'
+  - name: scope/frontend
+    color: 'b60205'
+  - name: scope/ci
+    color: '5319e7'
+  - name: scope/deps
+    color: '006b75'
+  - name: scope/infra
+    color: '0052cc'
+  - name: priority/high
+    color: 'b60205'
+  - name: priority/low
+    color: 'eeeeee'
+  - name: status/blocked
+    color: 'd73a4a'
+    description: Cannot proceed — waiting on external dependency
+  - name: status/wip
+    color: 'fbca04'
+    description: Work in progress, do not review yet
+  - name: status/needs-review
+    color: '0e8a16'
+  - name: dependencies
+    color: '0366d6'
+    description: Dependency updates (Dependabot/Renovate)
 
 branches:
+  - name: dev
+    protection:
+      required_pull_request_reviews:
+        required_approving_review_count: 0
+        dismiss_stale_reviews: false
+        require_code_owner_reviews: false
+      required_status_checks: null
+      enforce_admins: false
+      required_linear_history: true
+      allow_force_pushes: false
+      allow_deletions: false
+      restrictions: null
   - name: main
     protection:
       required_pull_request_reviews:

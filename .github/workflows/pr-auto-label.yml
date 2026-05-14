@@ -1,0 +1,58 @@
+name: PR Auto Label
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  label:
+    name: label
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const match = title.match(/^(\w+)(?:\(([^)]+)\))?:/);
+            if (!match) {
+              core.info(`PR title "${title}" does not match conventional format — skipping.`);
+              return;
+            }
+            const [, type, scope] = match;
+
+            const typeMap = {
+              feat: 'type/feat',
+              fix: 'type/fix',
+              chore: 'type/chore',
+              docs: 'type/docs',
+              refactor: 'type/refactor',
+              perf: 'type/perf',
+              test: 'type/test',
+            };
+            const scopeMap = {
+              backend: 'scope/backend',
+              frontend: 'scope/frontend',
+              ci: 'scope/ci',
+              deps: 'scope/deps',
+              infra: 'scope/infra',
+            };
+
+            const labels = [];
+            if (typeMap[type]) labels.push(typeMap[type]);
+            if (scope && scopeMap[scope]) labels.push(scopeMap[scope]);
+
+            if (!labels.length) {
+              core.info(`No matching labels for type="${type}" scope="${scope ?? ''}".`);
+              return;
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels,
+            });
+            core.info(`Applied labels: ${labels.join(', ')}`);
