@@ -1,5 +1,5 @@
 repository:
-  name: nx-fullstack-stater-kit
+  name: nx-fullstack-starter-kit
   default_branch: dev
   allow_squash_merge: true
   allow_merge_commit: false
