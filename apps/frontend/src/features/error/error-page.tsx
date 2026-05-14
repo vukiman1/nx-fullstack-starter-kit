@@ -18,8 +18,9 @@ export function ErrorPage({ error, reset }: ErrorComponentProps) {
         >
           Unexpected error
         </h1>
-        <p className="mt-4 break-words text-base text-muted-foreground">
-          {error.message || 'An unexpected error occurred while rendering this page.'}
+        <p className="mt-4 wrap-break-words text-base text-muted-foreground">
+          {error.message ||
+            'An unexpected error occurred while rendering this page.'}
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button onClick={reset}>Try again</Button>

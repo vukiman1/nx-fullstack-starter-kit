@@ -11,9 +11,9 @@ describe('App', () => {
     const { findByRole, findByText } = render(<App />);
 
     expect(await findByText('My Workspace')).toBeTruthy();
-    expect((await findByRole('link', { name: /login/i })).getAttribute('href')).toBe(
-      '/login',
-    );
+    expect(
+      (await findByRole('link', { name: /login/i })).getAttribute('href'),
+    ).toBe('/login');
     expect(
       (await findByRole('link', { name: /register/i })).getAttribute('href'),
     ).toBe('/register');
