@@ -94,7 +94,7 @@ pnpm exec commitlint --edit "$1"
 
 ---
 
-### [ ] `.github/dependabot.yml`
+### [x] `.github/dependabot.yml` ✅
 
 **Why**: auto-PR weekly bump npm + Actions versions. PR auto-gắn label `dependencies` → vào "Dependencies" section của release notes.
 
