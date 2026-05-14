@@ -127,14 +127,14 @@
     }
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.20",
+    "@nestjs/common": "^11.1.21",
     "@nestjs/config": "^4.0.4",
-    "@nestjs/core": "^11.1.20",
+    "@nestjs/core": "^11.1.21",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.1.20",
+    "@nestjs/platform-express": "^11.1.21",
     "@nestjs/serve-static": "^5.0.5",
-    "@nestjs/swagger": "^11.4.2",
+    "@nestjs/swagger": "^11.4.3",
     "@nestjs/typeorm": "^11.0.1",
     "@org/backend-base": "workspace:*",
     "@org/backend-config": "workspace:*",
@@ -159,7 +159,7 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.20.0",
-    "reflect-metadata": "^0.1.13",
+    "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
     "tslib": "^2.3.0",
     "typeorm": "^0.3.29"
