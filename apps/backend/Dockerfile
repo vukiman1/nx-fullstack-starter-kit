@@ -1,4 +1,4 @@
-FROM node:22-slim AS builder
+FROM node:26-slim AS builder
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -13,7 +13,7 @@ COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 RUN pnpm nx run @org/backend:docker-build
 
-FROM node:22-slim AS runner
+FROM node:26-slim AS runner
 
 ENV NODE_ENV=production
 ENV PORT=3000
