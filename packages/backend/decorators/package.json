@@ -21,11 +21,11 @@
     ]
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.19",
+    "@nestjs/common": "^11.1.20",
     "express": "5.2.1"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.1.19",
+    "@nestjs/testing": "^11.1.20",
     "@types/express": "^5.0.6"
   }
 }

@@ -21,7 +21,7 @@
     ]
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.19",
+    "@nestjs/common": "^11.1.20",
     "@nestjs/config": "^4.0.4",
     "@org/backend-constants": "workspace:*",
     "@org/backend-interfaces": "workspace:*",

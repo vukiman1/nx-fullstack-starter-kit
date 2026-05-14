@@ -21,12 +21,12 @@
     ]
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.0",
+    "@nestjs/common": "^11.1.20",
     "@nestjs/config": "^4.0.4",
     "@nestjs/typeorm": "^11.0.1",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.29"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.1.19"
+    "@nestjs/testing": "^11.1.20"
   }
 }

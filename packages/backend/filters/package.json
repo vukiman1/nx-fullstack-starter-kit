@@ -21,9 +21,9 @@
     ]
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.19",
+    "@nestjs/common": "^11.1.20",
     "express": "5.2.1",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.29"
   },
   "devDependencies": {
     "@types/express": "^5.0.6"
