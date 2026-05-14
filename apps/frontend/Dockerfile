@@ -13,7 +13,7 @@ COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 RUN pnpm nx run @org/frontend:docker-build
 
-FROM nginx:1.27-alpine AS runner
+FROM nginx:1.31-alpine AS runner
 
 COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/apps/frontend/dist /usr/share/nginx/html
