@@ -1,16 +1,23 @@
 import { Type, applyDecorators } from '@nestjs/common';
-import {
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  getSchemaPath,
-} from '@nestjs/swagger';
-import {
-  ReferenceObject,
-  SchemaObject,
-} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, getSchemaPath } from '@nestjs/swagger';
 
 type SwaggerModel = Type<unknown> | string;
+
+interface ReferenceObject {
+  $ref: string;
+}
+
+interface SchemaObject {
+  type?: string;
+  example?: unknown;
+  items?: SchemaObject | ReferenceObject;
+  properties?: Record<string, SchemaObject | ReferenceObject>;
+  required?: string[];
+  enum?: unknown[];
+  format?: string;
+  description?: string;
+  nullable?: boolean;
+}
 
 export function OkResponse(
   $ref: SwaggerModel | null,
@@ -76,36 +83,21 @@ export function CreatedResponse($ref: SwaggerModel) {
 }
 
 export function ApiCreate($ref: SwaggerModel, name?: string) {
-  return applyDecorators(
-    ApiOperation({ summary: 'Create new ' + name }),
-    CreatedResponse($ref),
-  );
+  return applyDecorators(ApiOperation({ summary: 'Create new ' + name }), CreatedResponse($ref));
 }
 
 export function ApiGetAll($ref: SwaggerModel, name?: string) {
-  return applyDecorators(
-    ApiOperation({ summary: 'Get all ' + name }),
-    OkResponse($ref, true),
-  );
+  return applyDecorators(ApiOperation({ summary: 'Get all ' + name }), OkResponse($ref, true));
 }
 
 export function ApiGetDetail($ref: SwaggerModel, name?: string) {
-  return applyDecorators(
-    ApiOperation({ summary: 'Get detail ' + name }),
-    OkResponse($ref),
-  );
+  return applyDecorators(ApiOperation({ summary: 'Get detail ' + name }), OkResponse($ref));
 }
 
 export function ApiUpdate($ref: SwaggerModel, name?: string) {
-  return applyDecorators(
-    ApiOperation({ summary: 'Update ' + name }),
-    OkResponse($ref),
-  );
+  return applyDecorators(ApiOperation({ summary: 'Update ' + name }), OkResponse($ref));
 }
 
 export function ApiDelete($ref: SwaggerModel, name?: string) {
-  return applyDecorators(
-    ApiOperation({ summary: 'Delete ' + name }),
-    OkResponse($ref),
-  );
+  return applyDecorators(ApiOperation({ summary: 'Delete ' + name }), OkResponse($ref));
 }
