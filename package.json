@@ -27,9 +27,19 @@
     "db:migration:generate": "node tools/typeorm-migration.mjs generate",
     "db:migration:run": "node tools/typeorm-migration.mjs run",
     "db:migration:revert": "node tools/typeorm-migration.mjs revert",
-    "db:migration:show": "node tools/typeorm-migration.mjs show"
+    "db:migration:show": "node tools/typeorm-migration.mjs show",
+    "prepare": "husky"
   },
   "private": true,
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "prettier --write",
+      "eslint --fix --max-warnings=0"
+    ],
+    "*.{json,md,yml,yaml,css,html}": [
+      "prettier --write"
+    ]
+  },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@nestjs/schematics": "^11.0.0",
@@ -73,6 +83,7 @@
     "eslint-plugin-playwright": "^1.6.2",
     "eslint-plugin-react": "7.35.0",
     "eslint-plugin-react-hooks": "5.0.0",
+    "husky": "^9.1.7",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "jest-environment-node": "^30.4.1",
@@ -80,6 +91,7 @@
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
     "jsonc-eslint-parser": "^2.1.0",
+    "lint-staged": "^17.0.4",
     "nx": "22.7.1",
     "prettier": "^3.8.1",
     "ts-jest": "^29.4.0",
