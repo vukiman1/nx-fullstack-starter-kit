@@ -196,7 +196,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps
-      - run: pnpm nx run @org/frontend-e2e:e2e-ci
+      - run: pnpm nx run @org/frontend-e2e:e2e
 
   security-scan:
     name: security-scan

@@ -45,6 +45,10 @@ module.exports = async function () {
   };
 
   try {
+    mkdirSync(dirname(runtimeFile), { recursive: true });
+    mkdirSync(env.DB_DATA_PATH, { recursive: true });
+    mkdirSync(env.REDIS_DATA_PATH, { recursive: true });
+
     run('docker', ['compose', 'up', '-d', 'db', 'redis'], env);
     await waitForDockerHealth(dbContainerName, env);
     await waitForDockerHealth(redisContainerName, env);
@@ -59,7 +63,6 @@ module.exports = async function () {
     });
     backend.unref();
 
-    mkdirSync(dirname(runtimeFile), { recursive: true });
     writeFileSync(
       runtimeFile,
       JSON.stringify({
