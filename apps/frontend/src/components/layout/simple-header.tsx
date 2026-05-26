@@ -5,11 +5,7 @@ import { appConfig } from '@/config/app-config';
 import { authService } from '@/services/auth-service';
 import { userService } from '@/services/user-service';
 import type { UserCredit } from '@org/shared-contracts';
-import {
-  selectIsInitializing,
-  selectUser,
-  useAuthStore,
-} from '@/stores/auth-store';
+import { selectIsInitializing, selectUser, useAuthStore } from '@/stores/auth-store';
 
 function CreditBadge() {
   const [credit, setCredit] = useState<UserCredit | null>(null);
@@ -24,8 +20,7 @@ function CreditBadge() {
       })
       .catch((error: unknown) => {
         if (cancelled) return;
-        const message =
-          error instanceof Error ? error.message : 'Failed to load credit';
+        const message = error instanceof Error ? error.message : 'Failed to load credit';
         setCreditError(message);
       });
 
@@ -39,11 +34,7 @@ function CreditBadge() {
       className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary"
       aria-label="Account balance"
     >
-      {creditError
-        ? '— credit unavailable'
-        : credit
-          ? `Balance: ${credit.balance}`
-          : 'Loading...'}
+      {creditError ? '— credit unavailable' : credit ? `Balance: ${credit.balance}` : 'Loading...'}
     </span>
   );
 }
@@ -65,10 +56,7 @@ export function SimpleHeader() {
 
   return (
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-      <a
-        className="text-base font-extrabold text-foreground no-underline"
-        href="/"
-      >
+      <a className="text-base font-extrabold text-foreground no-underline" href="/">
         {appConfig.app.name}
       </a>
 
@@ -83,10 +71,7 @@ export function SimpleHeader() {
           </span>
         ) : user ? (
           <>
-            <span
-              className="text-sm text-muted-foreground"
-              aria-label="Signed-in email"
-            >
+            <span className="text-sm text-muted-foreground" aria-label="Signed-in email">
               {user.email}
             </span>
             <CreditBadge key={user.email} />
