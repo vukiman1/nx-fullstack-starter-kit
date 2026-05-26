@@ -21,6 +21,7 @@ env:
 jobs:
   check-branch-up-to-date:
     name: check-branch-up-to-date
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -40,6 +41,7 @@ jobs:
 
   format:
     name: format
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -62,6 +64,7 @@ jobs:
 
   lint:
     name: lint
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -84,6 +87,7 @@ jobs:
 
   typecheck:
     name: typecheck
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -106,6 +110,7 @@ jobs:
 
   test:
     name: test
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -128,6 +133,7 @@ jobs:
 
   build:
     name: build
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -151,6 +157,7 @@ jobs:
 
   backend-e2e:
     name: backend-e2e
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -173,6 +180,7 @@ jobs:
 
   frontend-e2e:
     name: frontend-e2e
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -196,6 +204,7 @@ jobs:
 
   security-scan:
     name: security-scan
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'automation/skip-ci') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
