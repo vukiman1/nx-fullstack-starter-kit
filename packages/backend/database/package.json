@@ -27,6 +27,6 @@
     "typeorm": "^0.3.29"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.1.21"
+    "@nestjs/testing": "^11.1.23"
   }
 }
