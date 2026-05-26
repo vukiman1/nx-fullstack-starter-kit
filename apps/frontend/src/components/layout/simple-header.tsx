@@ -11,21 +11,11 @@ import {
   useAuthStore,
 } from '@/stores/auth-store';
 
-export function SimpleHeader() {
-  const navigate = useNavigate();
-  const user = useAuthStore(selectUser);
-  const isInitializing = useAuthStore(selectIsInitializing);
-  const clearUser = useAuthStore((state) => state.clearUser);
+function CreditBadge() {
   const [credit, setCredit] = useState<UserCredit | null>(null);
   const [creditError, setCreditError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      setCredit(null);
-      setCreditError(null);
-      return;
-    }
-
     let cancelled = false;
     userService
       .getCredit()
@@ -42,7 +32,27 @@ export function SimpleHeader() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, []);
+
+  return (
+    <span
+      className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary"
+      aria-label="Account balance"
+    >
+      {creditError
+        ? '— credit unavailable'
+        : credit
+          ? `Balance: ${credit.balance}`
+          : 'Loading...'}
+    </span>
+  );
+}
+
+export function SimpleHeader() {
+  const navigate = useNavigate();
+  const user = useAuthStore(selectUser);
+  const isInitializing = useAuthStore(selectIsInitializing);
+  const clearUser = useAuthStore((state) => state.clearUser);
 
   const handleLogout = async () => {
     try {
@@ -79,16 +89,7 @@ export function SimpleHeader() {
             >
               {user.email}
             </span>
-            <span
-              className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary"
-              aria-label="Account balance"
-            >
-              {creditError
-                ? '— credit unavailable'
-                : credit
-                  ? `Balance: ${credit.balance}`
-                  : 'Loading...'}
-            </span>
+            <CreditBadge key={user.email} />
             <Button onClick={handleLogout} variant="ghost">
               Logout
             </Button>
