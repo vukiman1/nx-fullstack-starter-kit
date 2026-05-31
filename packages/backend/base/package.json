@@ -22,6 +22,6 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.1.23",
-    "typeorm": "^0.3.29"
+    "typeorm": "^1.0.0"
   }
 }
