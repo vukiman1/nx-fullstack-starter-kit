@@ -181,7 +181,7 @@ Apply `@Throttle({ default: { limit: 5, ttl: 60_000 } })` cho auth endpoints (ch
 
 ---
 
-### [ ] Helmet security headers
+### [x] Helmet security headers ✅
 
 **Why**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options. Hạn chế XSS / clickjacking.
 
@@ -192,7 +192,8 @@ pnpm --filter @org/backend add helmet
 ```
 
 ```ts
-app.use(helmet());
+// Prod bật CSP đầy đủ; dev/test tắt CSP vì default chặn assets của Swagger UI (/docs chỉ mount ngoài prod).
+app.use(helmet(isProduction ? undefined : { contentSecurityPolicy: false }));
 ```
 
 **Acceptance**: `curl -I localhost:3000` thấy `Strict-Transport-Security`, `X-Frame-Options`...

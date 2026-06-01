@@ -7,11 +7,16 @@ import { ClassSerializerInterceptor, Logger, RequestMethod } from '@nestjs/commo
 import { NestFactory, Reflector } from '@nestjs/core';
 import configuration from '@org/backend-config';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 import { useSwagger } from './app/app.swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const { app: appConfig, cors } = configuration();
+  const isProduction = appConfig.nodeEnv === 'production';
+
+  app.use(helmet(isProduction ? undefined : { contentSecurityPolicy: false }));
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix, {
     exclude: [
@@ -21,12 +26,13 @@ async function bootstrap() {
   });
   app.use(cookieParser());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-  const { cors } = configuration();
   app.enableCors({
     origin: cors.origins,
     credentials: true,
   });
-  useSwagger(app);
+  if (!isProduction) {
+    useSwagger(app);
+  }
   const port = process.env.PORT || 3000;
   await app.listen(port);
   Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
