@@ -21,10 +21,10 @@
     ]
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.23",
+    "@nestjs/common": "^11.1.24",
     "@nestjs/config": "^4.0.4",
     "@org/backend-constants": "workspace:*",
     "@org/backend-interfaces": "workspace:*",
-    "ioredis": "^5.10.1"
+    "ioredis": "^5.11.0"
   }
 }
