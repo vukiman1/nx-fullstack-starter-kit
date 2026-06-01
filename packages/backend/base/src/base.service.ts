@@ -1,14 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
-import {
-  DeepPartial,
-  FindOptionsOrder,
-  FindOptionsWhere,
-  Repository,
-} from 'typeorm';
+import { DeepPartial, FindOptionsOrder, FindOptionsWhere, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { PaginationDto } from './base.dto';
 import { BaseEntity } from './base.entity';
 import { getQueryBuilder } from './queryBuilder';
+import { toFindOptionsRelations } from './toFindOptionsRelations';
 
 export abstract class BaseService<Entity extends BaseEntity> {
   abstract name: string;
@@ -19,7 +15,7 @@ export abstract class BaseService<Entity extends BaseEntity> {
     where?: FindOptionsWhere<Entity> | FindOptionsWhere<Entity>[],
     ...relations: string[]
   ): Promise<Entity[]> {
-    return this.repo.find({ where, relations });
+    return this.repo.find({ where, relations: toFindOptionsRelations(relations) });
   }
 
   async getAllWithPagination(
@@ -28,13 +24,7 @@ export abstract class BaseService<Entity extends BaseEntity> {
     order?: FindOptionsOrder<Entity>,
     ...relations: string[]
   ): Promise<[Entity[], number]> {
-    const queryBuilder = getQueryBuilder(
-      this.repo,
-      query,
-      where,
-      order,
-      ...relations,
-    );
+    const queryBuilder = getQueryBuilder(this.repo, query, where, order, ...relations);
     return queryBuilder.getManyAndCount();
   }
 
@@ -42,13 +32,13 @@ export abstract class BaseService<Entity extends BaseEntity> {
     where?: FindOptionsWhere<Entity> | FindOptionsWhere<Entity>[],
     ...relations: string[]
   ): Promise<Entity | null> {
-    return this.repo.findOne({ where, relations });
+    return this.repo.findOne({ where, relations: toFindOptionsRelations(relations) });
   }
 
   async getOneById(id: string, ...relations: string[]): Promise<Entity | null> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    return this.repo.findOne({ where: { id }, relations });
+    return this.repo.findOne({ where: { id }, relations: toFindOptionsRelations(relations) });
   }
 
   async getOneOrFail(
@@ -63,9 +53,7 @@ export abstract class BaseService<Entity extends BaseEntity> {
   }
 
   async getOneByIdOrFail(id: string, ...relations: string[]): Promise<Entity> {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const entity = await this.repo.findOne({ where: { id }, relations });
+    const entity = await this.getOneById(id, ...relations);
     if (!entity) {
       const errorMessage = `${this.name} not found`;
       throw new NotFoundException(errorMessage);
@@ -119,9 +107,7 @@ export abstract class BaseService<Entity extends BaseEntity> {
     return this.repo.remove(entity);
   }
 
-  async softDelete(
-    where: FindOptionsWhere<Entity> | FindOptionsWhere<Entity>[],
-  ) {
+  async softDelete(where: FindOptionsWhere<Entity> | FindOptionsWhere<Entity>[]) {
     const entity = await this.getOneOrFail(where);
     return this.repo.softRemove(entity);
   }
