@@ -32,6 +32,25 @@ describe('GET /health', () => {
   });
 });
 
+describe('Security headers (helmet)', () => {
+  it('should set HSTS, frame and content-type protections', async () => {
+    const res = await axios.get('/api');
+
+    expect(res.headers['strict-transport-security']).toBeDefined();
+    expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['x-powered-by']).toBeUndefined();
+  });
+
+  it('should leave CSP disabled so Swagger UI keeps working', async () => {
+    const res = await axios.get('/api');
+    expect(res.headers['content-security-policy']).toBeUndefined();
+
+    const docs = await axios.get('/docs', { validateStatus: () => true });
+    expect(docs.status).toBe(200);
+  });
+});
+
 describe('POST /api/auth/login', () => {
   it('should rate limit login attempts after 5 requests per minute', async () => {
     const login = () =>
