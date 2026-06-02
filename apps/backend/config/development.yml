@@ -3,6 +3,7 @@ app:
   logLevels:
     - error
     - warn
+    - log
 
 db:
   primary:
