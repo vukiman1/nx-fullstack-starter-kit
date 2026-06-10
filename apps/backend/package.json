@@ -158,7 +158,7 @@
     "dotenv": "^17.4.2",
     "express": "5.2.1",
     "helmet": "^8.2.0",
-    "ioredis": "^5.11.0",
+    "ioredis": "^5.11.1",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.21.0",
