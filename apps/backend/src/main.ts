@@ -9,10 +9,12 @@ import configuration from '@org/backend-config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
+import { createAppLogger } from './app/app.logger';
 import { useSwagger } from './app/app.swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(createAppLogger());
   const { app: appConfig, cors } = configuration();
   const isProduction = appConfig.nodeEnv === 'production';
 

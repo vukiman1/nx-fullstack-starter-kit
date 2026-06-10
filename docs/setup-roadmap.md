@@ -200,19 +200,15 @@ app.use(helmet(isProduction ? undefined : { contentSecurityPolicy: false }));
 
 ---
 
-### [ ] Structured logging (Pino)
+### [x] Structured logging (JSON) ✅
 
-**Why**: JSON logs có timestamp + trace ID + level → Cloud logs (CF, Datadog, Loki) parse được. `console.log` chỉ tốt cho dev.
+**Why**: JSON logs có timestamp + level → Cloud logs (CF, Datadog, Loki) parse được. `console.log` chỉ tốt cho dev.
 
-**How**:
+**How**: dùng `ConsoleLogger` built-in của Nest (không thêm dependency) — `json: true` ở production, colored ở dev. Xem `app.logger.ts` (`createAppLogger`) + `main.ts` (`bufferLogs` + `useLogger`). Log levels lấy từ `app.logLevels`.
 
-```bash
-pnpm --filter @org/backend add nestjs-pino pino-http pino-pretty
-```
+> Pino (`nestjs-pino`) bị bỏ qua: worker transport (`pino-pretty`) không resolve được module trong webpack bundle, và lợi ích `reqId`/structured chưa tương xứng chi phí ở giai đoạn này. Khi cần request-id tracing thật (đã deploy + log aggregator), cân nhắc thêm lại.
 
-Wire `LoggerModule.forRoot` với pretty transport ở dev, JSON ở prod. Add request-id correlation.
-
-**Acceptance**: prod log ra JSON; mỗi request có `reqId` để trace.
+**Acceptance**: prod log ra JSON một dòng/entry; dev log dễ đọc.
 
 ---
 
