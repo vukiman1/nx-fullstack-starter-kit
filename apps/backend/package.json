@@ -168,7 +168,7 @@
     "typeorm": "^1.0.0"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.1.26",
+    "@nestjs/testing": "^11.1.27",
     "@types/express": "^5.0.6"
   },
   "scripts": {
