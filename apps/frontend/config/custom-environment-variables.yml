@@ -4,3 +4,6 @@ app:
 
 api:
   baseUrl: VITE_API_BASE_URL
+
+sentry:
+  dsn: VITE_SENTRY_DSN

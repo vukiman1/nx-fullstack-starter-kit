@@ -23,18 +23,16 @@ const frontendPublicConfigSchema = z.object({
         'api.baseUrl must be an absolute URL or same-origin path',
       ),
   }),
+  sentry: z.object({
+    dsn: z.string().default(''),
+  }),
 });
 
 function resolveFrontendRoot() {
-  const candidates = [
-    process.cwd(),
-    join(process.cwd(), 'apps/frontend'),
-    join(__dirname, '..'),
-  ];
+  const candidates = [process.cwd(), join(process.cwd(), 'apps/frontend'), join(__dirname, '..')];
   return (
-    candidates.find((candidate) =>
-      existsSync(join(candidate, 'config/default.yml')),
-    ) || join(process.cwd(), 'apps/frontend')
+    candidates.find((candidate) => existsSync(join(candidate, 'config/default.yml'))) ||
+    join(process.cwd(), 'apps/frontend')
   );
 }
 
@@ -64,7 +62,5 @@ export function loadFrontendConfig(
 
   const nodeConfig = requireFn('config') as NodeConfig;
 
-  return frontendPublicConfigSchema.parse(
-    nodeConfig.util.toObject(),
-  ) as FrontendPublicConfig;
+  return frontendPublicConfigSchema.parse(nodeConfig.util.toObject()) as FrontendPublicConfig;
 }

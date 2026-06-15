@@ -150,6 +150,8 @@
     "@org/backend-interceptors": "workspace:*",
     "@org/backend-jwt": "workspace:*",
     "@org/backend-redis": "workspace:*",
+    "@sentry/nestjs": "^10.57.0",
+    "@sentry/profiling-node": "^10.57.0",
     "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -169,7 +171,8 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^11.1.26",
-    "@types/express": "^5.0.6"
+    "@types/express": "^5.0.6",
+    "tsconfig-paths-webpack-plugin": "4.2.0"
   },
   "scripts": {
     "start": "node main.js",

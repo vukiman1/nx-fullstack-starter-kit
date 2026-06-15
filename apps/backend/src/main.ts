@@ -3,6 +3,7 @@
  * This is only a minimal backend to get started.
  */
 
+import './instrument';
 import { ClassSerializerInterceptor, Logger, RequestMethod } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import configuration from '@org/backend-config';

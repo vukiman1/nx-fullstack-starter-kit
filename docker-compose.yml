@@ -58,6 +58,7 @@ services:
       JWT_ACCESS_TOKEN_EXPIRES_IN: 15m
       SECRET_KEY: yoursecretkeymustbe32characters!!
       SECRET_KEY_IV: yoursecretkeyiv!
+      SENTRY_DSN: ${SENTRY_DSN:-}
     ports:
       - '${BACKEND_HOST_PORT:-3000}:3000'
     depends_on:

@@ -74,6 +74,11 @@ interface CryptoConfig {
   secretKeyIv: string;
 }
 
+interface SentryConfig {
+  dsn: string;
+  tracesSampleRate: number;
+}
+
 const stringListSchema = z.preprocess(
   (value) =>
     typeof value === 'string'
@@ -130,14 +135,14 @@ const backendConfigSchema = z.object({
     secretKey: z.string().min(32),
     secretKeyIv: z.string().min(16),
   }),
+  sentry: z.object({
+    dsn: z.string().default(''),
+    tracesSampleRate: z.coerce.number().min(0).max(1),
+  }),
 });
 
 function resolveBackendRoot() {
-  const candidates = [
-    join(process.cwd(), 'apps/backend'),
-    process.cwd(),
-    join(__dirname, '..'),
-  ];
+  const candidates = [join(process.cwd(), 'apps/backend'), process.cwd(), join(__dirname, '..')];
 
   const backendRoot = candidates.find((candidate) =>
     existsSync(join(candidate, 'config/default.yml')),
@@ -167,9 +172,10 @@ export default () => {
     cors: nodeConfig.get<{ origins: string[] | string }>('cors'),
     jwt: nodeConfig.get<JwtConfig>('jwt'),
     crypto: nodeConfig.get<CryptoConfig>('crypto'),
+    sentry: nodeConfig.get<SentryConfig>('sentry'),
   });
 
-  const { app, db, redis, cors, jwt, crypto } = validated;
+  const { app, db, redis, cors, jwt, crypto, sentry } = validated;
 
   return {
     app: {
@@ -201,5 +207,6 @@ export default () => {
     cors,
     jwt,
     crypto,
+    sentry,
   };
 };

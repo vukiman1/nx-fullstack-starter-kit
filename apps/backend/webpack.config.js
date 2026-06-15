@@ -10,6 +10,7 @@ module.exports = (_env, argv) => {
       {
         '@nestjs/terminus': 'commonjs @nestjs/terminus',
         '@nestjs/throttler': 'commonjs @nestjs/throttler',
+        '@sentry/profiling-node': 'commonjs @sentry/profiling-node',
       },
     ],
     output: {

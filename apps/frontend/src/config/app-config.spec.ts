@@ -8,6 +8,7 @@ describe('frontend config', () => {
     expect(config).toEqual({
       app: { name: 'My Workspace', environment: 'test' },
       api: { baseUrl: 'http://localhost:3000/api' },
+      sentry: { dsn: '' },
     });
   });
 
