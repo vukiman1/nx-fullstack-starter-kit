@@ -35,6 +35,12 @@ redis:
     __name: REDIS_TLS
     __format: boolean
 
+sentry:
+  dsn: SENTRY_DSN
+  tracesSampleRate:
+    __name: SENTRY_TRACES_SAMPLE_RATE
+    __format: number
+
 cors:
   origins: CORS_ORIGINS
 

@@ -212,21 +212,16 @@ app.use(helmet(isProduction ? undefined : { contentSecurityPolicy: false }));
 
 ---
 
-### [ ] Sentry error tracking
+### [x] Sentry error tracking ✅
 
 **Why**: bug production không thấy nếu không có monitoring. Free tier 5k events/month.
 
-**How**:
+**How**: dùng `@sentry/nestjs` (integration chính thức cho NestJS) + `@sentry/react`. Cấu hình qua hệ config tập trung sẵn có, không đọc `process.env` thô.
 
-```bash
-pnpm add -w @sentry/node @sentry/profiling-node
-pnpm --filter @org/frontend add @sentry/react
-```
+- Backend: `apps/backend/src/instrument.ts` gọi `Sentry.init()` (guard bằng `sentry.dsn`), import dòng đầu `main.ts` để chạy trước mọi module. `SentryModule.forRoot()` + `SentryGlobalFilter` đăng ký **đầu** mảng `APP_FILTER` (NestJS reverse global filters → check cuối) nên `HttpExceptionFilter`/`TypeormExceptionFilter` giữ nguyên response shape; chỉ error lạ (non-HTTP) mới gửi Sentry. DSN + `tracesSampleRate` nằm trong `@org/backend-config` (env `SENTRY_DSN`).
+- Frontend: `initSentry()` (`src/lib/sentry.ts`) guard bằng `sentry.dsn`, gọi trong `main.tsx`; bọc `Sentry.ErrorBoundary` quanh root + `captureException` trong route `ErrorPage`. DSN inject lúc build qua `__FRONTEND_CONFIG__` (env `VITE_SENTRY_DSN`).
 
-Backend: `Sentry.init({ dsn, tracesSampleRate: 0.1 })` trước `bootstrap()`.
-Frontend: wrap `<ErrorBoundary>` của Sentry quanh root.
-
-Env vars: `SENTRY_DSN_BACKEND`, `VITE_SENTRY_DSN_FRONTEND`.
+> Khác bản gốc: dùng `@sentry/nestjs` thay `@sentry/node` (đúng pattern Nest). Bỏ `@sentry/profiling-node` vì kéo native module `@sentry-internal/node-cpu-profiler` bị pnpm chặn build script — error tracking là giá trị cốt lõi, thêm lại khi cần profiling. DSN để trống = tắt, app chạy bình thường không cần Sentry account.
 
 **Acceptance**: throw test error → xuất hiện trên Sentry dashboard.
 

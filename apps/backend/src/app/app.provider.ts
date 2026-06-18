@@ -1,3 +1,4 @@
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { HttpExceptionFilter, TypeormExceptionFilter } from '@org/backend-filters';
 import { ResponseTransformInterceptor } from '@org/backend-interceptors';
 import {
@@ -37,6 +38,10 @@ export const providers: Provider[] = [
   {
     provide: APP_GUARD,
     useClass: ThrottlerGuard,
+  },
+  {
+    provide: APP_FILTER,
+    useClass: SentryGlobalFilter,
   },
   {
     provide: APP_FILTER,

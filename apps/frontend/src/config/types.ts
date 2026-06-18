@@ -6,4 +6,7 @@ export interface FrontendPublicConfig {
   api: {
     baseUrl: string;
   };
+  sentry: {
+    dsn: string;
+  };
 }
