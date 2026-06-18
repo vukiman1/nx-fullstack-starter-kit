@@ -8,6 +8,7 @@
     "dev:frontend": "pnpm nx serve @org/frontend",
     "dev:backend": "pnpm nx serve @org/backend",
     "build": "pnpm nx run-many -t build",
+    "analyze:frontend": "ANALYZE=true pnpm nx build @org/frontend",
     "test": "pnpm nx run-many -t test",
     "lint": "pnpm nx run-many -t lint -- --max-warnings=0",
     "typecheck": "pnpm nx run-many -t typecheck",

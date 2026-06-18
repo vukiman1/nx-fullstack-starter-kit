@@ -264,19 +264,15 @@ pnpm dlx storybook@latest init
 
 ---
 
-### [ ] Bundle analyzer
+### [x] Bundle analyzer ✅
 
 **Why**: trước go live cần biết bundle nặng gì để code-split / remove deps không cần.
 
-**How**:
+**How**: `rollup-plugin-visualizer` cắm vào `vite.config.mts` (`plugins`), **gate sau cờ `ANALYZE`** để build thường (CI / Vercel) không sinh `stats.html` thừa trong output. Script tiện: `pnpm analyze:frontend`.
 
-```bash
-pnpm --filter @org/frontend add -D rollup-plugin-visualizer
-```
+> Khác bản gốc: gate sau `ANALYZE=true` thay vì emit mọi build — tránh rác trong dist deploy. Vite 8 dùng rolldown nhưng plugin vẫn tương thích qua lớp Rollup-compat.
 
-Plug vào `vite.config.mts` ở `build.rollupOptions.plugins`.
-
-**Acceptance**: `pnpm nx build @org/frontend` xong tạo `dist/stats.html`.
+**Acceptance**: `pnpm analyze:frontend` (hoặc `ANALYZE=true pnpm nx build @org/frontend`) tạo `apps/frontend/dist/stats.html`; build thường thì không.
 
 ---
 

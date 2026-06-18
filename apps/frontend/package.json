@@ -20,5 +20,8 @@
     "@org/shared-contracts": "workspace:*",
     "radix-ui": "^1.5.0",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "rollup-plugin-visualizer": "^7.0.1"
   }
 }
