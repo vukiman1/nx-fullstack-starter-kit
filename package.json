@@ -35,7 +35,12 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@sentry-internal/node-cpu-profiler"
-    ]
+    ],
+    "overrides": {
+      "multer": "^2.2.0",
+      "js-yaml": "^4.2.0",
+      "qs": "^6.15.2"
+    }
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
