@@ -229,19 +229,15 @@ app.use(helmet(isProduction ? undefined : { contentSecurityPolicy: false }));
 
 ## 🟡 Frontend
 
-### [ ] Data fetching layer (TanStack Query)
+### [x] Data fetching layer (TanStack Query) ✅
 
 **Why**: chưa thấy data fetching layer chuẩn. TanStack Query khớp với TanStack Router đang dùng. Cache, retry, optimistic update built-in.
 
-**How**:
+**How**: `QueryClientProvider` bọc app root; `queryClient` (`lib/query-client.ts`) đặt defaults — `staleTime 60s`, không retry lỗi 4xx (`ApiError`), tắt `refetchOnWindowFocus`. Tích hợp Router context đầy đủ: `queryClient` đưa vào router context, route `loader` dùng `ensureQueryData` prefetch, component `useQuery` đọc lại từ cache. Query định nghĩa bằng `queryOptions` factory cạnh service (`userQueries.credit()`) để loader và hook dùng chung query key. Devtools lazy-load, gate sau `NODE_ENV === 'development'` nên không lọt prod bundle.
 
-```bash
-pnpm --filter @org/frontend add @tanstack/react-query @tanstack/react-query-devtools
-```
+> Khác bản gốc: tích hợp Router context (loader prefetch) thay vì chỉ provider. `SimpleHeader > CreditBadge` được refactor từ `useEffect` thủ công sang `useQuery` → header + dashboard share cache, chỉ 1 request.
 
-Wrap `<QueryClientProvider>` quanh app root.
-
-**Acceptance**: 1 page demo dùng `useQuery` fetch backend API.
+**Acceptance**: dashboard prefetch + `useQuery(userQueries.credit())` hiển thị credit; build prod không chứa devtools.
 
 ---
 

@@ -1,40 +1,20 @@
-import { useEffect, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { appConfig } from '@/config/app-config';
 import { authService } from '@/services/auth-service';
-import { userService } from '@/services/user-service';
-import type { UserCredit } from '@org/shared-contracts';
+import { userQueries } from '@/services/user-service';
 import { selectIsInitializing, selectUser, useAuthStore } from '@/stores/auth-store';
 
 function CreditBadge() {
-  const [credit, setCredit] = useState<UserCredit | null>(null);
-  const [creditError, setCreditError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    userService
-      .getCredit()
-      .then((result) => {
-        if (!cancelled) setCredit(result);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        const message = error instanceof Error ? error.message : 'Failed to load credit';
-        setCreditError(message);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: credit, isError } = useQuery(userQueries.credit());
 
   return (
     <span
       className="rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary"
       aria-label="Account balance"
     >
-      {creditError ? '— credit unavailable' : credit ? `Balance: ${credit.balance}` : 'Loading...'}
+      {isError ? '— credit unavailable' : credit ? `Balance: ${credit.balance}` : 'Loading...'}
     </span>
   );
 }

@@ -1,22 +1,28 @@
 import { Link } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { SimpleHeader } from '@/components/layout/simple-header';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { userQueries } from '@/services/user-service';
 
 export function DashboardPage() {
+  const { data: credit } = useQuery(userQueries.credit());
+
   return (
     <main className="min-h-screen bg-muted/40">
       <SimpleHeader />
 
       <section className="mx-auto w-full max-w-3xl px-6 py-16">
-        <p className="mb-3 text-sm font-extrabold uppercase text-primary">
-          Dashboard
-        </p>
-        <h1 className="text-3xl font-extrabold text-foreground">
-          Dashboard overview
-        </h1>
+        <p className="mb-3 text-sm font-extrabold uppercase text-primary">Dashboard</p>
+        <h1 className="text-3xl font-extrabold text-foreground">Dashboard overview</h1>
         <p className="mt-4 max-w-xl text-base text-muted-foreground">
           This page is a placeholder for your authenticated workspace area.
         </p>
+
+        <Card className="mt-8 max-w-xs p-6">
+          <p className="text-sm font-medium text-muted-foreground">Credit balance</p>
+          <p className="mt-1 text-2xl font-extrabold text-foreground">{credit?.balance ?? '—'}</p>
+        </Card>
 
         <div className="mt-8">
           <Button asChild variant="outline">

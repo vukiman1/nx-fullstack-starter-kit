@@ -19,6 +19,8 @@
   "dependencies": {
     "@org/shared-contracts": "workspace:*",
     "@sentry/react": "^10.57.0",
+    "@tanstack/react-query": "^5.101.0",
+    "@tanstack/react-query-devtools": "^5.101.0",
     "radix-ui": "^1.5.0",
     "zod": "^4.4.3"
   },
