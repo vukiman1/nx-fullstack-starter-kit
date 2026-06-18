@@ -21,5 +21,8 @@
     "@sentry/react": "^10.57.0",
     "radix-ui": "^1.5.0",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "rollup-plugin-visualizer": "^7.0.1"
   }
 }

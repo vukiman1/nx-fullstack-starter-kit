@@ -3,11 +3,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
 import { loadFrontendConfig } from './config/index';
 
 const requireFromHere = createRequire(import.meta.url);
+const isAnalyze = process.env.ANALYZE === 'true';
 
 export default defineConfig(({ mode }) => {
   const frontendConfig = loadFrontendConfig(mode, requireFromHere);
@@ -32,6 +34,14 @@ export default defineConfig(({ mode }) => {
       }),
       react(),
       tailwindcss(),
+      isAnalyze &&
+        visualizer({
+          filename: './dist/stats.html',
+          template: 'treemap',
+          gzipSize: true,
+          brotliSize: true,
+          open: false,
+        }),
     ],
     resolve: {
       alias: {
