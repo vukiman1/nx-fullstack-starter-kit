@@ -144,8 +144,8 @@ importers:
         specifier: ^11.1.27
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)
       '@nx/devkit':
-        specifier: 22.7.5
-        version: 22.7.5(nx@22.7.5(@swc-node/register@1.11.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@swc/core@1.15.41(@swc/helpers@0.5.23))(@swc/types@0.1.26)(typescript@5.9.3))(@swc/core@1.15.41(@swc/helpers@0.5.23)))
+        specifier: 23.0.0
+        version: 23.0.0(nx@22.7.5(@swc-node/register@1.11.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@swc/core@1.15.41(@swc/helpers@0.5.23))(@swc/types@0.1.26)(typescript@5.9.3))(@swc/core@1.15.41(@swc/helpers@0.5.23)))
       '@nx/eslint':
         specifier: 22.7.5
         version: 22.7.5(8fb9aa936a64f8b0f59a6a4307f7c57a)
@@ -2323,6 +2323,11 @@ packages:
     resolution: {integrity: sha512-/63ziS7kdHXYTLLhwWBu9hFwoFFT8xf+PkcQjsNdPqc5JmkYkSew0cE/vp5ORgBpGLWWnFPJgmfqjbJoO2C7jA==}
     peerDependencies:
       nx: '>= 21 <= 23 || ^22.0.0-0'
+
+  '@nx/devkit@23.0.0':
+    resolution: {integrity: sha512-AYZWLcgYVQJjhhYwoKWFiu0u4jlrfMM64zarRbpQ7vwXWSJXCMQ2j2w9c5vzTnH3SeWigyyEYRo9xulfNESJ8w==}
+    peerDependencies:
+      nx: '>= 22 <= 24 || ^23.0.0-0'
 
   '@nx/docker@22.7.5':
     resolution: {integrity: sha512-IuizX/ACvAjoTIued7eHFDaknSL6WVfDTMtzxiqaY+iDpdOwCVTC1ZXQZSMba/xEsh4owk4qnSRmJ2eWSWburw==}
@@ -5259,6 +5264,10 @@ packages:
   balanced-match@4.0.3:
     resolution: {integrity: sha512-1pHv8LX9CpKut1Zp4EXey7Z8OfH11ONNH6Dhi2WDUt31VVZFXZzKwXcysBgqSumFCmR+0dqjMK5v5JiFHzi0+g==}
     engines: {node: 20 || >=22}
+
+  balanced-match@4.0.4:
+    resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
+    engines: {node: 18 || 20 || >=22}
 
   bare-events@2.8.2:
     resolution: {integrity: sha512-riJjyv1/mHLIPX4RwiK+oW9/4c3TEUeORHKefKAKnZ5kyslbN+HXowtbaVEqt4IMUB7OXlfixcs6gsFeo/jhiQ==}
@@ -12580,7 +12589,18 @@ snapshots:
       enquirer: 2.3.6
       minimatch: 10.2.5
       nx: 22.7.5(@swc-node/register@1.11.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@swc/core@1.15.41(@swc/helpers@0.5.23))(@swc/types@0.1.26)(typescript@5.9.3))(@swc/core@1.15.41(@swc/helpers@0.5.23))
-      semver: 7.8.1
+      semver: 7.8.5
+      tslib: 2.8.1
+      yargs-parser: 21.1.1
+
+  '@nx/devkit@23.0.0(nx@22.7.5(@swc-node/register@1.11.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@swc/core@1.15.41(@swc/helpers@0.5.23))(@swc/types@0.1.26)(typescript@5.9.3))(@swc/core@1.15.41(@swc/helpers@0.5.23)))':
+    dependencies:
+      '@zkochan/js-yaml': 0.0.7
+      ejs: 5.0.1
+      enquirer: 2.3.6
+      minimatch: 10.2.5
+      nx: 22.7.5(@swc-node/register@1.11.1(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)(@swc/core@1.15.41(@swc/helpers@0.5.23))(@swc/types@0.1.26)(typescript@5.9.3))(@swc/core@1.15.41(@swc/helpers@0.5.23))
+      semver: 7.8.5
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
@@ -16024,6 +16044,8 @@ snapshots:
 
   balanced-match@4.0.3: {}
 
+  balanced-match@4.0.4: {}
+
   bare-events@2.8.2: {}
 
   base64-js@1.5.1: {}
@@ -16121,7 +16143,7 @@ snapshots:
 
   brace-expansion@5.0.6:
     dependencies:
-      balanced-match: 4.0.3
+      balanced-match: 4.0.4
 
   braces@3.0.3:
     dependencies:
