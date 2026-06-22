@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
@@ -12,15 +13,19 @@ import { JwtService } from '@org/backend-jwt';
 import { UserService } from '../../user/user.service';
 import { clearCookie, CookieName, setCookie } from '@org/backend-helpers';
 import { RedisService } from '@org/backend-redis';
+import { EmailService } from '../../../email/email.service';
 import { UserType } from '../interfaces/auth.interface';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly cryptoService: CryptoService,
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly redisService: RedisService,
+    private readonly emailService: EmailService,
   ) {}
   me(user: UserEntity) {
     const { email, avatar, balance } = user;
@@ -48,9 +53,7 @@ export class AuthService {
 
   async register({ email, password, confirmPassword }: RegisterDto) {
     if (password !== confirmPassword) {
-      throw new BadRequestException(
-        'Password and confirm password do not match',
-      );
+      throw new BadRequestException('Password and confirm password do not match');
     }
     const existingUser = await this.userService.getOne({ email });
     if (existingUser) {
@@ -60,6 +63,15 @@ export class AuthService {
       email,
       password,
     });
+
+    try {
+      await this.emailService.sendWelcomeEmail(email);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send welcome email to ${email}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
 
     return {
       message: 'User registered successfully',

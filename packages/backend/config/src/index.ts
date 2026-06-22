@@ -33,6 +33,7 @@ interface ConfigReader {
 interface AppConfig {
   port: number | string;
   nodeEnv: string;
+  url: string;
   logLevels: string[] | string;
 }
 
@@ -79,6 +80,11 @@ interface SentryConfig {
   tracesSampleRate: number;
 }
 
+interface EmailConfig {
+  resendApiKey: string;
+  from: string;
+}
+
 const stringListSchema = z.preprocess(
   (value) =>
     typeof value === 'string'
@@ -94,6 +100,7 @@ const backendConfigSchema = z.object({
   app: z.object({
     port: z.coerce.number().int().positive(),
     nodeEnv: z.string().min(1),
+    url: z.string().min(1),
     logLevels: stringListSchema,
   }),
   db: z.object({
@@ -139,6 +146,10 @@ const backendConfigSchema = z.object({
     dsn: z.string().default(''),
     tracesSampleRate: z.coerce.number().min(0).max(1),
   }),
+  email: z.object({
+    resendApiKey: z.string().default(''),
+    from: z.string().min(1),
+  }),
 });
 
 function resolveBackendRoot() {
@@ -173,9 +184,10 @@ export default () => {
     jwt: nodeConfig.get<JwtConfig>('jwt'),
     crypto: nodeConfig.get<CryptoConfig>('crypto'),
     sentry: nodeConfig.get<SentryConfig>('sentry'),
+    email: nodeConfig.get<EmailConfig>('email'),
   });
 
-  const { app, db, redis, cors, jwt, crypto, sentry } = validated;
+  const { app, db, redis, cors, jwt, crypto, sentry, email } = validated;
 
   return {
     app: {
@@ -208,5 +220,6 @@ export default () => {
     jwt,
     crypto,
     sentry,
+    email,
   };
 };

@@ -3,6 +3,7 @@ app:
     __name: PORT
     __format: number
   nodeEnv: NODE_ENV
+  url: APP_URL
   logLevels: LOG_LEVELS
 
 db:
@@ -52,3 +53,7 @@ jwt:
 crypto:
   secretKey: SECRET_KEY
   secretKeyIv: SECRET_KEY_IV
+
+email:
+  resendApiKey: RESEND_API_KEY
+  from: EMAIL_FROM

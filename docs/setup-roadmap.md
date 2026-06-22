@@ -317,10 +317,20 @@ Tạo `QueueModule`, `EmailProcessor`...
 **How**: Resend SDK đơn giản nhất.
 
 ```bash
-pnpm --filter @org/backend add resend
+pnpm --filter @org/backend add resend @react-email/components
+pnpm --filter @org/backend add -D react-email
 ```
 
-Template với `@react-email/components` hoặc handlebars.
+**Template: chọn `@react-email/components`** (không dùng Handlebars). Lý do với stack React + Resend này:
+
+- **Email client compat**: tự lo table layout + inline CSS, xử lý quirk của Outlook/Gmail — phần đau nhất của email HTML. Handlebars là templating thuần, phải tự viết HTML table bằng tay.
+- **Type-safe**: props của email là interface, sai field là compile error. Handlebars data là `any`, sai thì silent.
+- **DX**: `react-email dev` preview live; truyền thẳng component vào Resend qua `resend.emails.send({ react: <Email/> })`, không cần render ra HTML string.
+- **Reuse**: cùng mental model JSX với frontend, share component/style được.
+
+Cân nhắc Handlebars chỉ khi: template do non-dev chỉnh, hoặc load động từ DB/CMS (string lưu DB dễ hơn code phải build).
+
+Render template (đồng bộ) trong `EmailProcessor` của BullMQ rồi đẩy qua Resend.
 
 **Acceptance**: register user → nhận welcome email.
 
