@@ -1,4 +1,3 @@
-import { TokenExpires } from '@org/backend-constants';
 import { CookieOptions, Response } from 'express';
 
 export const CookieName = {
@@ -8,15 +7,20 @@ export const CookieName = {
 
 export type CookieName = (typeof CookieName)[keyof typeof CookieName];
 
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
 const COOKIE_DEFAULTS: Record<CookieName, CookieOptions> = {
   [CookieName.ACCESS_TOKEN]: {
-    maxAge: TokenExpires.redisAccessToken,
     httpOnly: true,
     sameSite: 'lax',
+    secure: IS_PRODUCTION,
+    path: '/',
   },
   [CookieName.SESSION]: {
-    maxAge: TokenExpires.redisRefreshToken,
     httpOnly: true,
+    sameSite: 'lax',
+    secure: IS_PRODUCTION,
+    path: '/',
   },
 };
 
@@ -30,5 +34,5 @@ export function setCookie(
 }
 
 export function clearCookie(response: Response, name: CookieName) {
-  response.clearCookie(name);
+  response.clearCookie(name, COOKIE_DEFAULTS[name]);
 }

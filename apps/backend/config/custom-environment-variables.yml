@@ -52,8 +52,12 @@ jwt:
 
 crypto:
   secretKey: SECRET_KEY
-  secretKeyIv: SECRET_KEY_IV
 
 email:
   resendApiKey: RESEND_API_KEY
   from: EMAIL_FROM
+
+session:
+  maxSessionsPerUser:
+    __name: MAX_SESSIONS_PER_USER
+    __format: number

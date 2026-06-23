@@ -70,9 +70,12 @@ interface JwtConfig {
   accessTokenExpiresIn: string;
 }
 
+interface SessionConfig {
+  maxSessionsPerUser: number;
+}
+
 interface CryptoConfig {
   secretKey: string;
-  secretKeyIv: string;
 }
 
 interface SentryConfig {
@@ -138,9 +141,11 @@ const backendConfigSchema = z.object({
     refreshTokenExpiresIn: z.string().min(1),
     accessTokenExpiresIn: z.string().min(1),
   }),
+  session: z.object({
+    maxSessionsPerUser: z.coerce.number().int().positive(),
+  }),
   crypto: z.object({
     secretKey: z.string().min(32),
-    secretKeyIv: z.string().min(16),
   }),
   sentry: z.object({
     dsn: z.string().default(''),
@@ -182,12 +187,13 @@ export default () => {
     redis: nodeConfig.get<RedisConfig>('redis'),
     cors: nodeConfig.get<{ origins: string[] | string }>('cors'),
     jwt: nodeConfig.get<JwtConfig>('jwt'),
+    session: nodeConfig.get<SessionConfig>('session'),
     crypto: nodeConfig.get<CryptoConfig>('crypto'),
     sentry: nodeConfig.get<SentryConfig>('sentry'),
     email: nodeConfig.get<EmailConfig>('email'),
   });
 
-  const { app, db, redis, cors, jwt, crypto, sentry, email } = validated;
+  const { app, db, redis, cors, jwt, session, crypto, sentry, email } = validated;
 
   return {
     app: {
@@ -218,6 +224,7 @@ export default () => {
     },
     cors,
     jwt,
+    session,
     crypto,
     sentry,
     email,

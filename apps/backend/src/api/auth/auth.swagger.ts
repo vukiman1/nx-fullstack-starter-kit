@@ -45,6 +45,13 @@ export function ApiRefreshToken(userType: UserType) {
   );
 }
 
+export function ApiLogoutAll(userType: UserType) {
+  return applyDecorators(
+    ApiOperation({ summary: 'Logout from all devices for ' + userType }),
+    OkResponse(null),
+  );
+}
+
 export function ApiChangePassword(userType: UserType) {
   return applyDecorators(
     ApiOperation({ summary: 'Change password for ' + userType }),
