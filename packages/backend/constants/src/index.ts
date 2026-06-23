@@ -13,10 +13,3 @@ export const StrategyKey = {
     USER: 'jwt_user',
   },
 };
-
-export const TokenExpires = {
-  accessToken: '15d',
-  refreshToken: '30d',
-  redisAccessToken: 60 * 60 * 24 * 15,
-  redisRefreshToken: 60 * 60 * 24 * 30,
-};

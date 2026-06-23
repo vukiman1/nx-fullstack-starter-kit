@@ -3,18 +3,22 @@ import {
   ConflictException,
   Injectable,
   Logger,
-  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { RegisterDto } from '../dto/register.dto';
 import { CryptoService } from '@org/backend-crypto';
 import { UserEntity } from '../../user/entities/user.entity';
-import { JwtService } from '@org/backend-jwt';
 import { UserService } from '../../user/user.service';
 import { clearCookie, CookieName, setCookie } from '@org/backend-helpers';
-import { RedisService } from '@org/backend-redis';
 import { EmailService } from '../../../email/email.service';
 import { UserType } from '../interfaces/auth.interface';
+import { SessionService } from './session.service';
+
+interface SessionCookiePayload {
+  id: string;
+  jti: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -22,29 +26,29 @@ export class AuthService {
 
   constructor(
     private readonly cryptoService: CryptoService,
-    private readonly jwtService: JwtService,
     private readonly userService: UserService,
-    private readonly redisService: RedisService,
+    private readonly sessionService: SessionService,
     private readonly emailService: EmailService,
   ) {}
+
   me(user: UserEntity) {
     const { email, avatar, balance } = user;
     return {
       user: { email, avatar, balance },
     };
   }
+
   async login(user: UserEntity, response: Response) {
     const { id, email, avatar, balance } = user;
-    const payload = { id };
-    const accessToken = await this.jwtService.signJwt(payload);
-    const refreshToken = await this.jwtService.signJwt(payload, true);
+    const session = await this.sessionService.createSession(id);
 
-    this.redisService.setRefreshToken(id, refreshToken);
-    this.redisService.setAccessToken(id, accessToken);
-
-    const encryptId = this.cryptoService.encryptData(id);
-    setCookie(response, CookieName.SESSION, encryptId);
-    setCookie(response, CookieName.ACCESS_TOKEN, accessToken);
+    this.setSessionCookies(response, {
+      id,
+      jti: session.jti,
+      accessToken: session.accessToken,
+      accessTokenTtlMs: session.accessTokenTtlMs,
+      refreshTokenTtlMs: session.refreshTokenTtlMs,
+    });
 
     return {
       user: { email, avatar, balance },
@@ -78,45 +82,102 @@ export class AuthService {
       email,
     };
   }
-  async logout(user: UserEntity, response: Response) {
-    const { id } = user;
-    await this.redisService.delRFToken(id);
-    await this.redisService.delAccessToken(id);
-    clearCookie(response, CookieName.ACCESS_TOKEN);
-    clearCookie(response, CookieName.SESSION);
+
+  async logout(user: UserEntity, request: Request, response: Response) {
+    const jti = request.sessionJti;
+    if (!jti) {
+      throw new UnauthorizedException();
+    }
+    await this.sessionService.revokeSession(user.id, jti);
+    this.clearSessionCookies(response);
     return {
       message: 'Logout successfully',
     };
   }
 
-  async refreshToken(request: Request, response: Response, userType: UserType) {
-    const { sub } = request.cookies;
-    if (!sub) {
-      throw new NotFoundException('Refresh token not found');
-    }
+  async logoutAll(user: UserEntity, response: Response) {
+    await this.sessionService.revokeAllSessions(user.id);
+    this.clearSessionCookies(response);
+    return {
+      message: 'Logged out from all devices',
+    };
+  }
 
-    const decryptData = this.cryptoService.decryptData(sub);
-    const refreshToken = await this.redisService.getRefreshToken(decryptData);
-    const user = await this.getUser(refreshToken, userType);
-    const { id, email, avatar, balance } = user;
-    const accessToken = await this.jwtService.signJwt({ id });
-    this.redisService.setAccessToken(id, accessToken);
-    setCookie(response, CookieName.ACCESS_TOKEN, accessToken);
+  async refreshToken(request: Request, response: Response, userType: UserType) {
+    const { id, jti } = this.decodeSessionCookie(request);
+    const { email, avatar, balance } = await this.getUserById(id, userType);
+    const tokens = await this.sessionService.rotateSession(id, jti);
+
+    this.setSessionCookies(response, {
+      id,
+      jti,
+      accessToken: tokens.accessToken,
+      accessTokenTtlMs: tokens.accessTokenTtlMs,
+      refreshTokenTtlMs: tokens.refreshTokenTtlMs,
+    });
 
     return {
       user: { email, avatar, balance },
     };
   }
 
-  async getUser(refreshToken: string, userType: UserType) {
-    const { id } = await this.jwtService.verifyJwt(refreshToken);
-    const where = { id };
-    const targetServices = this.getService(userType);
-    const user = await targetServices.getOne(where);
-    if (!user) {
-      throw new NotFoundException('User not found');
+  private setSessionCookies(
+    response: Response,
+    params: SessionCookiePayload & {
+      accessToken: string;
+      accessTokenTtlMs: number;
+      refreshTokenTtlMs: number;
+    },
+  ) {
+    const { id, jti, accessToken, accessTokenTtlMs, refreshTokenTtlMs } = params;
+    setCookie(response, CookieName.SESSION, this.encodeSessionCookie({ id, jti }), {
+      maxAge: refreshTokenTtlMs,
+    });
+    setCookie(response, CookieName.ACCESS_TOKEN, accessToken, {
+      maxAge: accessTokenTtlMs,
+    });
+  }
+
+  private clearSessionCookies(response: Response) {
+    clearCookie(response, CookieName.ACCESS_TOKEN);
+    clearCookie(response, CookieName.SESSION);
+  }
+
+  private getUserById(id: string, userType: UserType) {
+    return this.getService(userType).getOneOrFail({ id });
+  }
+
+  private encodeSessionCookie(payload: SessionCookiePayload): string {
+    return this.cryptoService.encryptData(JSON.stringify(payload));
+  }
+
+  private decodeSessionCookie(request: Request): SessionCookiePayload {
+    const raw = request.cookies?.[CookieName.SESSION];
+    if (!raw) {
+      throw new UnauthorizedException();
     }
-    return user;
+    const payload = this.parseSessionCookie(raw);
+    if (!payload) {
+      throw new UnauthorizedException();
+    }
+    return payload;
+  }
+
+  private parseSessionCookie(raw: string): SessionCookiePayload | null {
+    try {
+      const parsed: unknown = JSON.parse(this.cryptoService.decryptData(raw));
+      if (
+        typeof parsed === 'object' &&
+        parsed !== null &&
+        typeof (parsed as Record<string, unknown>).id === 'string' &&
+        typeof (parsed as Record<string, unknown>).jti === 'string'
+      ) {
+        return parsed as SessionCookiePayload;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   private getService(type: UserType) {

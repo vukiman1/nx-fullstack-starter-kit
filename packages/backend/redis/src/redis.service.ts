@@ -1,6 +1,6 @@
-import { MetadataKey, TokenExpires } from '@org/backend-constants';
+import { MetadataKey } from '@org/backend-constants';
 import { RedisType } from '@org/backend-interfaces';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 
 @Injectable()
@@ -20,53 +20,23 @@ export class RedisService {
     return this.redis.get(key);
   }
 
+  del(key: string): Promise<number> {
+    return this.redis.del(key);
+  }
+
   ping(): Promise<string> {
     return this.redis.ping();
   }
 
-  async getRefreshToken(sub: string) {
-    const key = `RF_TOKEN:${sub}`;
-    const getRfToken = await this.get(key);
-    if (!getRfToken) {
-      throw new NotFoundException('Refresh token not found');
-    }
-    return getRfToken;
-  }
-  async getAccessToken(sub: string) {
-    const key = `AC_TOKEN:${sub}`;
-    const accessToken = await this.get(key);
-    if (!accessToken) {
-      throw new NotFoundException('Access token not found');
-    }
-    return accessToken;
-  }
-  async setRefreshToken(sub: string, token: string) {
-    const key = `RF_TOKEN:${sub}`;
-    return this.set({
-      key,
-      value: token,
-      expired: TokenExpires.redisRefreshToken,
-    });
-  }
-  async setAccessToken(sub: string, token: string) {
-    const key = `AC_TOKEN:${sub}`;
-    return this.set({
-      key,
-      value: token,
-      expired: TokenExpires.redisAccessToken,
-    });
-  }
-  async del(key: string) {
-    return this.redis.del(key);
+  zRem(key: string, ...members: string[]): Promise<number> {
+    return this.redis.zrem(key, ...members);
   }
 
-  async delRFToken(sub: string) {
-    const key = `RF_TOKEN:${sub}`;
-    return this.redis.del(key);
+  zRange(key: string, start: number, stop: number): Promise<string[]> {
+    return this.redis.zrange(key, start, stop);
   }
 
-  async delAccessToken(sub: string) {
-    const key = `AC_TOKEN:${sub}`;
-    return this.redis.del(key);
+  eval<T = unknown>(script: string, numKeys: number, ...args: Array<string | number>): Promise<T> {
+    return this.redis.eval(script, numKeys, ...args) as Promise<T>;
   }
 }
