@@ -2,9 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node"],
+    "types": ["node", "react"],
     "rootDir": "../..",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
+    "jsx": "react-jsx",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports": true,
@@ -18,7 +19,7 @@
     "strictNullChecks": true,
     "target": "es2021"
   },
-  "include": ["src/**/*.ts", "ormconfigs.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "ormconfigs.ts"],
   "exclude": [
     "out-tsc",
     "dist",

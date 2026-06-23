@@ -1,6 +1,7 @@
 app:
   port: 3000
   nodeEnv: development
+  url: http://localhost:4200
   logLevels:
     - error
     - warn
@@ -44,3 +45,7 @@ jwt:
 crypto:
   secretKey: yoursecretkeymustbe32characters!!
   secretKeyIv: yoursecretkeyiv!
+
+email:
+  resendApiKey: ''
+  from: Acme <onboarding@resend.dev>
