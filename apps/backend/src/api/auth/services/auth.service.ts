@@ -184,22 +184,29 @@ export class AuthService {
   }
 
   async refreshToken(request: Request, response: Response, userType: UserType) {
-    const { id, jti } = this.decodeSessionCookie(request);
-    const { email, avatar, balance } = await this.getUserById(id, userType);
-    const tokens = await this.sessionService.rotateSession(id, jti);
+    try {
+      const { id, jti } = this.decodeSessionCookie(request);
+      const { email, avatar, balance } = await this.getUserById(id, userType);
+      const tokens = await this.sessionService.rotateSession(id, jti);
 
-    this.setSessionCookies(response, {
-      id,
-      jti,
-      accessToken: tokens.accessToken,
-      accessTokenTtlMs: tokens.accessTokenTtlMs,
-      refreshTokenTtlMs: tokens.refreshTokenTtlMs,
-    });
-    this.auditService.record(AuthEvent.TOKEN_REFRESHED, { userId: id, jti, request });
+      this.setSessionCookies(response, {
+        id,
+        jti,
+        accessToken: tokens.accessToken,
+        accessTokenTtlMs: tokens.accessTokenTtlMs,
+        refreshTokenTtlMs: tokens.refreshTokenTtlMs,
+      });
+      this.auditService.record(AuthEvent.TOKEN_REFRESHED, { userId: id, jti, request });
 
-    return {
-      user: { email, avatar, balance },
-    };
+      return {
+        user: { email, avatar, balance },
+      };
+    } catch (error) {
+      // A failed refresh means the session is gone — drop the stale cookies so the
+      // browser stops sending them instead of waiting for them to expire.
+      this.clearSessionCookies(response);
+      throw error;
+    }
   }
 
   private async sendVerification(userId: string, email: string): Promise<void> {
