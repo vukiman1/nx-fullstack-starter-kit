@@ -9,6 +9,7 @@ import { UserType } from '../interfaces/auth.interface';
 import { AuthService } from '../services/auth.service';
 import { UserEntity } from '../../user/entities/user.entity';
 import { LoginDto } from '../dto/login.dto';
+import { CaptchaGuard } from '../guards/captcha.guard';
 
 export const AuthBaseController = <Entity extends UserEntity>(
   userType: UserType,
@@ -23,13 +24,14 @@ export const AuthBaseController = <Entity extends UserEntity>(
     @HttpCode(200)
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     @ApiLogin(userType)
-    @UseGuards(AuthGuard(strategyKey))
+    @UseGuards(CaptchaGuard, AuthGuard(strategyKey))
     async login(
       @Body() _login: LoginDto, // Load to Swagger
       @User() userData: Entity,
+      @Req() request: Request,
       @Res({ passthrough: true }) response: Response,
     ) {
-      return this.authService.login(userData, response);
+      return this.authService.login(userData, response, request);
     }
 
     @Post('refresh-token')
@@ -62,8 +64,12 @@ export const AuthBaseController = <Entity extends UserEntity>(
     @HttpCode(200)
     @ApiLogoutAll(userType)
     @UseGuards(AuthGuard(jwtStrategyKey))
-    async logoutAll(@User() user: Entity, @Res({ passthrough: true }) response: Response) {
-      return this.authService.logoutAll(user, response);
+    async logoutAll(
+      @User() user: Entity,
+      @Req() request: Request,
+      @Res({ passthrough: true }) response: Response,
+    ) {
+      return this.authService.logoutAll(user, response, request);
     }
   }
 

@@ -6,7 +6,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import * as argon2 from 'argon2';
 import { RegisterDto } from '../dto/register.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { CryptoService } from '@org/backend-crypto';
 import { UserEntity } from '../../user/entities/user.entity';
 import { UserService } from '../../user/user.service';
@@ -14,6 +17,11 @@ import { clearCookie, CookieName, setCookie } from '@org/backend-helpers';
 import { EmailService } from '../../../email/email.service';
 import { UserType } from '../interfaces/auth.interface';
 import { SessionService } from './session.service';
+import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
+import { AuthAuditService, AuthEvent } from './auth-audit.service';
+
+const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
 
 interface SessionCookiePayload {
   id: string;
@@ -28,7 +36,9 @@ export class AuthService {
     private readonly cryptoService: CryptoService,
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
+    private readonly authTokenService: AuthTokenService,
     private readonly emailService: EmailService,
+    private readonly auditService: AuthAuditService,
   ) {}
 
   me(user: UserEntity) {
@@ -38,7 +48,7 @@ export class AuthService {
     };
   }
 
-  async login(user: UserEntity, response: Response) {
+  async login(user: UserEntity, response: Response, request: Request) {
     const { id, email, avatar, balance } = user;
     const session = await this.sessionService.createSession(id);
 
@@ -49,38 +59,104 @@ export class AuthService {
       accessTokenTtlMs: session.accessTokenTtlMs,
       refreshTokenTtlMs: session.refreshTokenTtlMs,
     });
+    this.auditService.record(AuthEvent.LOGIN_SUCCEEDED, {
+      userId: id,
+      email,
+      jti: session.jti,
+      request,
+    });
 
     return {
       user: { email, avatar, balance },
     };
   }
 
-  async register({ email, password, confirmPassword }: RegisterDto) {
-    if (password !== confirmPassword) {
-      throw new BadRequestException('Password and confirm password do not match');
-    }
+  async register({ email, password }: RegisterDto, request: Request) {
     const existingUser = await this.userService.getOne({ email });
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
-    await this.userService.create({
-      email,
-      password,
-    });
-
-    try {
-      await this.emailService.sendWelcomeEmail(email);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send welcome email to ${email}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-    }
+    const user = await this.userService.create({ email, password });
+    await this.sendVerification(user.id, email);
+    this.auditService.record(AuthEvent.REGISTERED, { userId: user.id, email, request });
 
     return {
-      message: 'User registered successfully',
+      message: 'Registration successful. Please check your email to verify your account.',
       email,
     };
+  }
+
+  async verifyEmail(token: string, request: Request) {
+    const userId = await this.authTokenService.consume(OneTimeTokenKind.EMAIL_VERIFY, token);
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+    const user = await this.userService.getOneOrFail({ id: userId });
+    if (!user.isEmailVerified) {
+      await this.userService.update(user, { isEmailVerified: true });
+      await this.trySend(() => this.emailService.sendWelcomeEmail(user.email), user.email);
+    }
+    this.auditService.record(AuthEvent.EMAIL_VERIFIED, { userId, email: user.email, request });
+
+    return { message: 'Email verified successfully' };
+  }
+
+  async resendVerification(email: string) {
+    const user = await this.userService.getOne({ email });
+    if (user && !user.isEmailVerified) {
+      await this.sendVerification(user.id, email);
+    }
+    return {
+      message: 'If the email is registered and unverified, a verification link has been sent.',
+    };
+  }
+
+  async forgotPassword(email: string, request: Request) {
+    const user = await this.userService.getOne({ email });
+    if (user) {
+      const token = await this.authTokenService.issue(
+        OneTimeTokenKind.PASSWORD_RESET,
+        user.id,
+        PASSWORD_RESET_TTL_MS,
+      );
+      await this.trySend(() => this.emailService.sendPasswordResetEmail(email, token), email);
+      this.auditService.record(AuthEvent.PASSWORD_RESET_REQUESTED, {
+        userId: user.id,
+        email,
+        request,
+      });
+    }
+    return { message: 'If the email is registered, a reset link has been sent.' };
+  }
+
+  async resetPassword({ token, password }: ResetPasswordDto, request: Request) {
+    const userId = await this.authTokenService.consume(OneTimeTokenKind.PASSWORD_RESET, token);
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+    const user = await this.userService.getOneOrFail({ id: userId });
+    await this.userService.update(user, { password });
+    await this.sessionService.revokeAllSessions(userId);
+    this.auditService.record(AuthEvent.PASSWORD_RESET, { userId, email: user.email, request });
+
+    return { message: 'Password reset successfully' };
+  }
+
+  async changePassword(user: UserEntity, jti: string, dto: ChangePasswordDto, request: Request) {
+    const matches = await argon2.verify(user.password, dto.currentPassword);
+    if (!matches) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    await this.userService.update(user, { password: dto.newPassword });
+    await this.sessionService.revokeOtherSessions(user.id, jti);
+    this.auditService.record(AuthEvent.PASSWORD_CHANGED, {
+      userId: user.id,
+      email: user.email,
+      jti,
+      request,
+    });
+
+    return { message: 'Password changed successfully' };
   }
 
   async logout(user: UserEntity, request: Request, response: Response) {
@@ -90,14 +166,18 @@ export class AuthService {
     }
     await this.sessionService.revokeSession(user.id, jti);
     this.clearSessionCookies(response);
+    this.auditService.record(AuthEvent.LOGOUT, { userId: user.id, jti, request });
+
     return {
       message: 'Logout successfully',
     };
   }
 
-  async logoutAll(user: UserEntity, response: Response) {
+  async logoutAll(user: UserEntity, response: Response, request: Request) {
     await this.sessionService.revokeAllSessions(user.id);
     this.clearSessionCookies(response);
+    this.auditService.record(AuthEvent.LOGOUT_ALL, { userId: user.id, request });
+
     return {
       message: 'Logged out from all devices',
     };
@@ -115,10 +195,31 @@ export class AuthService {
       accessTokenTtlMs: tokens.accessTokenTtlMs,
       refreshTokenTtlMs: tokens.refreshTokenTtlMs,
     });
+    this.auditService.record(AuthEvent.TOKEN_REFRESHED, { userId: id, jti, request });
 
     return {
       user: { email, avatar, balance },
     };
+  }
+
+  private async sendVerification(userId: string, email: string): Promise<void> {
+    const token = await this.authTokenService.issue(
+      OneTimeTokenKind.EMAIL_VERIFY,
+      userId,
+      EMAIL_VERIFY_TTL_MS,
+    );
+    await this.trySend(() => this.emailService.sendVerificationEmail(email, token), email);
+  }
+
+  private async trySend(send: () => Promise<void>, recipient: string): Promise<void> {
+    try {
+      await send();
+    } catch (error) {
+      this.logger.error(
+        `Failed to send email to ${recipient}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
   }
 
   private setSessionCookies(
