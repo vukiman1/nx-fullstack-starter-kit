@@ -88,6 +88,11 @@ interface EmailConfig {
   from: string;
 }
 
+interface CaptchaConfig {
+  enabled: boolean;
+  secretKey: string;
+}
+
 const stringListSchema = z.preprocess(
   (value) =>
     typeof value === 'string'
@@ -155,6 +160,10 @@ const backendConfigSchema = z.object({
     resendApiKey: z.string().default(''),
     from: z.string().min(1),
   }),
+  captcha: z.object({
+    enabled: z.boolean().default(false),
+    secretKey: z.string().default(''),
+  }),
 });
 
 function resolveBackendRoot() {
@@ -191,9 +200,10 @@ export default () => {
     crypto: nodeConfig.get<CryptoConfig>('crypto'),
     sentry: nodeConfig.get<SentryConfig>('sentry'),
     email: nodeConfig.get<EmailConfig>('email'),
+    captcha: nodeConfig.get<CaptchaConfig>('captcha'),
   });
 
-  const { app, db, redis, cors, jwt, session, crypto, sentry, email } = validated;
+  const { app, db, redis, cors, jwt, session, crypto, sentry, email, captcha } = validated;
 
   return {
     app: {
@@ -228,5 +238,6 @@ export default () => {
     crypto,
     sentry,
     email,
+    captcha,
   };
 };

@@ -1,11 +1,11 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { Match } from './validators/match.validator';
 import { IsStrongPassword } from './validators/strong-password.validator';
 
-export class RegisterDto {
-  @IsEmail()
+export class ResetPasswordDto {
+  @IsString()
   @IsNotEmpty()
-  email!: string;
+  token!: string;
 
   @IsStrongPassword()
   password!: string;

@@ -5,7 +5,6 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypt
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
-const DEFAULT_SECRET_KEY = 'vibe_source_secret_key';
 
 @Injectable()
 export class CryptoService {
@@ -37,7 +36,10 @@ export class CryptoService {
   }
 
   private getKey(): Buffer {
-    const secretKey = this.configService.get<string>('crypto.secretKey') || DEFAULT_SECRET_KEY;
+    const secretKey = this.configService.get<string>('crypto.secretKey');
+    if (!secretKey) {
+      throw new Error('SECRET_KEY is not configured');
+    }
     return createHash('sha256').update(secretKey).digest();
   }
 }

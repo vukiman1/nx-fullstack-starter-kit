@@ -88,6 +88,21 @@ export class SessionService {
     await this.redisService.del(sessionSetKey);
   }
 
+  async revokeOtherSessions(userId: string, keepJti: string): Promise<void> {
+    const jtis = await this.redisService.zRange(this.sessionSetKey(userId), 0, -1);
+    const others = jtis.filter((jti) => jti !== keepJti);
+    if (others.length === 0) {
+      return;
+    }
+    await Promise.all(
+      others.flatMap((jti) => [
+        this.redisService.del(this.accessTokenKey(userId, jti)),
+        this.redisService.del(this.refreshTokenKey(userId, jti)),
+        this.redisService.zRem(this.sessionSetKey(userId), jti),
+      ]),
+    );
+  }
+
   private async issueTokens(userId: string, jti: string): Promise<SessionTokens> {
     const payload = { id: userId, jti };
     const [accessToken, refreshToken] = await Promise.all([
@@ -150,16 +165,18 @@ export class SessionService {
     return this.refreshTokenKeyPrefix(userId) + jti;
   }
 
+  // `{userId}` hash-tag keeps every key of a user in the same Redis Cluster slot,
+  // so the multi-key Lua scripts don't fail with CROSSSLOT.
   private accessTokenKeyPrefix(userId: string): string {
-    return `${ACCESS_TOKEN_KEY_PREFIX}:${userId}:`;
+    return `${ACCESS_TOKEN_KEY_PREFIX}:{${userId}}:`;
   }
 
   private refreshTokenKeyPrefix(userId: string): string {
-    return `${REFRESH_TOKEN_KEY_PREFIX}:${userId}:`;
+    return `${REFRESH_TOKEN_KEY_PREFIX}:{${userId}}:`;
   }
 
   private sessionSetKey(userId: string): string {
-    return `${SESSION_SET_KEY_PREFIX}:${userId}`;
+    return `${SESSION_SET_KEY_PREFIX}:{${userId}}`;
   }
 }
 

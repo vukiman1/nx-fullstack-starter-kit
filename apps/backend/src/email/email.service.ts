@@ -4,6 +4,11 @@ import { render } from '@react-email/render';
 import { Resend } from 'resend';
 import { EmailSendError } from './email.errors';
 import { WelcomeEmail } from './templates/welcome.email';
+import { VerifyEmail } from './templates/verify-email.email';
+import { ResetPasswordEmail } from './templates/reset-password.email';
+
+const VERIFY_EMAIL_PATH = '/verify-email';
+const RESET_PASSWORD_PATH = '/reset-password';
 
 interface SendEmailParams {
   to: string;
@@ -32,6 +37,22 @@ export class EmailService {
   async sendWelcomeEmail(to: string): Promise<void> {
     const html = await render(WelcomeEmail({ email: to, appUrl: this.appUrl }));
     await this.send({ to, subject: 'Welcome aboard 🎉', html });
+  }
+
+  async sendVerificationEmail(to: string, token: string): Promise<void> {
+    const verifyUrl = this.buildLink(VERIFY_EMAIL_PATH, token);
+    const html = await render(VerifyEmail({ verifyUrl }));
+    await this.send({ to, subject: 'Confirm your email', html });
+  }
+
+  async sendPasswordResetEmail(to: string, token: string): Promise<void> {
+    const resetUrl = this.buildLink(RESET_PASSWORD_PATH, token);
+    const html = await render(ResetPasswordEmail({ resetUrl }));
+    await this.send({ to, subject: 'Reset your password', html });
+  }
+
+  private buildLink(path: string, token: string): string {
+    return `${this.appUrl}${path}?token=${encodeURIComponent(token)}`;
   }
 
   private async send({ to, subject, html }: SendEmailParams): Promise<void> {

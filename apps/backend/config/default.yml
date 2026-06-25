@@ -51,3 +51,7 @@ email:
 
 session:
   maxSessionsPerUser: 5
+
+captcha:
+  enabled: false
+  secretKey: ''

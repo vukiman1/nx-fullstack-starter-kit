@@ -8,17 +8,25 @@ import { Strategy } from 'passport-jwt';
 import { UserService } from '../../../user/user.service';
 import { SessionService } from '../../services/session.service';
 
+function getJwtSecret(configService: ConfigService): string {
+  const secret = configService.get<string>('jwt.secret');
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return secret;
+}
+
 @Injectable()
 export class JwtUserStrategy extends PassportStrategy(Strategy, StrategyKey.JWT.USER) {
   constructor(
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
-    private readonly configService: ConfigService,
+    configService: ConfigService,
   ) {
     super({
       jwtFromRequest: (req: Request) => req?.cookies?.access_token ?? null,
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('jwt.secret') || 'secret',
+      secretOrKey: getJwtSecret(configService),
       passReqToCallback: true,
     });
   }
