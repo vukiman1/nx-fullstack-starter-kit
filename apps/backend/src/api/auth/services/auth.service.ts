@@ -26,6 +26,7 @@ const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
 interface SessionCookiePayload {
   id: string;
   jti: string;
+  remember: boolean;
 }
 
 @Injectable()
@@ -48,13 +49,14 @@ export class AuthService {
     };
   }
 
-  async login(user: UserEntity, response: Response, request: Request) {
+  async login(user: UserEntity, response: Response, request: Request, rememberMe: boolean) {
     const { id, email, avatar, balance } = user;
-    const session = await this.sessionService.createSession(id);
+    const session = await this.sessionService.createSession(id, rememberMe);
 
     this.setSessionCookies(response, {
       id,
       jti: session.jti,
+      remember: rememberMe,
       accessToken: session.accessToken,
       accessTokenTtlMs: session.accessTokenTtlMs,
       refreshTokenTtlMs: session.refreshTokenTtlMs,
@@ -185,13 +187,14 @@ export class AuthService {
 
   async refreshToken(request: Request, response: Response, userType: UserType) {
     try {
-      const { id, jti } = this.decodeSessionCookie(request);
+      const { id, jti, remember } = this.decodeSessionCookie(request);
       const { email, avatar, balance } = await this.getUserById(id, userType);
-      const tokens = await this.sessionService.rotateSession(id, jti);
+      const tokens = await this.sessionService.rotateSession(id, jti, remember);
 
       this.setSessionCookies(response, {
         id,
         jti,
+        remember,
         accessToken: tokens.accessToken,
         accessTokenTtlMs: tokens.accessTokenTtlMs,
         refreshTokenTtlMs: tokens.refreshTokenTtlMs,
@@ -237,8 +240,8 @@ export class AuthService {
       refreshTokenTtlMs: number;
     },
   ) {
-    const { id, jti, accessToken, accessTokenTtlMs, refreshTokenTtlMs } = params;
-    setCookie(response, CookieName.SESSION, this.encodeSessionCookie({ id, jti }), {
+    const { id, jti, remember, accessToken, accessTokenTtlMs, refreshTokenTtlMs } = params;
+    setCookie(response, CookieName.SESSION, this.encodeSessionCookie({ id, jti, remember }), {
       maxAge: refreshTokenTtlMs,
     });
     setCookie(response, CookieName.ACCESS_TOKEN, accessToken, {
@@ -280,7 +283,12 @@ export class AuthService {
         typeof (parsed as Record<string, unknown>).id === 'string' &&
         typeof (parsed as Record<string, unknown>).jti === 'string'
       ) {
-        return parsed as SessionCookiePayload;
+        const record = parsed as Record<string, unknown>;
+        return {
+          id: record.id as string,
+          jti: record.jti as string,
+          remember: record.remember === true,
+        };
       }
       return null;
     } catch {

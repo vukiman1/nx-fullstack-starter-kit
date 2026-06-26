@@ -26,12 +26,12 @@ export const AuthBaseController = <Entity extends UserEntity>(
     @ApiLogin(userType)
     @UseGuards(CaptchaGuard, AuthGuard(strategyKey))
     async login(
-      @Body() _login: LoginDto, // Load to Swagger
+      @Body() loginDto: LoginDto,
       @User() userData: Entity,
       @Req() request: Request,
       @Res({ passthrough: true }) response: Response,
     ) {
-      return this.authService.login(userData, response, request);
+      return this.authService.login(userData, response, request, loginDto.rememberMe ?? false);
     }
 
     @Post('refresh-token')

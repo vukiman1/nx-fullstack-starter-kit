@@ -1,4 +1,4 @@
-import { JwtService } from '@org/backend-jwt';
+import { JwtService, parseDurationToMs } from '@org/backend-jwt';
 import { RedisService } from '@org/backend-redis';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -8,6 +8,8 @@ const ACCESS_TOKEN_KEY_PREFIX = 'AC_TOKEN';
 const REFRESH_TOKEN_KEY_PREFIX = 'RF_TOKEN';
 const SESSION_SET_KEY_PREFIX = 'SESSIONS';
 const MAX_SESSIONS_CONFIG_KEY = 'session.maxSessionsPerUser';
+const REFRESH_TTL_CONFIG_KEY = 'session.refreshTtl';
+const REFRESH_TTL_REMEMBER_CONFIG_KEY = 'session.refreshTtlRemember';
 const MS_PER_SECOND = 1000;
 
 const TRACK_SESSION_SCRIPT = `
@@ -47,20 +49,20 @@ export class SessionService {
     private readonly configService: ConfigService,
   ) {}
 
-  async createSession(userId: string): Promise<IssuedSession> {
+  async createSession(userId: string, rememberMe: boolean): Promise<IssuedSession> {
     const jti = randomUUID();
-    const tokens = await this.issueTokens(userId, jti);
+    const tokens = await this.issueTokens(userId, jti, this.resolveRefreshTtlMs(rememberMe));
     await this.enforceSessionLimit(userId);
     return { jti, ...tokens };
   }
 
-  async rotateSession(userId: string, jti: string): Promise<SessionTokens> {
+  async rotateSession(userId: string, jti: string, rememberMe: boolean): Promise<SessionTokens> {
     const storedRefreshToken = await this.redisService.get(this.refreshTokenKey(userId, jti));
     if (!storedRefreshToken) {
       throw new UnauthorizedException();
     }
     await this.jwtService.verifyJwt(storedRefreshToken);
-    return this.issueTokens(userId, jti);
+    return this.issueTokens(userId, jti, this.resolveRefreshTtlMs(rememberMe));
   }
 
   async isAccessTokenActive(userId: string, jti: string, accessToken: string): Promise<boolean> {
@@ -103,14 +105,17 @@ export class SessionService {
     );
   }
 
-  private async issueTokens(userId: string, jti: string): Promise<SessionTokens> {
+  private async issueTokens(
+    userId: string,
+    jti: string,
+    refreshTokenTtlMs: number,
+  ): Promise<SessionTokens> {
     const payload = { id: userId, jti };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signJwt(payload),
-      this.jwtService.signJwt(payload, true),
+      this.jwtService.signJwt(payload, refreshTokenTtlMs),
     ]);
     const accessTokenTtlMs = this.jwtService.getAccessTokenExpiryMs();
-    const refreshTokenTtlMs = this.jwtService.getRefreshTokenExpiryMs();
 
     await Promise.all([
       // Access token is stored hashed: it's only ever compared (allowlist), never read back.
@@ -129,6 +134,11 @@ export class SessionService {
     await this.trackSession(userId, jti, refreshTokenTtlMs);
 
     return { accessToken, refreshToken, accessTokenTtlMs, refreshTokenTtlMs };
+  }
+
+  private resolveRefreshTtlMs(rememberMe: boolean): number {
+    const key = rememberMe ? REFRESH_TTL_REMEMBER_CONFIG_KEY : REFRESH_TTL_CONFIG_KEY;
+    return parseDurationToMs(this.configService.get<string>(key) ?? '');
   }
 
   private trackSession(userId: string, jti: string, refreshTokenTtlMs: number): Promise<number> {

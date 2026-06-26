@@ -47,7 +47,6 @@ cors:
 
 jwt:
   secret: JWT_SECRET
-  refreshTokenExpiresIn: JWT_REFRESH_TOKEN_EXPIRES_IN
   accessTokenExpiresIn: JWT_ACCESS_TOKEN_EXPIRES_IN
 
 crypto:
@@ -61,6 +60,8 @@ session:
   maxSessionsPerUser:
     __name: MAX_SESSIONS_PER_USER
     __format: number
+  refreshTtl: SESSION_REFRESH_TTL
+  refreshTtlRemember: SESSION_REFRESH_TTL_REMEMBER
 
 captcha:
   enabled:

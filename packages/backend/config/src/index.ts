@@ -66,12 +66,13 @@ interface RedisConfig {
 
 interface JwtConfig {
   secret: string;
-  refreshTokenExpiresIn: string;
   accessTokenExpiresIn: string;
 }
 
 interface SessionConfig {
   maxSessionsPerUser: number;
+  refreshTtl: string;
+  refreshTtlRemember: string;
 }
 
 interface CryptoConfig {
@@ -103,6 +104,8 @@ const stringListSchema = z.preprocess(
       : value,
   z.array(z.string().min(1)),
 );
+
+const durationSchema = z.string().regex(/^\d+(s|m|h|d)$/, 'Expected a duration like 15m, 1d, 60d');
 
 const backendConfigSchema = z.object({
   app: z.object({
@@ -143,11 +146,12 @@ const backendConfigSchema = z.object({
   }),
   jwt: z.object({
     secret: z.string().min(1),
-    refreshTokenExpiresIn: z.string().min(1),
-    accessTokenExpiresIn: z.string().min(1),
+    accessTokenExpiresIn: durationSchema,
   }),
   session: z.object({
     maxSessionsPerUser: z.coerce.number().int().positive(),
+    refreshTtl: durationSchema,
+    refreshTtlRemember: durationSchema,
   }),
   crypto: z.object({
     secretKey: z.string().min(32),

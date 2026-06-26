@@ -39,7 +39,6 @@ cors:
 
 jwt:
   secret: super-secret-key
-  refreshTokenExpiresIn: 7d
   accessTokenExpiresIn: 15m
 
 crypto:
@@ -51,6 +50,8 @@ email:
 
 session:
   maxSessionsPerUser: 5
+  refreshTtl: 1d
+  refreshTtlRemember: 60d
 
 captcha:
   enabled: false

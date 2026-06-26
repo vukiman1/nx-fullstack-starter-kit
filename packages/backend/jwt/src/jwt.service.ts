@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { parseDurationToMs } from './duration';
 
 const ACCESS_TOKEN_EXPIRES_IN = 'jwt.accessTokenExpiresIn';
-const REFRESH_TOKEN_EXPIRES_IN = 'jwt.refreshTokenExpiresIn';
+const MS_PER_SECOND = 1000;
 
 @Injectable()
 export class JwtService {
@@ -14,17 +14,16 @@ export class JwtService {
     private readonly configService: ConfigService,
   ) {}
 
-  async signJwt(payload: JwtPayload, isRefreshToken = false): Promise<string> {
-    const expiresIn = this.getExpiresIn(isRefreshToken);
+  async signJwt(payload: JwtPayload, expiresInMs?: number): Promise<string> {
+    const expiresIn: string | number =
+      expiresInMs != null
+        ? Math.floor(expiresInMs / MS_PER_SECOND)
+        : this.getAccessTokenExpiresIn();
     const signOptions: JwtSignOptions = {};
     if (expiresIn) {
       signOptions.expiresIn = expiresIn as JwtSignOptions['expiresIn'];
     }
-    const token = await this.nestJwtService.signAsync(payload, {
-      ...signOptions,
-    });
-
-    return token;
+    return this.nestJwtService.signAsync(payload, { ...signOptions });
   }
 
   async verifyJwt(token: string): Promise<JwtPayload> {
@@ -37,15 +36,10 @@ export class JwtService {
   }
 
   getAccessTokenExpiryMs(): number {
-    return parseDurationToMs(this.getExpiresIn(false));
+    return parseDurationToMs(this.getAccessTokenExpiresIn());
   }
 
-  getRefreshTokenExpiryMs(): number {
-    return parseDurationToMs(this.getExpiresIn(true));
-  }
-
-  private getExpiresIn(isRefreshToken: boolean): string {
-    const key = isRefreshToken ? REFRESH_TOKEN_EXPIRES_IN : ACCESS_TOKEN_EXPIRES_IN;
-    return this.configService.get<string>(key) ?? '';
+  private getAccessTokenExpiresIn(): string {
+    return this.configService.get<string>(ACCESS_TOKEN_EXPIRES_IN) ?? '';
   }
 }

@@ -6,7 +6,8 @@ import { createHash } from 'crypto';
 import { SessionService } from './session.service';
 
 const ACCESS_TTL_MS = 900_000;
-const REFRESH_TTL_MS = 604_800_000;
+const DAY_MS = 86_400_000;
+const REMEMBER_TTL_MS = 60 * DAY_MS;
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
@@ -20,12 +21,11 @@ describe('SessionService', () => {
 
   beforeEach(() => {
     jwt = {
-      signJwt: jest.fn((_payload, isRefresh) =>
-        Promise.resolve(isRefresh ? 'refresh-jwt' : 'access-jwt'),
+      signJwt: jest.fn((_payload, expiresInMs) =>
+        Promise.resolve(expiresInMs != null ? 'refresh-jwt' : 'access-jwt'),
       ),
       verifyJwt: jest.fn().mockResolvedValue({ id: 'user-1', jti: 'jti-1' }),
       getAccessTokenExpiryMs: jest.fn().mockReturnValue(ACCESS_TTL_MS),
-      getRefreshTokenExpiryMs: jest.fn().mockReturnValue(REFRESH_TTL_MS),
     } as unknown as jest.Mocked<JwtService>;
 
     redis = {
@@ -37,14 +37,21 @@ describe('SessionService', () => {
       eval: jest.fn().mockResolvedValue(0),
     } as unknown as jest.Mocked<RedisService>;
 
-    config = { get: jest.fn().mockReturnValue(5) } as unknown as jest.Mocked<ConfigService>;
+    config = {
+      get: jest.fn((key: string) => {
+        if (key === 'session.maxSessionsPerUser') return 5;
+        if (key === 'session.refreshTtl') return '1d';
+        if (key === 'session.refreshTtlRemember') return '60d';
+        return undefined;
+      }),
+    } as unknown as jest.Mocked<ConfigService>;
 
     service = new SessionService(jwt, redis, config);
   });
 
   describe('createSession', () => {
     it('stores the access token hashed and the refresh token whole', async () => {
-      const session = await service.createSession('user-1');
+      const session = await service.createSession('user-1', false);
 
       expect(session.accessToken).toBe('access-jwt');
       expect(session.refreshToken).toBe('refresh-jwt');
@@ -52,12 +59,21 @@ describe('SessionService', () => {
         expect.objectContaining({ value: sha256('access-jwt'), expired: ACCESS_TTL_MS / 1000 }),
       );
       expect(redis.set).toHaveBeenCalledWith(
-        expect.objectContaining({ value: 'refresh-jwt', expired: REFRESH_TTL_MS / 1000 }),
+        expect.objectContaining({ value: 'refresh-jwt', expired: DAY_MS / 1000 }),
+      );
+    });
+
+    it('uses the longer "remember me" lifetime when requested', async () => {
+      const session = await service.createSession('user-1', true);
+
+      expect(session.refreshTokenTtlMs).toBe(REMEMBER_TTL_MS);
+      expect(redis.set).toHaveBeenCalledWith(
+        expect.objectContaining({ value: 'refresh-jwt', expired: REMEMBER_TTL_MS / 1000 }),
       );
     });
 
     it('enforces the per-user session limit from config', async () => {
-      await service.createSession('user-1');
+      await service.createSession('user-1', false);
       expect(config.get).toHaveBeenCalledWith('session.maxSessionsPerUser');
       expect(redis.eval).toHaveBeenCalled();
     });
@@ -78,14 +94,14 @@ describe('SessionService', () => {
   describe('rotateSession', () => {
     it('rejects when the refresh token is no longer stored', async () => {
       redis.get.mockResolvedValue(null);
-      await expect(service.rotateSession('user-1', 'jti-1')).rejects.toBeInstanceOf(
+      await expect(service.rotateSession('user-1', 'jti-1', false)).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
     });
 
     it('verifies the stored refresh token then issues a fresh pair', async () => {
       redis.get.mockResolvedValue('stored-refresh');
-      const tokens = await service.rotateSession('user-1', 'jti-1');
+      const tokens = await service.rotateSession('user-1', 'jti-1', false);
 
       expect(jwt.verifyJwt).toHaveBeenCalledWith('stored-refresh');
       expect(tokens.accessToken).toBe('access-jwt');

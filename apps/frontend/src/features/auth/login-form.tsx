@@ -37,6 +37,7 @@ export function LoginForm() {
     defaultValues: {
       email: 'user@example.com',
       password: 'yourpassword',
+      rememberMe: false,
     } as LoginFormValues,
     validators: {
       onSubmit: loginSchema,
@@ -61,9 +62,7 @@ export function LoginForm() {
     <main className="grid min-h-screen place-items-center bg-muted/40 px-6 py-10">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <p className="text-sm font-extrabold uppercase text-primary">
-            Account access
-          </p>
+          <p className="text-sm font-extrabold uppercase text-primary">Account access</p>
           <CardTitle className="text-3xl">
             <h1 id="login-title">Sign in</h1>
           </CardTitle>
@@ -109,10 +108,7 @@ export function LoginForm() {
                     type="email"
                     value={field.state.value}
                   />
-                  <FieldError
-                    errors={field.state.meta.errors}
-                    id={`${field.name}-error`}
-                  />
+                  <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
                 </div>
               )}
             />
@@ -138,11 +134,24 @@ export function LoginForm() {
                     type="password"
                     value={field.state.value}
                   />
-                  <FieldError
-                    errors={field.state.meta.errors}
-                    id={`${field.name}-error`}
-                  />
+                  <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
                 </div>
+              )}
+            />
+
+            <form.Field
+              name="rememberMe"
+              children={(field) => (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    checked={field.state.value}
+                    className="h-4 w-4 rounded border-input"
+                    name={field.name}
+                    onChange={(event) => field.handleChange(event.target.checked)}
+                    type="checkbox"
+                  />
+                  Remember me for 60 days
+                </label>
               )}
             />
           </CardContent>
