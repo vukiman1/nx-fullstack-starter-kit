@@ -30,7 +30,7 @@ const instance: AxiosInstance = axios.create({
 let refreshPromise: Promise<void> | null = null;
 
 async function refreshAccessToken(): Promise<void> {
-  await instance.get(REFRESH_PATH);
+  await instance.post(REFRESH_PATH);
 }
 
 instance.interceptors.response.use(
@@ -41,16 +41,9 @@ instance.interceptors.response.use(
     const url = originalRequest?.url ?? '';
 
     const isAuthEndpoint =
-      url.startsWith(LOGIN_PATH) ||
-      url.startsWith(REGISTER_PATH) ||
-      url.startsWith(REFRESH_PATH);
+      url.startsWith(LOGIN_PATH) || url.startsWith(REGISTER_PATH) || url.startsWith(REFRESH_PATH);
 
-    if (
-      status === 401 &&
-      originalRequest &&
-      !originalRequest._retry &&
-      !isAuthEndpoint
-    ) {
+    if (status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       try {
         refreshPromise = refreshPromise ?? refreshAccessToken();
@@ -82,9 +75,7 @@ function unwrap<T>(envelope: ApiSuccessEnvelope<T>): T {
   return envelope.data;
 }
 
-function unwrapPaginated<T>(
-  envelope: ApiSuccessEnvelope<T[]>,
-): PaginatedResult<T> {
+function unwrapPaginated<T>(envelope: ApiSuccessEnvelope<T[]>): PaginatedResult<T> {
   const metadata: PaginationMetadata = envelope.metadata ?? {
     page: 1,
     limit: envelope.data.length,
@@ -98,25 +89,15 @@ export const httpRequest = {
   get: <T>(url: string, config?: AxiosRequestConfig) =>
     instance.get<unknown, ApiSuccessEnvelope<T>>(url, config).then(unwrap<T>),
   post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    instance
-      .post<unknown, ApiSuccessEnvelope<T>>(url, data, config)
-      .then(unwrap<T>),
+    instance.post<unknown, ApiSuccessEnvelope<T>>(url, data, config).then(unwrap<T>),
   put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    instance
-      .put<unknown, ApiSuccessEnvelope<T>>(url, data, config)
-      .then(unwrap<T>),
+    instance.put<unknown, ApiSuccessEnvelope<T>>(url, data, config).then(unwrap<T>),
   patch: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-    instance
-      .patch<unknown, ApiSuccessEnvelope<T>>(url, data, config)
-      .then(unwrap<T>),
+    instance.patch<unknown, ApiSuccessEnvelope<T>>(url, data, config).then(unwrap<T>),
   delete: <T>(url: string, config?: AxiosRequestConfig) =>
-    instance
-      .delete<unknown, ApiSuccessEnvelope<T>>(url, config)
-      .then(unwrap<T>),
+    instance.delete<unknown, ApiSuccessEnvelope<T>>(url, config).then(unwrap<T>),
   getPaginated: <T>(url: string, config?: AxiosRequestConfig) =>
-    instance
-      .get<unknown, ApiSuccessEnvelope<T[]>>(url, config)
-      .then(unwrapPaginated<T>),
+    instance.get<unknown, ApiSuccessEnvelope<T[]>>(url, config).then(unwrapPaginated<T>),
 };
 
 export default httpRequest;

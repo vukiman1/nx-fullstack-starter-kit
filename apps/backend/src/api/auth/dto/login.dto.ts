@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
@@ -11,6 +11,11 @@ export class LoginDto {
   @IsNotEmpty()
   password!: string;
 
-  // @IsString()
-  // captchaToken: string;
+  @IsOptional()
+  @IsBoolean()
+  rememberMe?: boolean;
+
+  @IsOptional()
+  @IsString()
+  captchaToken?: string;
 }

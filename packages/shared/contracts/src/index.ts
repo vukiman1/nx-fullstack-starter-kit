@@ -13,9 +13,7 @@ export interface ApiSuccessEnvelope<T> {
   metadata?: PaginationMetadata;
 }
 
-export type ApiErrorPayload =
-  | Record<string, string>
-  | { message: string; [key: string]: unknown };
+export type ApiErrorPayload = Record<string, string> | { message: string; [key: string]: unknown };
 
 export interface ApiErrorEnvelope {
   statusCode: number;
@@ -40,6 +38,7 @@ export interface User {
 export interface LoginPayload {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface LoginResponse {

@@ -39,13 +39,20 @@ cors:
 
 jwt:
   secret: super-secret-key
-  refreshTokenExpiresIn: 7d
   accessTokenExpiresIn: 15m
 
 crypto:
   secretKey: yoursecretkeymustbe32characters!!
-  secretKeyIv: yoursecretkeyiv!
 
 email:
   resendApiKey: ''
   from: Acme <onboarding@resend.dev>
+
+session:
+  maxSessionsPerUser: 5
+  refreshTtl: 1d
+  refreshTtlRemember: 60d
+
+captcha:
+  enabled: false
+  secretKey: ''

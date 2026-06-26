@@ -1,11 +1,30 @@
 import { StrategyKey } from '@org/backend-constants';
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { User } from '@org/backend-decorators';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Request } from 'express';
 import { AuthService } from '../services/auth.service';
 import { AuthBaseController } from './auth.base.controller';
+import { ApiChangePassword } from '../auth.swagger';
 import { UserEntity } from '../../user/entities/user.entity';
 import { RegisterDto } from '../dto/register.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
+import { ResendVerificationDto } from '../dto/resend-verification.dto';
+
+const STRICT_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
 @ApiTags('Auth API For User')
 @Controller('/auth')
@@ -19,8 +38,52 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
 
   @Post('register')
   @HttpCode(200)
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  async register(@Body() body: RegisterDto) {
-    return this.authService.register(body);
+  @Throttle(STRICT_THROTTLE)
+  async register(@Body() body: RegisterDto, @Req() request: Request) {
+    return this.authService.register(body, request);
+  }
+
+  @Post('verify-email')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async verifyEmail(@Body() body: VerifyEmailDto, @Req() request: Request) {
+    return this.authService.verifyEmail(body.token, request);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async resendVerification(@Body() body: ResendVerificationDto) {
+    return this.authService.resendVerification(body.email);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async forgotPassword(@Body() body: ForgotPasswordDto, @Req() request: Request) {
+    return this.authService.forgotPassword(body.email, request);
+  }
+
+  @Post('reset-password')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async resetPassword(@Body() body: ResetPasswordDto, @Req() request: Request) {
+    return this.authService.resetPassword(body, request);
+  }
+
+  @Post('change-password')
+  @HttpCode(200)
+  @ApiChangePassword('user')
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async changePassword(
+    @User() user: UserEntity,
+    @Body() body: ChangePasswordDto,
+    @Req() request: Request,
+  ) {
+    const jti = request.sessionJti;
+    if (!jti) {
+      throw new UnauthorizedException();
+    }
+    return this.authService.changePassword(user, jti, body, request);
   }
 }

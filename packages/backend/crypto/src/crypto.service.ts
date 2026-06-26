@@ -1,57 +1,45 @@
 import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createCipheriv, createDecipheriv, createHash } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 12;
+const AUTH_TAG_LENGTH = 16;
 
 @Injectable()
 export class CryptoService {
   constructor(private readonly configService: ConfigService) {}
 
-  get() {
-    const secretKey =
-      this.configService.get<string>('crypto.secretKey') ||
-      'vibe_source_secret_key';
-    const secretIV =
-      this.configService.get<string>('crypto.secretKeyIv') ||
-      'vibe_source_secret_iv';
-
-    const key = createHash('sha512')
-      .update(secretKey)
-      .digest('hex')
-      .substring(0, 32);
-    const encryptionIV = createHash('sha512')
-      .update(secretIV)
-      .digest('hex')
-      .substring(0, 16);
-    return {
-      key,
-      encryptionIV,
-    };
-  }
-
   encryptData(data: string): string {
     if (!data) {
       throw new Error('Data to encrypt cannot be undefined or null');
     }
-    const { key, encryptionIV } = this.get();
-    const cipher = createCipheriv('aes256', key, encryptionIV);
-    return Buffer.from(
-      cipher.update(data, 'utf8', 'hex') + cipher.final('hex'),
-    ).toString('base64'); // Encrypts data and converts to hex and base64
+    const iv = randomBytes(IV_LENGTH);
+    const cipher = createCipheriv(ALGORITHM, this.getKey(), iv);
+    const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
+    const authTag = cipher.getAuthTag();
+    return Buffer.concat([iv, authTag, encrypted]).toString('base64');
   }
 
-  decryptData(token: string) {
-    const buff = Buffer.from(token, 'base64');
-    const { key, encryptionIV } = this.get();
-    const decipher = createDecipheriv('aes256', key, encryptionIV);
+  decryptData(token: string): string {
+    const payload = Buffer.from(token, 'base64');
+    const iv = payload.subarray(0, IV_LENGTH);
+    const authTag = payload.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
+    const encrypted = payload.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
+    const decipher = createDecipheriv(ALGORITHM, this.getKey(), iv);
+    decipher.setAuthTag(authTag);
     try {
-      // Decrypts data and converts to utf8
-      const decryptData =
-        decipher.update(buff.toString('utf8'), 'hex', 'utf8') +
-        decipher.final('utf8');
-      return decryptData;
-    } catch (error) {
-      console.error(error);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+    } catch {
       throw new NotAcceptableException('Not acceptable');
     }
+  }
+
+  private getKey(): Buffer {
+    const secretKey = this.configService.get<string>('crypto.secretKey');
+    if (!secretKey) {
+      throw new Error('SECRET_KEY is not configured');
+    }
+    return createHash('sha256').update(secretKey).digest();
   }
 }

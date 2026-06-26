@@ -20,7 +20,7 @@ export const authService = {
     return httpRequest.post<LogoutResponse>('/auth/logout');
   },
   refreshToken() {
-    return httpRequest.get<RefreshTokenResponse>('/auth/refresh-token');
+    return httpRequest.post<RefreshTokenResponse>('/auth/refresh-token');
   },
   getMe() {
     return httpRequest.get<MeResponse>('/auth/me');
