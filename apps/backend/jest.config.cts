@@ -8,14 +8,28 @@ const swcJestConfig = JSON.parse(
 // Disable .swcrc look-up by SWC core because we're passing in swcJestConfig ourselves
 swcJestConfig.swcrc = false;
 
+// .tsx (React Email templates) needs JSX parsing + the automatic runtime.
+const swcTsxConfig = {
+  ...swcJestConfig,
+  jsc: {
+    ...swcJestConfig.jsc,
+    parser: { ...swcJestConfig.jsc.parser, tsx: true },
+    transform: {
+      ...swcJestConfig.jsc.transform,
+      react: { runtime: 'automatic' },
+    },
+  },
+};
+
 module.exports = {
   displayName: '@org/backend',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   transform: {
+    '^.+\\.tsx$': ['@swc/jest', swcTsxConfig],
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
-  moduleFileExtensions: ['ts', 'js', 'html'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'html'],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/dist/'],
   coverageDirectory: 'test-output/jest/coverage',
 };
