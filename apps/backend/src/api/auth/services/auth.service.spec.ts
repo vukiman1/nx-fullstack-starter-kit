@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import type { Request, Response } from 'express';
 import { CryptoService } from '@org/backend-crypto';
@@ -135,10 +131,9 @@ describe('AuthService', () => {
 
       await service.verifyEmail('tok', request);
 
-      expect(userService.update).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'user-1' }),
-        { isEmailVerified: true },
-      );
+      expect(userService.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'user-1' }), {
+        isEmailVerified: true,
+      });
       expect(email.sendWelcomeEmail).toHaveBeenCalledWith('a@b.c');
       expect(audit.record).toHaveBeenCalledWith(AuthEvent.EMAIL_VERIFIED, expect.any(Object));
     });
@@ -182,10 +177,9 @@ describe('AuthService', () => {
 
       await service.resetPassword(dto, request);
 
-      expect(userService.update).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'user-1' }),
-        { password: 'newpass1' },
-      );
+      expect(userService.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'user-1' }), {
+        password: 'newpass1',
+      });
       expect(sessionService.revokeAllSessions).toHaveBeenCalledWith('user-1');
     });
   });
@@ -275,7 +269,9 @@ describe('AuthService', () => {
 
     it('rotates the session preserving the remember flag and sets fresh cookies', async () => {
       const response = mockResponse();
-      crypto.decryptData.mockReturnValue(JSON.stringify({ id: 'user-1', jti: 'jti-1', remember: true }));
+      crypto.decryptData.mockReturnValue(
+        JSON.stringify({ id: 'user-1', jti: 'jti-1', remember: true }),
+      );
       userService.getOneOrFail.mockResolvedValue({
         id: 'user-1',
         email: 'a@b.c',
@@ -283,7 +279,11 @@ describe('AuthService', () => {
         balance: 0,
       });
 
-      await service.refreshToken({ cookies: { sub: 'enc' } } as unknown as Request, response, 'user');
+      await service.refreshToken(
+        { cookies: { sub: 'enc' } } as unknown as Request,
+        response,
+        'user',
+      );
 
       expect(sessionService.rotateSession).toHaveBeenCalledWith('user-1', 'jti-1', true);
       expect(response.cookie).toHaveBeenCalledTimes(2);

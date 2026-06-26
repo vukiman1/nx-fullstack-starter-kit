@@ -67,8 +67,8 @@ describe('UserLocalStrategy', () => {
     const user = { id: 'user-1', password: passwordHash, isEmailVerified: true };
     userService.getOne.mockResolvedValue(user as never);
 
-    await expect(
-      strategy.validate(request, 'user@example.com', CORRECT_PASSWORD),
-    ).resolves.toBe(user);
+    await expect(strategy.validate(request, 'user@example.com', CORRECT_PASSWORD)).resolves.toBe(
+      user,
+    );
   });
 });
