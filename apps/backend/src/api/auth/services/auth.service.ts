@@ -19,6 +19,7 @@ import { UserType } from '../interfaces/auth.interface';
 import { SessionService } from './session.service';
 import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
+import { UserSessionService } from './user-session.service';
 
 const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
@@ -40,6 +41,7 @@ export class AuthService {
     private readonly authTokenService: AuthTokenService,
     private readonly emailService: EmailService,
     private readonly auditService: AuthAuditService,
+    private readonly userSessionService: UserSessionService,
   ) {}
 
   me(user: UserEntity) {
@@ -52,6 +54,13 @@ export class AuthService {
   async login(user: UserEntity, response: Response, request: Request, rememberMe: boolean) {
     const { id, email, avatar, balance } = user;
     const session = await this.sessionService.createSession(id, rememberMe);
+    await this.userSessionService.createSession({
+      userId: id,
+      jti: session.jti,
+      rememberMe,
+      refreshTokenTtlMs: session.refreshTokenTtlMs,
+      request,
+    });
 
     this.setSessionCookies(response, {
       id,
@@ -139,6 +148,7 @@ export class AuthService {
     const user = await this.userService.getOneOrFail({ id: userId });
     await this.userService.update(user, { password });
     await this.sessionService.revokeAllSessions(userId);
+    await this.userSessionService.revokeAllSessions(userId, 'password_reset');
     this.auditService.record(AuthEvent.PASSWORD_RESET, { userId, email: user.email, request });
 
     return { message: 'Password reset successfully' };
@@ -151,6 +161,7 @@ export class AuthService {
     }
     await this.userService.update(user, { password: dto.newPassword });
     await this.sessionService.revokeOtherSessions(user.id, jti);
+    await this.userSessionService.revokeOtherSessions(user.id, jti, 'password_changed');
     this.auditService.record(AuthEvent.PASSWORD_CHANGED, {
       userId: user.id,
       email: user.email,
@@ -167,6 +178,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
     await this.sessionService.revokeSession(user.id, jti);
+    await this.userSessionService.revokeSession(user.id, jti);
     this.clearSessionCookies(response);
     this.auditService.record(AuthEvent.LOGOUT, { userId: user.id, jti, request });
 
@@ -177,6 +189,7 @@ export class AuthService {
 
   async logoutAll(user: UserEntity, response: Response, request: Request) {
     await this.sessionService.revokeAllSessions(user.id);
+    await this.userSessionService.revokeAllSessions(user.id);
     this.clearSessionCookies(response);
     this.auditService.record(AuthEvent.LOGOUT_ALL, { userId: user.id, request });
 
@@ -190,6 +203,7 @@ export class AuthService {
       const { id, jti, remember } = this.decodeSessionCookie(request);
       const { email, avatar, balance } = await this.getUserById(id, userType);
       const tokens = await this.sessionService.rotateSession(id, jti, remember);
+      await this.userSessionService.touchSession(id, jti, request);
 
       this.setSessionCookies(response, {
         id,
@@ -210,6 +224,34 @@ export class AuthService {
       this.clearSessionCookies(response);
       throw error;
     }
+  }
+
+  async listSessions(user: UserEntity, request: Request) {
+    const jti = request.sessionJti;
+    if (!jti) {
+      throw new UnauthorizedException();
+    }
+
+    return {
+      sessions: await this.userSessionService.listActiveSessions(user.id, jti),
+    };
+  }
+
+  async revokeDeviceSession(user: UserEntity, sessionId: string, request: Request) {
+    const currentJti = request.sessionJti;
+    if (!currentJti) {
+      throw new UnauthorizedException();
+    }
+
+    const session = await this.userSessionService.getActiveSessionOrFail(user.id, sessionId);
+    if (session.jti === currentJti) {
+      throw new BadRequestException('Use logout to revoke the current session');
+    }
+
+    await this.sessionService.revokeSession(user.id, session.jti);
+    await this.userSessionService.revokeSession(user.id, session.jti, 'revoked_by_user');
+
+    return { message: 'Session revoked successfully' };
   }
 
   private async sendVerification(userId: string, email: string): Promise<void> {

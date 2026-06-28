@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { SessionService } from './session.service';
 import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
+import { UserSessionService } from './user-session.service';
 
 const ACCESS_TTL_MS = 900_000;
 const REFRESH_TTL_MS = 86_400_000;
@@ -35,6 +36,15 @@ describe('AuthService', () => {
     sendPasswordResetEmail: jest.Mock;
   };
   let audit: { record: jest.Mock };
+  let userSessionService: {
+    createSession: jest.Mock;
+    touchSession: jest.Mock;
+    listActiveSessions: jest.Mock;
+    getActiveSessionOrFail: jest.Mock;
+    revokeSession: jest.Mock;
+    revokeAllSessions: jest.Mock;
+    revokeOtherSessions: jest.Mock;
+  };
   let service: AuthService;
 
   function mockResponse(): Response {
@@ -74,6 +84,15 @@ describe('AuthService', () => {
       sendPasswordResetEmail: jest.fn(),
     };
     audit = { record: jest.fn() };
+    userSessionService = {
+      createSession: jest.fn(),
+      touchSession: jest.fn(),
+      listActiveSessions: jest.fn().mockResolvedValue([]),
+      getActiveSessionOrFail: jest.fn(),
+      revokeSession: jest.fn(),
+      revokeAllSessions: jest.fn(),
+      revokeOtherSessions: jest.fn(),
+    };
 
     service = new AuthService(
       crypto as unknown as CryptoService,
@@ -82,6 +101,7 @@ describe('AuthService', () => {
       authToken as unknown as AuthTokenService,
       email as unknown as EmailService,
       audit as unknown as AuthAuditService,
+      userSessionService as unknown as UserSessionService,
     );
   });
 
@@ -181,6 +201,7 @@ describe('AuthService', () => {
         password: 'newpass1',
       });
       expect(sessionService.revokeAllSessions).toHaveBeenCalledWith('user-1');
+      expect(userSessionService.revokeAllSessions).toHaveBeenCalledWith('user-1', 'password_reset');
     });
   });
 
@@ -212,6 +233,11 @@ describe('AuthService', () => {
 
       expect(userService.update).toHaveBeenCalledWith(user, { password: 'newpass1' });
       expect(sessionService.revokeOtherSessions).toHaveBeenCalledWith('user-1', 'jti-1');
+      expect(userSessionService.revokeOtherSessions).toHaveBeenCalledWith(
+        'user-1',
+        'jti-1',
+        'password_changed',
+      );
     });
   });
 
@@ -227,6 +253,14 @@ describe('AuthService', () => {
       );
 
       expect(sessionService.createSession).toHaveBeenCalledWith('user-1', true);
+      expect(userSessionService.createSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-1',
+          jti: 'jti-1',
+          rememberMe: true,
+          refreshTokenTtlMs: REFRESH_TTL_MS,
+        }),
+      );
       expect(response.cookie).toHaveBeenCalledTimes(2);
       expect(audit.record).toHaveBeenCalledWith(
         AuthEvent.LOGIN_SUCCEEDED,
@@ -253,7 +287,49 @@ describe('AuthService', () => {
       );
 
       expect(sessionService.revokeSession).toHaveBeenCalledWith('user-1', 'jti-1');
+      expect(userSessionService.revokeSession).toHaveBeenCalledWith('user-1', 'jti-1');
       expect(response.clearCookie).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('sessions', () => {
+    it('lists active sessions for the authenticated user', async () => {
+      userSessionService.listActiveSessions.mockResolvedValue([
+        { id: 'session-1', isCurrent: true },
+      ]);
+
+      const result = await service.listSessions(
+        { id: 'user-1' } as never,
+        { sessionJti: 'jti-1' } as unknown as Request,
+      );
+
+      expect(userSessionService.listActiveSessions).toHaveBeenCalledWith('user-1', 'jti-1');
+      expect(result.sessions).toEqual([{ id: 'session-1', isCurrent: true }]);
+    });
+
+    it('revokes a non-current device session', async () => {
+      userSessionService.getActiveSessionOrFail.mockResolvedValue({ jti: 'jti-2' });
+
+      await service.revokeDeviceSession({ id: 'user-1' } as never, 'session-2', {
+        sessionJti: 'jti-1',
+      } as unknown as Request);
+
+      expect(sessionService.revokeSession).toHaveBeenCalledWith('user-1', 'jti-2');
+      expect(userSessionService.revokeSession).toHaveBeenCalledWith(
+        'user-1',
+        'jti-2',
+        'revoked_by_user',
+      );
+    });
+
+    it('rejects revoking the current session via device session endpoint', async () => {
+      userSessionService.getActiveSessionOrFail.mockResolvedValue({ jti: 'jti-1' });
+
+      await expect(
+        service.revokeDeviceSession({ id: 'user-1' } as never, 'session-1', {
+          sessionJti: 'jti-1',
+        } as unknown as Request),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 
@@ -286,6 +362,11 @@ describe('AuthService', () => {
       );
 
       expect(sessionService.rotateSession).toHaveBeenCalledWith('user-1', 'jti-1', true);
+      expect(userSessionService.touchSession).toHaveBeenCalledWith(
+        'user-1',
+        'jti-1',
+        expect.any(Object),
+      );
       expect(response.cookie).toHaveBeenCalledTimes(2);
       expect(audit.record).toHaveBeenCalledWith(AuthEvent.TOKEN_REFRESHED, expect.any(Object));
     });

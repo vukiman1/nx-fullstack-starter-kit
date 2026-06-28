@@ -3,7 +3,10 @@ import { User } from '@org/backend-decorators';
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   HttpCode,
+  Param,
   Post,
   Req,
   UnauthorizedException,
@@ -85,5 +88,23 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
       throw new UnauthorizedException();
     }
     return this.authService.changePassword(user, jti, body, request);
+  }
+
+  @Get('sessions')
+  @HttpCode(200)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async sessions(@User() user: UserEntity, @Req() request: Request) {
+    return this.authService.listSessions(user, request);
+  }
+
+  @Delete('sessions/:id')
+  @HttpCode(200)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async revokeSession(
+    @User() user: UserEntity,
+    @Param('id') sessionId: string,
+    @Req() request: Request,
+  ) {
+    return this.authService.revokeDeviceSession(user, sessionId, request);
   }
 }
