@@ -68,6 +68,30 @@ export interface LogoutResponse {
   message: string;
 }
 
+export interface UserLoginSession {
+  id: string;
+  ipAddress: string | null;
+  country: string | null;
+  city: string | null;
+  userAgent: string | null;
+  browserName: string | null;
+  osName: string | null;
+  deviceType: string | null;
+  rememberMe: boolean;
+  lastSeenAt: string | null;
+  expiresAt: string;
+  createdAt: string;
+  isCurrent: boolean;
+}
+
+export interface UserLoginSessionsResponse {
+  sessions: UserLoginSession[];
+}
+
+export interface RevokeUserLoginSessionResponse {
+  message: string;
+}
+
 // User
 export interface UserCredit {
   balance: number | string;

@@ -8,6 +8,6 @@
     "noEmit": false,
     "tsBuildInfoFile": "dist/tsconfig.migrations.tsbuildinfo"
   },
-  "include": ["ormconfigs.ts", "src/**/*.entity.ts", "src/migrations/**/*.ts"],
+  "include": ["ormconfigs.ts", "src/**/*.entity.ts", "src/**/*.enum.ts", "src/migrations/**/*.ts"],
   "exclude": ["dist", "out-tsc", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }

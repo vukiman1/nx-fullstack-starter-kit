@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { UserEntity } from './src/api/user/entities/user.entity';
+import { UserSessionEntity } from './src/api/auth/entities/user-session.entity';
 
 interface DatabaseConfig {
   host: string;
@@ -42,7 +43,7 @@ const migrationExtension = isTsRuntime ? 'ts' : 'js';
 export const options: DataSourceOptions = {
   type: 'postgres',
   ...dbConfig,
-  entities: [UserEntity],
+  entities: [UserEntity, UserSessionEntity],
   migrationsTableName: 'migrations',
   migrations: [join(__dirname, `src/migrations/*.${migrationExtension}`)],
   synchronize: false,
@@ -51,15 +52,10 @@ export const options: DataSourceOptions = {
 export const AppDataSource = new DataSource(options);
 
 function resolveBackendRoot() {
-  const candidates = [
-    join(process.cwd(), 'apps/backend'),
-    process.cwd(),
-    join(__dirname, '..'),
-  ];
+  const candidates = [join(process.cwd(), 'apps/backend'), process.cwd(), join(__dirname, '..')];
 
   return (
-    candidates.find((candidate) =>
-      existsSync(join(candidate, '.env.example')),
-    ) || join(process.cwd(), 'apps/backend')
+    candidates.find((candidate) => existsSync(join(candidate, '.env.example'))) ||
+    join(process.cwd(), 'apps/backend')
   );
 }

@@ -35,6 +35,7 @@ interface AppConfig {
   nodeEnv: string;
   url: string;
   logLevels: string[] | string;
+  trustProxy: number;
 }
 
 interface DatabaseConfig {
@@ -113,6 +114,7 @@ const backendConfigSchema = z.object({
     nodeEnv: z.string().min(1),
     url: z.string().min(1),
     logLevels: stringListSchema,
+    trustProxy: z.coerce.number().int().min(0).default(0),
   }),
   db: z.object({
     username: z.string().min(1),

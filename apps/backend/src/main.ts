@@ -6,6 +6,7 @@
 import './instrument';
 import { ClassSerializerInterceptor, Logger, RequestMethod } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import configuration from '@org/backend-config';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -14,11 +15,12 @@ import { createAppLogger } from './app/app.logger';
 import { useSwagger } from './app/app.swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
   app.useLogger(createAppLogger());
   const { app: appConfig, cors } = configuration();
   const isProduction = appConfig.nodeEnv === 'production';
 
+  app.set('trust proxy', appConfig.trustProxy);
   app.use(helmet(isProduction ? undefined : { contentSecurityPolicy: false }));
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix, {

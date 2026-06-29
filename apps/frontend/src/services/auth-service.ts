@@ -5,8 +5,10 @@ import type {
   LogoutResponse,
   MeResponse,
   RefreshTokenResponse,
+  RevokeUserLoginSessionResponse,
   RegisterPayload,
   RegisterResponse,
+  UserLoginSessionsResponse,
 } from '@org/shared-contracts';
 
 export const authService = {
@@ -24,6 +26,12 @@ export const authService = {
   },
   getMe() {
     return httpRequest.get<MeResponse>('/auth/me');
+  },
+  getSessions() {
+    return httpRequest.get<UserLoginSessionsResponse>('/auth/sessions');
+  },
+  revokeSession(sessionId: string) {
+    return httpRequest.delete<RevokeUserLoginSessionResponse>(`/auth/sessions/${sessionId}`);
   },
 };
 

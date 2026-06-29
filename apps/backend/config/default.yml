@@ -2,6 +2,7 @@ app:
   port: 3000
   nodeEnv: development
   url: http://localhost:4200
+  trustProxy: 0
   logLevels:
     - error
     - warn
