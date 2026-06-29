@@ -20,6 +20,12 @@ export class UserSessionEntity extends BaseEntity {
   @Column({ name: 'ip_address', type: 'varchar', length: 255, nullable: true })
   ipAddress!: string | null;
 
+  @Column({ name: 'country', type: 'varchar', length: 2, nullable: true })
+  country!: string | null;
+
+  @Column({ name: 'city', type: 'varchar', length: 120, nullable: true })
+  city!: string | null;
+
   @Column({ name: 'user_agent', type: 'text', nullable: true })
   userAgent!: string | null;
 

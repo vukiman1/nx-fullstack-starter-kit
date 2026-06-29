@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import { Repository } from 'typeorm';
 import { UserSessionEntity } from '../entities/user-session.entity';
 import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
+import { GeoIpService } from './geo-ip.service';
 import { UserSessionService } from './user-session.service';
 
 const CHROME_WINDOWS =
@@ -39,6 +40,7 @@ describe('UserSessionService', () => {
   let qb: ReturnType<typeof createQueryBuilderMock>;
   let repo: jest.Mocked<Repository<UserSessionEntity>>;
   let config: jest.Mocked<ConfigService>;
+  let geoIp: jest.Mocked<GeoIpService>;
   let service: UserSessionService;
 
   beforeEach(() => {
@@ -54,7 +56,11 @@ describe('UserSessionService', () => {
       get: jest.fn().mockReturnValue(5),
     } as unknown as jest.Mocked<ConfigService>;
 
-    service = new UserSessionService(repo, config);
+    geoIp = {
+      locate: jest.fn().mockReturnValue({ country: 'VN', city: 'Hanoi' }),
+    } as unknown as jest.Mocked<GeoIpService>;
+
+    service = new UserSessionService(repo, config, geoIp);
   });
 
   describe('createSession', () => {
@@ -75,12 +81,30 @@ describe('UserSessionService', () => {
           jti: 'jti-1',
           rememberMe: true,
           ipAddress: '203.0.113.5',
+          country: 'VN',
+          city: 'Hanoi',
           browserName: 'Chrome',
           osName: 'Windows',
           deviceType: 'Desktop',
         }),
       );
+      expect(geoIp.locate).toHaveBeenCalledWith('203.0.113.5');
       expectWithinMs(saved.expiresAt, Date.now() + ttl);
+    });
+
+    it('leaves country and city null when the ip cannot be geolocated', async () => {
+      geoIp.locate.mockReturnValue({ country: null, city: null });
+      await service.createSession({
+        userId: 'user-1',
+        jti: 'jti-1',
+        rememberMe: false,
+        refreshTokenTtlMs: 1_000,
+        request: mockRequest({ userAgent: CHROME_WINDOWS, ip: '10.0.0.1' }),
+      });
+
+      expect(repo.create.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ country: null, city: null }),
+      );
     });
 
     it('stores a null ip when the request has none', async () => {
@@ -202,7 +226,12 @@ describe('UserSessionService', () => {
       const [criteria, patch] = repo.update.mock.calls[0];
       expect(criteria).toEqual({ userId: 'user-1', jti: 'jti-1' });
       expect(patch).toEqual(
-        expect.objectContaining({ ipAddress: '198.51.100.7', lastSeenAt: expect.any(Date) }),
+        expect.objectContaining({
+          ipAddress: '198.51.100.7',
+          country: 'VN',
+          city: 'Hanoi',
+          lastSeenAt: expect.any(Date),
+        }),
       );
       expectWithinMs((patch as { expiresAt: Date }).expiresAt, Date.now() + ttl);
     });
@@ -211,14 +240,16 @@ describe('UserSessionService', () => {
   describe('listActiveSessions', () => {
     it('maps sessions and flags the one matching the current jti', async () => {
       qb.getMany.mockResolvedValue([
-        { id: 's1', jti: 'current', ipAddress: '1.1.1.1', browserName: 'Chrome' },
-        { id: 's2', jti: 'other', ipAddress: '2.2.2.2', browserName: 'Firefox' },
+        { id: 's1', jti: 'current', ipAddress: '1.1.1.1', country: 'VN', city: 'Hanoi' },
+        { id: 's2', jti: 'other', ipAddress: '2.2.2.2', country: null, city: null },
       ]);
 
       const result = await service.listActiveSessions('user-1', 'current');
 
       expect(result).toHaveLength(2);
-      expect(result[0]).toEqual(expect.objectContaining({ id: 's1', isCurrent: true }));
+      expect(result[0]).toEqual(
+        expect.objectContaining({ id: 's1', country: 'VN', city: 'Hanoi', isCurrent: true }),
+      );
       expect(result[1]).toEqual(expect.objectContaining({ id: 's2', isCurrent: false }));
     });
   });

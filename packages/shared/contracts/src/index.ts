@@ -71,6 +71,8 @@ export interface LogoutResponse {
 export interface UserLoginSession {
   id: string;
   ipAddress: string | null;
+  country: string | null;
+  city: string | null;
   userAgent: string | null;
   browserName: string | null;
   osName: string | null;

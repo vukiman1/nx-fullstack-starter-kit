@@ -5,12 +5,15 @@ import type { Request } from 'express';
 import { Repository } from 'typeorm';
 import { UserSessionEntity } from '../entities/user-session.entity';
 import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
+import { GeoIpService } from './geo-ip.service';
 
 const MAX_SESSIONS_CONFIG_KEY = 'session.maxSessionsPerUser';
 
 export type UserSessionSummary = {
   id: string;
   ipAddress: string | null;
+  country: string | null;
+  city: string | null;
   userAgent: string | null;
   browserName: string | null;
   osName: string | null;
@@ -36,6 +39,7 @@ export class UserSessionService {
     @InjectRepository(UserSessionEntity)
     private readonly sessionRepo: Repository<UserSessionEntity>,
     private readonly configService: ConfigService,
+    private readonly geoIpService: GeoIpService,
   ) {}
 
   async createSession({
@@ -47,13 +51,17 @@ export class UserSessionService {
   }: CreateUserSessionParams): Promise<UserSessionEntity> {
     const userAgent = headerValue(request.headers['user-agent']);
     const device = parseDevice(userAgent);
+    const ip = clientIp(request);
+    const geo = this.geoIpService.locate(ip);
     const now = new Date();
     const session = await this.sessionRepo.save(
       this.sessionRepo.create({
         userId,
         jti,
         rememberMe,
-        ipAddress: clientIp(request),
+        ipAddress: ip,
+        country: geo.country,
+        city: geo.city,
         userAgent,
         browserName: device.browserName,
         osName: device.osName,
@@ -73,11 +81,15 @@ export class UserSessionService {
     request: Request,
     refreshTokenTtlMs: number,
   ): Promise<void> {
+    const ip = clientIp(request);
+    const geo = this.geoIpService.locate(ip);
     const now = new Date();
     await this.sessionRepo.update(
       { userId, jti },
       {
-        ipAddress: clientIp(request),
+        ipAddress: ip,
+        country: geo.country,
+        city: geo.city,
         lastSeenAt: now,
         expiresAt: new Date(now.getTime() + refreshTokenTtlMs),
       },
@@ -97,6 +109,8 @@ export class UserSessionService {
     return sessions.map((session) => ({
       id: session.id,
       ipAddress: session.ipAddress,
+      country: session.country,
+      city: session.city,
       userAgent: session.userAgent,
       browserName: session.browserName,
       osName: session.osName,
