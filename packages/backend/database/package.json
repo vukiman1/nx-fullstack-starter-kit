@@ -23,7 +23,7 @@
   "dependencies": {
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
-    "@nestjs/typeorm": "^11.0.2",
+    "@nestjs/typeorm": "^11.0.3",
     "typeorm": "^1.0.0"
   },
   "devDependencies": {
