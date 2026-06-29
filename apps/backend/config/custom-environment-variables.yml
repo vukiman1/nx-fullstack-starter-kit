@@ -4,6 +4,9 @@ app:
     __format: number
   nodeEnv: NODE_ENV
   url: APP_URL
+  trustProxy:
+    __name: TRUST_PROXY
+    __format: number
   logLevels: LOG_LEVELS
 
 db:

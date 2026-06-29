@@ -366,6 +366,7 @@ describe('AuthService', () => {
         'user-1',
         'jti-1',
         expect.any(Object),
+        REFRESH_TTL_MS,
       );
       expect(response.cookie).toHaveBeenCalledTimes(2);
       expect(audit.record).toHaveBeenCalledWith(AuthEvent.TOKEN_REFRESHED, expect.any(Object));

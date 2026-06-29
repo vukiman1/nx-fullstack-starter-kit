@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { Request } from 'express';
 import { Repository } from 'typeorm';
 import { UserSessionEntity } from '../entities/user-session.entity';
+import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 
 const MAX_SESSIONS_CONFIG_KEY = 'session.maxSessionsPerUser';
 
@@ -52,7 +53,7 @@ export class UserSessionService {
         userId,
         jti,
         rememberMe,
-        ipAddress: clientIp(request) ?? null,
+        ipAddress: clientIp(request),
         userAgent,
         browserName: device.browserName,
         osName: device.osName,
@@ -66,12 +67,19 @@ export class UserSessionService {
     return session;
   }
 
-  async touchSession(userId: string, jti: string, request: Request): Promise<void> {
+  async touchSession(
+    userId: string,
+    jti: string,
+    request: Request,
+    refreshTokenTtlMs: number,
+  ): Promise<void> {
+    const now = new Date();
     await this.sessionRepo.update(
       { userId, jti },
       {
-        ipAddress: clientIp(request) ?? null,
-        lastSeenAt: new Date(),
+        ipAddress: clientIp(request),
+        lastSeenAt: now,
+        expiresAt: new Date(now.getTime() + refreshTokenTtlMs),
       },
     );
   }
@@ -117,11 +125,18 @@ export class UserSessionService {
     return session;
   }
 
-  async revokeSession(userId: string, jti: string, reason = 'logout'): Promise<void> {
+  async revokeSession(
+    userId: string,
+    jti: string,
+    reason: SessionRevokeReason = SessionRevokeReason.LOGOUT,
+  ): Promise<void> {
     await this.sessionRepo.update({ userId, jti }, { revokedAt: new Date(), revokeReason: reason });
   }
 
-  async revokeAllSessions(userId: string, reason = 'logout_all'): Promise<void> {
+  async revokeAllSessions(
+    userId: string,
+    reason: SessionRevokeReason = SessionRevokeReason.LOGOUT_ALL,
+  ): Promise<void> {
     await this.sessionRepo
       .createQueryBuilder()
       .update(UserSessionEntity)
@@ -131,7 +146,11 @@ export class UserSessionService {
       .execute();
   }
 
-  async revokeOtherSessions(userId: string, keepJti: string, reason = 'security'): Promise<void> {
+  async revokeOtherSessions(
+    userId: string,
+    keepJti: string,
+    reason: SessionRevokeReason = SessionRevokeReason.SECURITY,
+  ): Promise<void> {
     await this.sessionRepo
       .createQueryBuilder()
       .update(UserSessionEntity)
@@ -165,21 +184,14 @@ export class UserSessionService {
     await this.sessionRepo
       .createQueryBuilder()
       .update(UserSessionEntity)
-      .set({ revokedAt: new Date(), revokeReason: 'session_limit' })
+      .set({ revokedAt: new Date(), revokeReason: SessionRevokeReason.SESSION_LIMIT })
       .where('id IN (:...revokeIds)', { revokeIds })
       .execute();
   }
 }
 
-function clientIp(request: Request): string | undefined {
-  const forwarded = request.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0].trim();
-  }
-  if (Array.isArray(forwarded) && forwarded.length > 0) {
-    return forwarded[0]?.split(',')[0]?.trim();
-  }
-  return request.ip;
+function clientIp(request: Request): string | null {
+  return request.ip ?? null;
 }
 
 function headerValue(value: string | string[] | undefined): string | null {

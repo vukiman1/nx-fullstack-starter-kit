@@ -1,6 +1,7 @@
 import { BaseEntity } from '@org/backend-base';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { UserEntity } from '../../user/entities/user.entity';
+import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 
 @Entity('user_sessions')
 @Index(['userId', 'revokedAt'])
@@ -44,5 +45,5 @@ export class UserSessionEntity extends BaseEntity {
   revokedAt!: Date | null;
 
   @Column({ name: 'revoke_reason', type: 'varchar', length: 120, nullable: true })
-  revokeReason!: string | null;
+  revokeReason!: SessionRevokeReason | null;
 }

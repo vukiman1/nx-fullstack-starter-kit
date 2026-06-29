@@ -20,6 +20,7 @@ import { SessionService } from './session.service';
 import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
+import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 
 const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
@@ -148,7 +149,7 @@ export class AuthService {
     const user = await this.userService.getOneOrFail({ id: userId });
     await this.userService.update(user, { password });
     await this.sessionService.revokeAllSessions(userId);
-    await this.userSessionService.revokeAllSessions(userId, 'password_reset');
+    await this.userSessionService.revokeAllSessions(userId, SessionRevokeReason.PASSWORD_RESET);
     this.auditService.record(AuthEvent.PASSWORD_RESET, { userId, email: user.email, request });
 
     return { message: 'Password reset successfully' };
@@ -161,7 +162,11 @@ export class AuthService {
     }
     await this.userService.update(user, { password: dto.newPassword });
     await this.sessionService.revokeOtherSessions(user.id, jti);
-    await this.userSessionService.revokeOtherSessions(user.id, jti, 'password_changed');
+    await this.userSessionService.revokeOtherSessions(
+      user.id,
+      jti,
+      SessionRevokeReason.PASSWORD_CHANGED,
+    );
     this.auditService.record(AuthEvent.PASSWORD_CHANGED, {
       userId: user.id,
       email: user.email,
@@ -203,7 +208,7 @@ export class AuthService {
       const { id, jti, remember } = this.decodeSessionCookie(request);
       const { email, avatar, balance } = await this.getUserById(id, userType);
       const tokens = await this.sessionService.rotateSession(id, jti, remember);
-      await this.userSessionService.touchSession(id, jti, request);
+      await this.userSessionService.touchSession(id, jti, request, tokens.refreshTokenTtlMs);
 
       this.setSessionCookies(response, {
         id,
@@ -249,7 +254,11 @@ export class AuthService {
     }
 
     await this.sessionService.revokeSession(user.id, session.jti);
-    await this.userSessionService.revokeSession(user.id, session.jti, 'revoked_by_user');
+    await this.userSessionService.revokeSession(
+      user.id,
+      session.jti,
+      SessionRevokeReason.REVOKED_BY_USER,
+    );
 
     return { message: 'Session revoked successfully' };
   }
