@@ -2,6 +2,11 @@ const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
+// Instrumentation SDKs must run from node_modules, not be bundled: they hook module loading at
+// runtime (require/import-in-the-middle) and ship native/broken-sourcemap files that break webpack.
+const RUNTIME_EXTERNALS =
+  /^(@sentry|@opentelemetry)\/|^(require-in-the-middle|import-in-the-middle|standardwebhooks)$/;
+
 module.exports = (_env, argv) => {
   const isProduction = argv.mode === 'production';
 
@@ -10,9 +15,10 @@ module.exports = (_env, argv) => {
       {
         '@nestjs/terminus': 'commonjs @nestjs/terminus',
         '@nestjs/throttler': 'commonjs @nestjs/throttler',
-        '@sentry/profiling-node': 'commonjs @sentry/profiling-node',
         'geoip-lite': 'commonjs geoip-lite',
       },
+      ({ request }, callback) =>
+        RUNTIME_EXTERNALS.test(request) ? callback(null, `commonjs ${request}`) : callback(),
     ],
     output: {
       path: join(__dirname, 'dist'),
