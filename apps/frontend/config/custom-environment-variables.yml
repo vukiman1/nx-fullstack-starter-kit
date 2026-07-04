@@ -7,3 +7,6 @@ api:
 
 sentry:
   dsn: VITE_SENTRY_DSN
+
+google:
+  clientId: VITE_GOOGLE_CLIENT_ID

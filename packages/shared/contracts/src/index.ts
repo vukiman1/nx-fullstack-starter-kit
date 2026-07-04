@@ -41,6 +41,10 @@ export interface LoginPayload {
   rememberMe?: boolean;
 }
 
+export interface GoogleOneTapPayload {
+  credential: string;
+}
+
 export interface LoginResponse {
   user: User;
 }
@@ -78,6 +82,7 @@ export interface UserLoginSession {
   osName: string | null;
   deviceType: string | null;
   rememberMe: boolean;
+  authProvider: string;
   lastSeenAt: string | null;
   expiresAt: string;
   createdAt: string;

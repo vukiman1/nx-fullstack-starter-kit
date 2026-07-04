@@ -43,9 +43,9 @@ export class UserEntity extends BaseEntity {
   })
   token!: number;
 
-  @Column({ nullable: false, type: 'varchar', length: 255, name: 'password' })
+  @Column({ nullable: true, type: 'varchar', length: 255, name: 'password' })
   @Exclude()
-  password!: string;
+  password!: string | null;
 
   @Column({
     type: 'boolean',
@@ -63,15 +63,11 @@ export class UserEntity extends BaseEntity {
   })
   role!: Roles;
 
+  // OAuth-only users have no password; only hash a freshly assigned plaintext value.
+  // An already hashed value (loaded then re-saved) starts with `$argon2` and is left as is.
   @BeforeInsert()
-  async beforeInsert() {
-    this.password = await argon2.hash(this.password);
-  }
-
-  // Hash on update only when a fresh plaintext password was assigned; an already
-  // hashed value (loaded then re-saved unchanged) starts with `$argon2` and is left as is.
   @BeforeUpdate()
-  async beforeUpdate() {
+  async hashPasswordIfPlaintext() {
     if (this.password && !this.password.startsWith(ARGON2_HASH_PREFIX)) {
       this.password = await argon2.hash(this.password);
     }

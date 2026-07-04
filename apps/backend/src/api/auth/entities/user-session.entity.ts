@@ -1,4 +1,5 @@
 import { BaseEntity } from '@org/backend-base';
+import { AuthProvider } from '@org/backend-enum';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { UserEntity } from '../../user/entities/user.entity';
 import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
@@ -40,6 +41,9 @@ export class UserSessionEntity extends BaseEntity {
 
   @Column({ name: 'remember_me', type: 'boolean', default: false })
   rememberMe!: boolean;
+
+  @Column({ name: 'auth_provider', type: 'varchar', length: 40, default: AuthProvider.LOCAL })
+  authProvider!: AuthProvider;
 
   @Column({ name: 'last_seen_at', type: 'timestamp', nullable: true })
   lastSeenAt!: Date | null;

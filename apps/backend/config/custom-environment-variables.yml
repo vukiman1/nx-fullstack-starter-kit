@@ -65,9 +65,13 @@ session:
     __format: number
   refreshTtl: SESSION_REFRESH_TTL
   refreshTtlRemember: SESSION_REFRESH_TTL_REMEMBER
+  refreshTtlOauth: SESSION_REFRESH_TTL_OAUTH
 
 captcha:
   enabled:
     __name: CAPTCHA_ENABLED
     __format: boolean
   secretKey: CAPTCHA_SECRET_KEY
+
+google:
+  clientId: GOOGLE_CLIENT_ID

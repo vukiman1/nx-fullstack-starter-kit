@@ -4,10 +4,12 @@ import { JwtService } from '@org/backend-jwt';
 import { RedisService } from '@org/backend-redis';
 import { createHash } from 'crypto';
 import { SessionService } from './session.service';
+import { SessionPersistence } from '../enums/session-persistence.enum';
 
 const ACCESS_TTL_MS = 900_000;
 const DAY_MS = 86_400_000;
 const REMEMBER_TTL_MS = 60 * DAY_MS;
+const OAUTH_TTL_MS = 30 * DAY_MS;
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
@@ -42,6 +44,7 @@ describe('SessionService', () => {
         if (key === 'session.maxSessionsPerUser') return 5;
         if (key === 'session.refreshTtl') return '1d';
         if (key === 'session.refreshTtlRemember') return '60d';
+        if (key === 'session.refreshTtlOauth') return '30d';
         return undefined;
       }),
     } as unknown as jest.Mocked<ConfigService>;
@@ -51,7 +54,7 @@ describe('SessionService', () => {
 
   describe('createSession', () => {
     it('stores the access token hashed and the refresh token whole', async () => {
-      const session = await service.createSession('user-1', false);
+      const session = await service.createSession('user-1', SessionPersistence.STANDARD);
 
       expect(session.accessToken).toBe('access-jwt');
       expect(session.refreshToken).toBe('refresh-jwt');
@@ -64,7 +67,7 @@ describe('SessionService', () => {
     });
 
     it('uses the longer "remember me" lifetime when requested', async () => {
-      const session = await service.createSession('user-1', true);
+      const session = await service.createSession('user-1', SessionPersistence.REMEMBER);
 
       expect(session.refreshTokenTtlMs).toBe(REMEMBER_TTL_MS);
       expect(redis.set).toHaveBeenCalledWith(
@@ -72,8 +75,17 @@ describe('SessionService', () => {
       );
     });
 
+    it('uses the 30-day OAuth lifetime for social logins', async () => {
+      const session = await service.createSession('user-1', SessionPersistence.OAUTH);
+
+      expect(session.refreshTokenTtlMs).toBe(OAUTH_TTL_MS);
+      expect(redis.set).toHaveBeenCalledWith(
+        expect.objectContaining({ value: 'refresh-jwt', expired: OAUTH_TTL_MS / 1000 }),
+      );
+    });
+
     it('enforces the per-user session limit from config', async () => {
-      await service.createSession('user-1', false);
+      await service.createSession('user-1', SessionPersistence.STANDARD);
       expect(config.get).toHaveBeenCalledWith('session.maxSessionsPerUser');
       expect(redis.eval).toHaveBeenCalled();
     });
@@ -94,14 +106,14 @@ describe('SessionService', () => {
   describe('rotateSession', () => {
     it('rejects when the refresh token is no longer stored', async () => {
       redis.get.mockResolvedValue(null);
-      await expect(service.rotateSession('user-1', 'jti-1', false)).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.rotateSession('user-1', 'jti-1', SessionPersistence.STANDARD),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
     it('verifies the stored refresh token then issues a fresh pair', async () => {
       redis.get.mockResolvedValue('stored-refresh');
-      const tokens = await service.rotateSession('user-1', 'jti-1', false);
+      const tokens = await service.rotateSession('user-1', 'jti-1', SessionPersistence.STANDARD);
 
       expect(jwt.verifyJwt).toHaveBeenCalledWith('stored-refresh');
       expect(tokens.accessToken).toBe('access-jwt');

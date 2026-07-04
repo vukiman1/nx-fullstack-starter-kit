@@ -9,6 +9,7 @@ describe('frontend config', () => {
       app: { name: 'My Workspace', environment: 'test' },
       api: { baseUrl: 'http://localhost:3000/api' },
       sentry: { dsn: '' },
+      google: { clientId: '' },
     });
   });
 
@@ -16,5 +17,6 @@ describe('frontend config', () => {
     expect(appConfig.app.environment).toBe('test');
     expect(appConfig.app.name).toBe('My Workspace');
     expect(appConfig.api.baseUrl).toBe('http://localhost:3000/api');
+    expect(appConfig.google.clientId).toBe('');
   });
 });

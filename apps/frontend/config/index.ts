@@ -26,6 +26,9 @@ const frontendPublicConfigSchema = z.object({
   sentry: z.object({
     dsn: z.string().default(''),
   }),
+  google: z.object({
+    clientId: z.string().default(''),
+  }),
 });
 
 function resolveFrontendRoot() {

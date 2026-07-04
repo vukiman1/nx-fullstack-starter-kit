@@ -21,6 +21,10 @@ import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
 import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
+import { SessionPersistence } from '../enums/session-persistence.enum';
+import { AuthProvider } from '@org/backend-enum';
+import { GoogleOneTapVerifier } from './social/google-one-tap.verifier';
+import { SocialAuthService } from './social/social-auth.service';
 
 const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
@@ -28,7 +32,13 @@ const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
 interface SessionCookiePayload {
   id: string;
   jti: string;
-  remember: boolean;
+  persistence: SessionPersistence;
+}
+
+interface IssueSessionOptions {
+  persistence: SessionPersistence;
+  rememberMe: boolean;
+  authProvider: AuthProvider;
 }
 
 @Injectable()
@@ -43,6 +53,8 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly auditService: AuthAuditService,
     private readonly userSessionService: UserSessionService,
+    private readonly googleOneTapVerifier: GoogleOneTapVerifier,
+    private readonly socialAuthService: SocialAuthService,
   ) {}
 
   me(user: UserEntity) {
@@ -53,12 +65,27 @@ export class AuthService {
   }
 
   async login(user: UserEntity, response: Response, request: Request, rememberMe: boolean) {
+    const persistence = rememberMe ? SessionPersistence.REMEMBER : SessionPersistence.STANDARD;
+    return this.issueSession(user, response, request, {
+      persistence,
+      rememberMe,
+      authProvider: AuthProvider.LOCAL,
+    });
+  }
+
+  async issueSession(
+    user: UserEntity,
+    response: Response,
+    request: Request,
+    { persistence, rememberMe, authProvider }: IssueSessionOptions,
+  ) {
     const { id, email, avatar, balance } = user;
-    const session = await this.sessionService.createSession(id, rememberMe);
+    const session = await this.sessionService.createSession(id, persistence);
     await this.userSessionService.createSession({
       userId: id,
       jti: session.jti,
       rememberMe,
+      authProvider,
       refreshTokenTtlMs: session.refreshTokenTtlMs,
       request,
     });
@@ -66,7 +93,7 @@ export class AuthService {
     this.setSessionCookies(response, {
       id,
       jti: session.jti,
-      remember: rememberMe,
+      persistence,
       accessToken: session.accessToken,
       accessTokenTtlMs: session.accessTokenTtlMs,
       refreshTokenTtlMs: session.refreshTokenTtlMs,
@@ -81,6 +108,16 @@ export class AuthService {
     return {
       user: { email, avatar, balance },
     };
+  }
+
+  async loginWithGoogle(credential: string, response: Response, request: Request) {
+    const identity = await this.googleOneTapVerifier.verify(credential);
+    const user = await this.socialAuthService.findOrLinkIdentity(identity);
+    return this.issueSession(user, response, request, {
+      persistence: SessionPersistence.OAUTH,
+      rememberMe: false,
+      authProvider: AuthProvider.GOOGLE,
+    });
   }
 
   async register({ email, password }: RegisterDto, request: Request) {
@@ -156,7 +193,7 @@ export class AuthService {
   }
 
   async changePassword(user: UserEntity, jti: string, dto: ChangePasswordDto, request: Request) {
-    const matches = await argon2.verify(user.password, dto.currentPassword);
+    const matches = user.password ? await argon2.verify(user.password, dto.currentPassword) : false;
     if (!matches) {
       throw new UnauthorizedException('Current password is incorrect');
     }
@@ -205,15 +242,15 @@ export class AuthService {
 
   async refreshToken(request: Request, response: Response, userType: UserType) {
     try {
-      const { id, jti, remember } = this.decodeSessionCookie(request);
+      const { id, jti, persistence } = this.decodeSessionCookie(request);
       const { email, avatar, balance } = await this.getUserById(id, userType);
-      const tokens = await this.sessionService.rotateSession(id, jti, remember);
+      const tokens = await this.sessionService.rotateSession(id, jti, persistence);
       await this.userSessionService.touchSession(id, jti, request, tokens.refreshTokenTtlMs);
 
       this.setSessionCookies(response, {
         id,
         jti,
-        remember,
+        persistence,
         accessToken: tokens.accessToken,
         accessTokenTtlMs: tokens.accessTokenTtlMs,
         refreshTokenTtlMs: tokens.refreshTokenTtlMs,
@@ -291,8 +328,8 @@ export class AuthService {
       refreshTokenTtlMs: number;
     },
   ) {
-    const { id, jti, remember, accessToken, accessTokenTtlMs, refreshTokenTtlMs } = params;
-    setCookie(response, CookieName.SESSION, this.encodeSessionCookie({ id, jti, remember }), {
+    const { id, jti, persistence, accessToken, accessTokenTtlMs, refreshTokenTtlMs } = params;
+    setCookie(response, CookieName.SESSION, this.encodeSessionCookie({ id, jti, persistence }), {
       maxAge: refreshTokenTtlMs,
     });
     setCookie(response, CookieName.ACCESS_TOKEN, accessToken, {
@@ -338,7 +375,7 @@ export class AuthService {
         return {
           id: record.id as string,
           jti: record.jti as string,
-          remember: record.remember === true,
+          persistence: coercePersistence(record),
         };
       }
       return null;
@@ -355,4 +392,17 @@ export class AuthService {
         return this.userService;
     }
   }
+}
+
+function coercePersistence(record: Record<string, unknown>): SessionPersistence {
+  const value = record.persistence;
+  if (
+    value === SessionPersistence.STANDARD ||
+    value === SessionPersistence.REMEMBER ||
+    value === SessionPersistence.OAUTH
+  ) {
+    return value;
+  }
+  // Legacy cookies stored `remember: boolean`; map it onto the persistence policy.
+  return record.remember === true ? SessionPersistence.REMEMBER : SessionPersistence.STANDARD;
 }

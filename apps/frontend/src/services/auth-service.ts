@@ -15,6 +15,9 @@ export const authService = {
   login(payload: LoginPayload) {
     return httpRequest.post<LoginResponse>('/auth/login', payload);
   },
+  googleOneTap(credential: string) {
+    return httpRequest.post<LoginResponse>('/auth/google/one-tap', { credential });
+  },
   register(payload: RegisterPayload) {
     return httpRequest.post<RegisterResponse>('/auth/register', payload);
   },

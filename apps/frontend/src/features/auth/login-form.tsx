@@ -17,6 +17,7 @@ import { authService } from '@/services/auth-service';
 import { useAuthStore } from '@/stores/auth-store';
 import { isInternalPath } from './route-guards';
 import { loginSchema, type LoginFormValues } from './schemas';
+import { GoogleSignInButton } from './google-sign-in-button';
 
 function getErrorMessage(error: unknown) {
   if (error && typeof error === 'object' && 'message' in error) {
@@ -172,6 +173,13 @@ export function LoginForm() {
                 Create an account
               </Link>
             </p>
+
+            <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <GoogleSignInButton />
           </CardFooter>
         </form>
       </Card>

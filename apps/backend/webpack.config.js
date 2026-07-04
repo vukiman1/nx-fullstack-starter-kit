@@ -2,10 +2,10 @@ const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-// Instrumentation SDKs must run from node_modules, not be bundled: they hook module loading at
-// runtime (require/import-in-the-middle) and ship native/broken-sourcemap files that break webpack.
+// Server SDKs that must run from node_modules, not be bundled: they hook module loading at runtime
+// (require/import-in-the-middle) or ship native/broken-sourcemap files that break webpack.
 const RUNTIME_EXTERNALS =
-  /^(@sentry|@opentelemetry)\/|^(require-in-the-middle|import-in-the-middle|standardwebhooks)$/;
+  /^(@sentry|@opentelemetry)\/|^google-auth-library(\/|$)|^(require-in-the-middle|import-in-the-middle|standardwebhooks)$/;
 
 module.exports = (_env, argv) => {
   const isProduction = argv.mode === 'production';

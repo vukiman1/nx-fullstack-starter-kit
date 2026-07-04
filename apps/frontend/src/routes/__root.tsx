@@ -3,6 +3,7 @@ import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import type { QueryClient } from '@tanstack/react-query';
 import { ErrorPage } from '@/features/error/error-page';
 import { NotFoundPage } from '@/features/error/not-found-page';
+import { GoogleOneTap } from '@/features/auth/google-one-tap';
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -26,6 +27,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootRoute() {
   return (
     <>
+      <GoogleOneTap />
       <Outlet />
       <Suspense>
         <QueryDevtools />

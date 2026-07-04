@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AuthProvider } from '@org/backend-enum';
 import type { Request } from 'express';
 import { Repository } from 'typeorm';
 import { UserSessionEntity } from '../entities/user-session.entity';
@@ -19,6 +20,7 @@ export type UserSessionSummary = {
   osName: string | null;
   deviceType: string | null;
   rememberMe: boolean;
+  authProvider: AuthProvider;
   lastSeenAt: Date | null;
   expiresAt: Date;
   createdAt: Date;
@@ -29,6 +31,7 @@ type CreateUserSessionParams = {
   userId: string;
   jti: string;
   rememberMe: boolean;
+  authProvider?: AuthProvider;
   refreshTokenTtlMs: number;
   request: Request;
 };
@@ -46,6 +49,7 @@ export class UserSessionService {
     userId,
     jti,
     rememberMe,
+    authProvider = AuthProvider.LOCAL,
     refreshTokenTtlMs,
     request,
   }: CreateUserSessionParams): Promise<UserSessionEntity> {
@@ -59,6 +63,7 @@ export class UserSessionService {
         userId,
         jti,
         rememberMe,
+        authProvider,
         ipAddress: ip,
         country: geo.country,
         city: geo.city,
@@ -116,6 +121,7 @@ export class UserSessionService {
       osName: session.osName,
       deviceType: session.deviceType,
       rememberMe: session.rememberMe,
+      authProvider: session.authProvider,
       lastSeenAt: session.lastSeenAt,
       expiresAt: session.expiresAt,
       createdAt: session.createdAt,
