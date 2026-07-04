@@ -26,13 +26,7 @@
       "request": "launch",
       "name": "Launch Backend (Nx)",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "nx",
-        "run",
-        "@org/backend:serve",
-        "--inspect=inspect",
-        "--port=9229"
-      ],
+      "runtimeArgs": ["nx", "run", "@org/backend:serve", "--inspect=inspect", "--port=9229"],
       "autoAttachChildProcesses": true,
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
@@ -57,6 +51,17 @@
         "webpack://@org/backend/./*": "${workspaceFolder}/apps/backend/*",
         "webpack://@org/backend/*": "${workspaceFolder}/apps/backend/*"
       }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Jest (current file)",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": ["--runTestsByPath", "${file}", "--runInBand", "--watchAll=false"],
+      "cwd": "${fileDirname}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }
