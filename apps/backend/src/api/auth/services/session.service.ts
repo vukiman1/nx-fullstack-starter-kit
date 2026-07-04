@@ -3,13 +3,17 @@ import { RedisService } from '@org/backend-redis';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomUUID } from 'crypto';
+import { SessionPersistence } from '../enums/session-persistence.enum';
 
 const ACCESS_TOKEN_KEY_PREFIX = 'AC_TOKEN';
 const REFRESH_TOKEN_KEY_PREFIX = 'RF_TOKEN';
 const SESSION_SET_KEY_PREFIX = 'SESSIONS';
 const MAX_SESSIONS_CONFIG_KEY = 'session.maxSessionsPerUser';
-const REFRESH_TTL_CONFIG_KEY = 'session.refreshTtl';
-const REFRESH_TTL_REMEMBER_CONFIG_KEY = 'session.refreshTtlRemember';
+const REFRESH_TTL_CONFIG_KEYS: Record<SessionPersistence, string> = {
+  [SessionPersistence.STANDARD]: 'session.refreshTtl',
+  [SessionPersistence.REMEMBER]: 'session.refreshTtlRemember',
+  [SessionPersistence.OAUTH]: 'session.refreshTtlOauth',
+};
 const MS_PER_SECOND = 1000;
 
 const TRACK_SESSION_SCRIPT = `
@@ -49,20 +53,24 @@ export class SessionService {
     private readonly configService: ConfigService,
   ) {}
 
-  async createSession(userId: string, rememberMe: boolean): Promise<IssuedSession> {
+  async createSession(userId: string, persistence: SessionPersistence): Promise<IssuedSession> {
     const jti = randomUUID();
-    const tokens = await this.issueTokens(userId, jti, this.resolveRefreshTtlMs(rememberMe));
+    const tokens = await this.issueTokens(userId, jti, this.resolveRefreshTtlMs(persistence));
     await this.enforceSessionLimit(userId);
     return { jti, ...tokens };
   }
 
-  async rotateSession(userId: string, jti: string, rememberMe: boolean): Promise<SessionTokens> {
+  async rotateSession(
+    userId: string,
+    jti: string,
+    persistence: SessionPersistence,
+  ): Promise<SessionTokens> {
     const storedRefreshToken = await this.redisService.get(this.refreshTokenKey(userId, jti));
     if (!storedRefreshToken) {
       throw new UnauthorizedException();
     }
     await this.jwtService.verifyJwt(storedRefreshToken);
-    return this.issueTokens(userId, jti, this.resolveRefreshTtlMs(rememberMe));
+    return this.issueTokens(userId, jti, this.resolveRefreshTtlMs(persistence));
   }
 
   async isAccessTokenActive(userId: string, jti: string, accessToken: string): Promise<boolean> {
@@ -136,8 +144,8 @@ export class SessionService {
     return { accessToken, refreshToken, accessTokenTtlMs, refreshTokenTtlMs };
   }
 
-  private resolveRefreshTtlMs(rememberMe: boolean): number {
-    const key = rememberMe ? REFRESH_TTL_REMEMBER_CONFIG_KEY : REFRESH_TTL_CONFIG_KEY;
+  private resolveRefreshTtlMs(persistence: SessionPersistence): number {
+    const key = REFRESH_TTL_CONFIG_KEYS[persistence];
     return parseDurationToMs(this.configService.get<string>(key) ?? '');
   }
 

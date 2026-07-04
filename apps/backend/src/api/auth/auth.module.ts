@@ -13,9 +13,16 @@ import { UserModule } from '../user/user.module';
 import { UserLocalStrategy } from './strategies/local/user.local.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { UserSessionEntity } from './entities/user-session.entity';
+import { AuthIdentityEntity } from './entities/auth-identity.entity';
+import { GoogleOneTapVerifier } from './services/social/google-one-tap.verifier';
+import { SocialAuthService } from './services/social/social-auth.service';
 
 @Module({
-  imports: [UserModule, PassportModule, TypeOrmModule.forFeature([UserSessionEntity])],
+  imports: [
+    UserModule,
+    PassportModule,
+    TypeOrmModule.forFeature([UserSessionEntity, AuthIdentityEntity]),
+  ],
   controllers: [AuthUserController],
   providers: [
     AuthService,
@@ -27,6 +34,8 @@ import { UserSessionEntity } from './entities/user-session.entity';
     CaptchaService,
     JwtUserStrategy,
     UserLocalStrategy,
+    GoogleOneTapVerifier,
+    SocialAuthService,
   ],
 })
 export class AuthModule {}

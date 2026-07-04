@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AuthProvider } from '@org/backend-enum';
 import type { Request } from 'express';
 import { Repository } from 'typeorm';
 import { UserSessionEntity } from '../entities/user-session.entity';
@@ -90,6 +91,31 @@ describe('UserSessionService', () => {
       );
       expect(geoIp.locate).toHaveBeenCalledWith('203.0.113.5');
       expectWithinMs(saved.expiresAt, Date.now() + ttl);
+    });
+
+    it('records the auth provider, defaulting to local', async () => {
+      await service.createSession({
+        userId: 'user-1',
+        jti: 'jti-1',
+        rememberMe: false,
+        refreshTokenTtlMs: 1_000,
+        request: mockRequest({ userAgent: CHROME_WINDOWS }),
+      });
+      expect(repo.create.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ authProvider: AuthProvider.LOCAL }),
+      );
+
+      await service.createSession({
+        userId: 'user-1',
+        jti: 'jti-2',
+        rememberMe: false,
+        authProvider: AuthProvider.GOOGLE,
+        refreshTokenTtlMs: 1_000,
+        request: mockRequest({ userAgent: CHROME_WINDOWS }),
+      });
+      expect(repo.create.mock.calls[1][0]).toEqual(
+        expect.objectContaining({ authProvider: AuthProvider.GOOGLE }),
+      );
     });
 
     it('leaves country and city null when the ip cannot be geolocated', async () => {

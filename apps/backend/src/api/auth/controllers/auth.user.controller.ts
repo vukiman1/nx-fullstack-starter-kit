@@ -9,13 +9,14 @@ import {
   Param,
   Post,
   Req,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { AuthBaseController } from './auth.base.controller';
 import { ApiChangePassword } from '../auth.swagger';
@@ -26,6 +27,7 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ResendVerificationDto } from '../dto/resend-verification.dto';
+import { GoogleOneTapDto } from '../dto/google-one-tap.dto';
 
 const STRICT_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
@@ -44,6 +46,17 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
   @Throttle(STRICT_THROTTLE)
   async register(@Body() body: RegisterDto, @Req() request: Request) {
     return this.authService.register(body, request);
+  }
+
+  @Post('google/one-tap')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async googleOneTap(
+    @Body() body: GoogleOneTapDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.authService.loginWithGoogle(body.credential, response, request);
   }
 
   @Post('verify-email')

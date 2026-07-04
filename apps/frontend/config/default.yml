@@ -7,3 +7,6 @@ api:
 
 sentry:
   dsn: ''
+
+google:
+  clientId: ''

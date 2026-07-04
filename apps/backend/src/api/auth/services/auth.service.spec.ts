@@ -9,6 +9,10 @@ import { SessionService } from './session.service';
 import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
+import { SessionPersistence } from '../enums/session-persistence.enum';
+import { AuthProvider } from '@org/backend-enum';
+import { GoogleOneTapVerifier } from './social/google-one-tap.verifier';
+import { SocialAuthService } from './social/social-auth.service';
 
 const ACCESS_TTL_MS = 900_000;
 const REFRESH_TTL_MS = 86_400_000;
@@ -45,6 +49,8 @@ describe('AuthService', () => {
     revokeAllSessions: jest.Mock;
     revokeOtherSessions: jest.Mock;
   };
+  let verifier: { verify: jest.Mock };
+  let socialAuthService: { findOrLinkIdentity: jest.Mock };
   let service: AuthService;
 
   function mockResponse(): Response {
@@ -94,6 +100,9 @@ describe('AuthService', () => {
       revokeOtherSessions: jest.fn(),
     };
 
+    verifier = { verify: jest.fn() };
+    socialAuthService = { findOrLinkIdentity: jest.fn() };
+
     service = new AuthService(
       crypto as unknown as CryptoService,
       userService as unknown as UserService,
@@ -102,6 +111,8 @@ describe('AuthService', () => {
       email as unknown as EmailService,
       audit as unknown as AuthAuditService,
       userSessionService as unknown as UserSessionService,
+      verifier as unknown as GoogleOneTapVerifier,
+      socialAuthService as unknown as SocialAuthService,
     );
   });
 
@@ -252,12 +263,16 @@ describe('AuthService', () => {
         true,
       );
 
-      expect(sessionService.createSession).toHaveBeenCalledWith('user-1', true);
+      expect(sessionService.createSession).toHaveBeenCalledWith(
+        'user-1',
+        SessionPersistence.REMEMBER,
+      );
       expect(userSessionService.createSession).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'user-1',
           jti: 'jti-1',
           rememberMe: true,
+          authProvider: AuthProvider.LOCAL,
           refreshTokenTtlMs: REFRESH_TTL_MS,
         }),
       );
@@ -267,6 +282,64 @@ describe('AuthService', () => {
         expect.objectContaining({ jti: 'jti-1' }),
       );
       expect(result.user.email).toBe('a@b.c');
+    });
+  });
+
+  describe('issueSession', () => {
+    it('issues an OAuth session tagged with the provider', async () => {
+      const response = mockResponse();
+
+      const result = await service.issueSession(
+        { id: 'user-1', email: 'jane@example.com', avatar: null, balance: 0 } as never,
+        response,
+        request,
+        {
+          persistence: SessionPersistence.OAUTH,
+          rememberMe: false,
+          authProvider: AuthProvider.GOOGLE,
+        },
+      );
+
+      expect(sessionService.createSession).toHaveBeenCalledWith('user-1', SessionPersistence.OAUTH);
+      expect(userSessionService.createSession).toHaveBeenCalledWith(
+        expect.objectContaining({ rememberMe: false, authProvider: AuthProvider.GOOGLE }),
+      );
+      expect(response.cookie).toHaveBeenCalledTimes(2);
+      expect(result.user.email).toBe('jane@example.com');
+    });
+  });
+
+  describe('loginWithGoogle', () => {
+    it('verifies the credential, resolves the user and issues an OAuth session', async () => {
+      const response = mockResponse();
+      verifier.verify.mockResolvedValue({
+        provider: AuthProvider.GOOGLE,
+        providerAccountId: 'sub-1',
+        email: 'jane@example.com',
+        emailVerified: true,
+      });
+      socialAuthService.findOrLinkIdentity.mockResolvedValue({
+        id: 'user-1',
+        email: 'jane@example.com',
+        avatar: null,
+        balance: 0,
+      });
+      const issueSpy = jest.spyOn(service, 'issueSession');
+
+      const result = await service.loginWithGoogle('cred', response, request);
+
+      expect(verifier.verify).toHaveBeenCalledWith('cred');
+      expect(issueSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'user-1' }),
+        response,
+        request,
+        expect.objectContaining({
+          persistence: SessionPersistence.OAUTH,
+          rememberMe: false,
+          authProvider: AuthProvider.GOOGLE,
+        }),
+      );
+      expect(result.user.email).toBe('jane@example.com');
     });
   });
 
@@ -343,7 +416,7 @@ describe('AuthService', () => {
       expect(response.clearCookie).toHaveBeenCalledTimes(2);
     });
 
-    it('rotates the session preserving the remember flag and sets fresh cookies', async () => {
+    it('rotates a legacy remember cookie as a REMEMBER session and sets fresh cookies', async () => {
       const response = mockResponse();
       crypto.decryptData.mockReturnValue(
         JSON.stringify({ id: 'user-1', jti: 'jti-1', remember: true }),
@@ -361,7 +434,11 @@ describe('AuthService', () => {
         'user',
       );
 
-      expect(sessionService.rotateSession).toHaveBeenCalledWith('user-1', 'jti-1', true);
+      expect(sessionService.rotateSession).toHaveBeenCalledWith(
+        'user-1',
+        'jti-1',
+        SessionPersistence.REMEMBER,
+      );
       expect(userSessionService.touchSession).toHaveBeenCalledWith(
         'user-1',
         'jti-1',

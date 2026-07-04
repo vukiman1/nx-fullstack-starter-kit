@@ -74,6 +74,7 @@ interface SessionConfig {
   maxSessionsPerUser: number;
   refreshTtl: string;
   refreshTtlRemember: string;
+  refreshTtlOauth: string;
 }
 
 interface CryptoConfig {
@@ -93,6 +94,10 @@ interface EmailConfig {
 interface CaptchaConfig {
   enabled: boolean;
   secretKey: string;
+}
+
+interface GoogleConfig {
+  clientId: string;
 }
 
 const stringListSchema = z.preprocess(
@@ -154,6 +159,7 @@ const backendConfigSchema = z.object({
     maxSessionsPerUser: z.coerce.number().int().positive(),
     refreshTtl: durationSchema,
     refreshTtlRemember: durationSchema,
+    refreshTtlOauth: durationSchema,
   }),
   crypto: z.object({
     secretKey: z.string().min(32),
@@ -169,6 +175,9 @@ const backendConfigSchema = z.object({
   captcha: z.object({
     enabled: z.boolean().default(false),
     secretKey: z.string().default(''),
+  }),
+  google: z.object({
+    clientId: z.string().default(''),
   }),
 });
 
@@ -207,9 +216,10 @@ export default () => {
     sentry: nodeConfig.get<SentryConfig>('sentry'),
     email: nodeConfig.get<EmailConfig>('email'),
     captcha: nodeConfig.get<CaptchaConfig>('captcha'),
+    google: nodeConfig.get<GoogleConfig>('google'),
   });
 
-  const { app, db, redis, cors, jwt, session, crypto, sentry, email, captcha } = validated;
+  const { app, db, redis, cors, jwt, session, crypto, sentry, email, captcha, google } = validated;
 
   return {
     app: {
@@ -245,5 +255,6 @@ export default () => {
     sentry,
     email,
     captcha,
+    google,
   };
 };

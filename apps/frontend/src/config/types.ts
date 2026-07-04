@@ -9,4 +9,7 @@ export interface FrontendPublicConfig {
   sentry: {
     dsn: string;
   };
+  google: {
+    clientId: string;
+  };
 }
