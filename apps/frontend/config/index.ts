@@ -8,7 +8,11 @@ interface NodeConfig {
   util: { toObject: () => Record<string, unknown> };
 }
 
-type RequireFn = (id: string) => unknown;
+interface RequireFn {
+  (id: string): unknown;
+  resolve(id: string): string;
+  cache: NodeJS.Require['cache'];
+}
 
 const frontendPublicConfigSchema = z.object({
   app: z.object({
@@ -63,6 +67,7 @@ export function loadFrontendConfig(
     ],
   });
 
+  delete requireFn.cache[requireFn.resolve('config')];
   const nodeConfig = requireFn('config') as NodeConfig;
 
   return frontendPublicConfigSchema.parse(nodeConfig.util.toObject()) as FrontendPublicConfig;
