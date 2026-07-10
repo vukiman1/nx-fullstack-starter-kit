@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
+    "sourceMap": true,
     "types": ["node", "react"],
     "rootDir": "../..",
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
