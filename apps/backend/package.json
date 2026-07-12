@@ -177,7 +177,7 @@
     "typeorm": "^1.0.0"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.1.27",
+    "@nestjs/testing": "^11.1.28",
     "@types/express": "^5.0.6",
     "@types/geoip-lite": "^1.4.4",
     "tsconfig-paths-webpack-plugin": "4.2.0"
