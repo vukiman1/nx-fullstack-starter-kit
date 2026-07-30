@@ -1,0 +1,7 @@
+info:
+  name: debug-course
+  type: folder
+  seq: 2
+
+request:
+  auth: inherit

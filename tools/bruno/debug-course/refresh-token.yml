@@ -1,0 +1,27 @@
+info:
+  name: refresh-token
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: '{{BASE_URL}}/api/auth/refresh-token'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: '200'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Đọc cookie `sub` do login set (Bruno tự giữ cookie jar) → `SessionService.rotateSession`.
+
+  Dùng ở bài 02 §2: `rotateSession` cũng gọi `issueTokens`, nên logpoint đặt trong đó bắt
+  luôn luồng refresh chứ không chỉ luồng login.

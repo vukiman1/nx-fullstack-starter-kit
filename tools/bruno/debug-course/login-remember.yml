@@ -1,0 +1,35 @@
+info:
+  name: login-remember
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: '{{BASE_URL}}/api/auth/login'
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{USER_EMAIL}}",
+        "password": "{{PASSWORD}}",
+        "rememberMe": true
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: '200'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  `persistence = 'remember'` → `refreshTokenTtlMs = 5184000000` (`session.refreshTtlRemember` = 60d).
+
+  Dùng ở bài 02 §1 (conditional breakpoint dừng), §2 (logpoint in `ttlMs` khác hẳn
+  `login-standard`), §4.

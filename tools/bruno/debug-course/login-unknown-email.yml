@@ -1,0 +1,36 @@
+info:
+  name: login-unknown-email
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: '{{BASE_URL}}/api/auth/login'
+  body:
+    type: json
+    data: |-
+      {
+        "email": "nobody@example.com",
+        "password": "definitely-not-the-password",
+        "rememberMe": false
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: '401'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Nhánh `!user`: verify với `dummyHash()` để thời gian phản hồi giống user thật
+  (chống account enumeration bằng timing).
+
+  Dùng ở bài 02 §3: **cùng một dòng throw** như `login-wrong-password` nhưng `user` là
+  `undefined` — chỉ Variables mới phân biệt được hai nguyên nhân.

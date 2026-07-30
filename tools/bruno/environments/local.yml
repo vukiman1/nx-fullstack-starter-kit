@@ -3,6 +3,6 @@ variables:
   - name: BASE_URL
     value: http://localhost:3000
   - name: USER_EMAIL
-    value: '"user@example.com"'
+    value: user@example.com
   - name: PASSWORD
-    value: '"yourpassword"'
+    value: Local1234
