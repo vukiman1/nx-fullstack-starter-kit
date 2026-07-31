@@ -17,6 +17,7 @@ overrides:
   http-proxy-middleware@^2: ^2.0.10
   http-proxy-middleware@^3: ^3.0.7
   seroval: ~1.5.6
+  seroval-plugins: ~1.5.6
 
 importers:
 
@@ -9636,8 +9637,8 @@ packages:
     resolution: {integrity: sha512-F4LcB0UqUl1zErq+1nYEEzSHJnIwb3AF2XWB94b+afhrekOUijwooAYqFyRbjYkm2PAKBabx6oYv/xDxNi8IBw==}
     engines: {node: '>=20.0.0'}
 
-  seroval-plugins@1.6.0:
-    resolution: {integrity: sha512-CbR5DP5DPicpd9RwRUzka7hi4x1577eGFXJVBW409LXqqJNst99JSUTZ8CXcnskQX7laPOWpmzliq0gBZEGlrQ==}
+  seroval-plugins@1.5.6:
+    resolution: {integrity: sha512-HXuLAX2pu/UByPpaeo/TaMfvMIi+1QqIoPJYCcAtU8QkVNwgR6MPlGuCQTErV1JwraaMbYaWVIBX7mppzGLATQ==}
     engines: {node: '>=10'}
     peerDependencies:
       seroval: ~1.5.6
@@ -15531,14 +15532,14 @@ snapshots:
       '@tanstack/history': 1.162.0
       cookie-es: 3.1.1
       seroval: 1.5.6
-      seroval-plugins: 1.6.0(seroval@1.5.6)
+      seroval-plugins: 1.5.6(seroval@1.5.6)
 
   '@tanstack/router-core@1.171.15':
     dependencies:
       '@tanstack/history': 1.162.0
       cookie-es: 3.1.1
       seroval: 1.5.6
-      seroval-plugins: 1.6.0(seroval@1.5.6)
+      seroval-plugins: 1.5.6(seroval@1.5.6)
 
   '@tanstack/router-generator@1.167.17':
     dependencies:
@@ -21423,7 +21424,7 @@ snapshots:
 
   serialize-javascript@7.0.5: {}
 
-  seroval-plugins@1.6.0(seroval@1.5.6):
+  seroval-plugins@1.5.6(seroval@1.5.6):
     dependencies:
       seroval: 1.5.6
 
