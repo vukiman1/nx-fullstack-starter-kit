@@ -1,0 +1,25 @@
+info:
+  name: logout
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: '{{BASE_URL}}/api/auth/logout'
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: '200'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Thu hồi session hiện tại + xoá cookie. `session.maxSessionsPerUser` = 5, login liên tục
+  quá 5 lần sẽ đẩy session cũ nhất ra.

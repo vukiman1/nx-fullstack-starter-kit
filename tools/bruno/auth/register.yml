@@ -5,14 +5,14 @@ info:
 
 http:
   method: POST
-  url: http://localhost:3000/api/auth/register
+  url: '{{BASE_URL}}/api/auth/register'
   body:
     type: json
     data: |-
       {
-        "email": {{USER_EMAIL}},
-        "password": {{PASSWORD}},
-        "confirmPassword":  {{PASSWORD}}
+        "email": "{{USER_EMAIL}}",
+        "password": "{{PASSWORD}}",
+        "confirmPassword": "{{PASSWORD}}"
       }
   auth: inherit
 
