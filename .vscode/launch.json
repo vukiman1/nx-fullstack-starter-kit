@@ -45,12 +45,7 @@
       "port": 9229,
       "restart": true,
       "skipFiles": ["<node_internals>/**"],
-      "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/apps/backend/dist/**/*.js"],
-      "sourceMapPathOverrides": {
-        "webpack://@org/backend/./*": "${workspaceFolder}/apps/backend/*",
-        "webpack://@org/backend/*": "${workspaceFolder}/apps/backend/*"
-      }
+      "sourceMaps": true
     },
     {
       "type": "node",
