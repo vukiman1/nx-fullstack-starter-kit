@@ -5,7 +5,6 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "jsx": "react-jsx",
     "lib": ["dom"],
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
