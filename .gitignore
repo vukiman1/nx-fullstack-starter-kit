@@ -63,3 +63,6 @@ apps/backend/docker/data
 .docker-data
 .nx/migrate-runs
 .vercel
+
+# node-config local overrides — never commit, they load after every environment file
+apps/backend/config/local.yml
