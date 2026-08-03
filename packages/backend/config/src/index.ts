@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { z } from 'zod';
+import { applyConnectionUrls } from './connection-urls';
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const backendRoot = resolveBackendRoot();
@@ -21,6 +22,8 @@ export const envFilePaths = [
 dotenv.config({
   path: envFilePaths,
 });
+
+applyConnectionUrls();
 
 process.env.NODE_CONFIG_DIR = process.env.NODE_CONFIG_DIR || configDir;
 
