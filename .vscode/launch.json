@@ -44,7 +44,7 @@
       "name": "Attach Backend (Nx)",
       "port": 9229,
       "restart": true,
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": ["<node_internals>/**", "${workspaceFolder}/**/node_modules/**"],
       "sourceMaps": true
     },
     {
