@@ -5,8 +5,6 @@ app:
     - warn
     - log
 
-# TLS defaults on: production almost always reaches a managed database over the public network.
-# Self-hosting next to the app? Set DB_TLS=false / REDIS_TLS=false.
 db:
   tls: true
   replicas: []
