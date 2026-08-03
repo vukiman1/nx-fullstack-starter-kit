@@ -1,11 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
-import {
-  HealthCheck,
-  HealthCheckService,
-  HealthIndicatorService,
-  TypeOrmHealthIndicator,
-} from '@nestjs/terminus';
+import { HealthCheck, HealthCheckService, HealthIndicatorService } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
+import { DatabaseHealthIndicator } from './database.health';
 import { RedisHealthIndicator } from './redis.health';
 
 @SkipThrottle()
@@ -14,7 +10,7 @@ export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly healthIndicatorService: HealthIndicatorService,
-    private readonly db: TypeOrmHealthIndicator,
+    private readonly db: DatabaseHealthIndicator,
     private readonly redis: RedisHealthIndicator,
   ) {}
 
@@ -33,7 +29,7 @@ export class HealthController {
   @HealthCheck()
   readiness() {
     return this.health.check([
-      async () => this.db.pingCheck('database', { timeout: 300 }),
+      async () => this.db.pingCheck('database'),
       async () => this.redis.pingCheck('redis'),
     ]);
   }
