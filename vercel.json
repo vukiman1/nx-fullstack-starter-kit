@@ -1,10 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
   "buildCommand": "pnpm nx build @org/backend",
   "outputDirectory": "public",
   "functions": {
     "api/index.js": {
-      "includeFiles": "apps/backend/config/**/*",
       "maxDuration": 30
     }
   },
