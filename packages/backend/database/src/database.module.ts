@@ -16,6 +16,8 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
         autoLoadEntities: true,
         migrationsTableName: 'migrations',
         synchronize: false,
+        // managed Postgres (Neon, Supabase, RDS) refuses plaintext connections
+        ssl: configService.get<boolean>('database.tls') ? { rejectUnauthorized: false } : false,
       }),
     }),
   ],
