@@ -89,7 +89,7 @@ describe('UserSessionService', () => {
           deviceType: 'Desktop',
         }),
       );
-      expect(geoIp.locate).toHaveBeenCalledWith('203.0.113.5');
+      expect(geoIp.locate).toHaveBeenCalledWith(expect.objectContaining({ ip: '203.0.113.5' }));
       expectWithinMs(saved.expiresAt, Date.now() + ttl);
     });
 
