@@ -4,7 +4,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.28.0",
   "engines": {
-    "node": ">=26"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "pnpm nx run-many -t serve -p @org/frontend @org/backend --parallel=2",

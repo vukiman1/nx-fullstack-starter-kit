@@ -62,3 +62,4 @@ vite.config.*.timestamp*
 apps/backend/docker/data
 .docker-data
 .nx/migrate-runs
+.vercel
