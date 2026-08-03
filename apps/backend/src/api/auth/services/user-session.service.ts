@@ -56,7 +56,7 @@ export class UserSessionService {
     const userAgent = headerValue(request.headers['user-agent']);
     const device = parseDevice(userAgent);
     const ip = clientIp(request);
-    const geo = this.geoIpService.locate(ip);
+    const geo = this.geoIpService.locate(request);
     const now = new Date();
     const session = await this.sessionRepo.save(
       this.sessionRepo.create({
@@ -87,7 +87,7 @@ export class UserSessionService {
     refreshTokenTtlMs: number,
   ): Promise<void> {
     const ip = clientIp(request);
-    const geo = this.geoIpService.locate(ip);
+    const geo = this.geoIpService.locate(request);
     const now = new Date();
     await this.sessionRepo.update(
       { userId, jti },

@@ -6,11 +6,11 @@ app:
     - log
 
 db:
-  tls: false
+  tls: true
   replicas: []
   log:
     enabled: false
 
 redis:
   cluster: false
-  tls: false
+  tls: true

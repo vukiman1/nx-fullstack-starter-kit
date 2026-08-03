@@ -15,6 +15,9 @@ import { RedisService } from './redis.service';
           host: configService.get('redis.host'),
           port: configService.get('redis.port'),
           password: configService.get('redis.password'),
+          db: configService.get('redis.db'),
+          // managed providers (Upstash and friends) only accept TLS connections
+          ...(configService.get<boolean>('redis.tls') ? { tls: {} } : {}),
         });
       },
       inject: [ConfigService],

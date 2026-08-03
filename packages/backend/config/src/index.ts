@@ -243,6 +243,7 @@ export default () => {
       username: db.username,
       password: db.password,
       database: db.database,
+      tls: db.tls,
     },
     redis: {
       ...redis,

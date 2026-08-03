@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as geoip from 'geoip-lite';
+import { Request } from 'express';
 
 export interface GeoLocation {
   country: string | null;
@@ -8,24 +8,37 @@ export interface GeoLocation {
 
 const EMPTY_LOCATION: GeoLocation = { country: null, city: null };
 
+/**
+ * Geo data comes from the edge that terminated the request — Vercel and Cloudflare both resolve it
+ * before it reaches us. Behind a plain reverse proxy the headers are absent and callers get nulls,
+ * which the session columns already allow.
+ */
 @Injectable()
 export class GeoIpService {
-  locate(ip: string | null): GeoLocation {
-    if (!ip) {
+  locate(request: Request): GeoLocation {
+    const country = header(request, 'x-vercel-ip-country') ?? header(request, 'cf-ipcountry');
+    const city = header(request, 'x-vercel-ip-city') ?? header(request, 'cf-ipcity');
+
+    if (!country && !city) {
       return EMPTY_LOCATION;
     }
-    const match = geoip.lookup(ip);
-    if (!match) {
-      return EMPTY_LOCATION;
-    }
-    return {
-      country: blankToNull(match.country),
-      city: blankToNull(match.city),
-    };
+    return { country, city: city && decodeCity(city) };
   }
 }
 
-function blankToNull(value: string | undefined): string | null {
-  const trimmed = value?.trim();
+function header(request: Request, name: string): string | null {
+  const value = request.headers[name];
+  const first = Array.isArray(value) ? value[0] : value;
+  const trimmed = first?.trim();
   return trimmed ? trimmed : null;
+}
+
+// Vercel percent-encodes city names ("Ho%20Chi%20Minh%20City")
+function decodeCity(value: string): string | null {
+  try {
+    const decoded = decodeURIComponent(value).trim();
+    return decoded ? decoded : null;
+  } catch {
+    return value;
+  }
 }
