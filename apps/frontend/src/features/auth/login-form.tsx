@@ -1,36 +1,20 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useForm } from '@tanstack/react-form';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
+import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api-error';
+import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { useAuthStore } from '@/stores/auth-store';
-import { isInternalPath } from './route-guards';
 import { loginSchema, type LoginFormValues } from './schemas';
 import { GoogleSignInButton } from './google-sign-in-button';
-
-function getErrorMessage(error: unknown) {
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String(error.message);
-  }
-
-  return String(error);
-}
+import { useAuthModal } from './use-auth-modal';
 
 export function LoginForm() {
-  const navigate = useNavigate();
-  const search = useSearch({ from: '/(auth)/login' });
-  const redirectTo = isInternalPath(search.redirect) ? search.redirect : '/';
+  const { open, finish } = useAuthModal();
   const setUser = useAuthStore((state) => state.setUser);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -48,7 +32,8 @@ export function LoginForm() {
       try {
         const result = await authService.login(value);
         setUser(result.user);
-        await navigate({ to: redirectTo as never });
+        notify.success('Signed in.');
+        await finish();
       } catch (error) {
         if (error instanceof ApiError) {
           setSubmitError(error.message);
@@ -60,146 +45,114 @@ export function LoginForm() {
   });
 
   return (
-    <main className="grid min-h-screen place-items-center bg-muted/40 px-6 py-10">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <p className="text-sm font-extrabold uppercase text-primary">Account access</p>
-          <CardTitle className="text-3xl">
-            <h1 id="login-title">Sign in</h1>
-          </CardTitle>
-          <CardDescription>Enter your credentials to continue.</CardDescription>
-        </CardHeader>
+    <form
+      className="grid gap-5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        form.handleSubmit();
+      }}
+    >
+      <div className="grid gap-5">
+        <FormError message={submitError} />
 
-        <form
-          className="grid gap-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            form.handleSubmit();
+        <form.Field
+          name="email"
+          validators={{
+            onBlur: loginSchema.shape.email,
+            onSubmit: loginSchema.shape.email,
           }}
-        >
-          <CardContent className="grid gap-5">
-            {submitError && (
-              <p
-                className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive"
-                role="alert"
-              >
-                {submitError}
-              </p>
-            )}
-
-            <form.Field
-              name="email"
-              validators={{
-                onBlur: loginSchema.shape.email,
-                onSubmit: loginSchema.shape.email,
-              }}
-              children={(field) => (
-                <div className="grid gap-2">
-                  <Label htmlFor={field.name}>Email</Label>
-                  <Input
-                    autoComplete="email"
-                    id={field.name}
-                    name={field.name}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="you@example.com"
-                    aria-describedby={`${field.name}-error`}
-                    aria-invalid={field.state.meta.errors.length > 0}
-                    type="email"
-                    value={field.state.value}
-                  />
-                  <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-                </div>
-              )}
-            />
-
-            <form.Field
-              name="password"
-              validators={{
-                onBlur: loginSchema.shape.password,
-                onSubmit: loginSchema.shape.password,
-              }}
-              children={(field) => (
-                <div className="grid gap-2">
-                  <Label htmlFor={field.name}>Password</Label>
-                  <Input
-                    autoComplete="current-password"
-                    id={field.name}
-                    name={field.name}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="Enter your password"
-                    aria-describedby={`${field.name}-error`}
-                    aria-invalid={field.state.meta.errors.length > 0}
-                    type="password"
-                    value={field.state.value}
-                  />
-                  <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-                </div>
-              )}
-            />
-
-            <form.Field
-              name="rememberMe"
-              children={(field) => (
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <input
-                    checked={field.state.value}
-                    className="h-4 w-4 rounded border-input"
-                    name={field.name}
-                    onChange={(event) => field.handleChange(event.target.checked)}
-                    type="checkbox"
-                  />
-                  Remember me for 60 days
-                </label>
-              )}
-            />
-          </CardContent>
-
-          <CardFooter className="grid gap-4">
-            <form.Subscribe
-              selector={(state) => [state.canSubmit, state.isSubmitting]}
-              children={([canSubmit, isSubmitting]) => (
-                <Button disabled={!canSubmit} type="submit">
-                  {isSubmitting ? 'Signing in...' : 'Sign in'}
-                </Button>
-              )}
-            />
-
-            <p className="text-center text-sm text-muted-foreground">
-              New here?{' '}
-              <Link className="font-semibold text-primary" to="/register">
-                Create an account
-              </Link>
-            </p>
-
-            <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
-              <span className="h-px flex-1 bg-border" />
-              or
-              <span className="h-px flex-1 bg-border" />
+          children={(field) => (
+            <div className="grid gap-2">
+              <Label htmlFor={field.name}>Email</Label>
+              <Input
+                autoComplete="email"
+                id={field.name}
+                name={field.name}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+                placeholder="you@example.com"
+                aria-describedby={`${field.name}-error`}
+                aria-invalid={field.state.meta.errors.length > 0}
+                type="email"
+                value={field.state.value}
+              />
+              <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
             </div>
-            <GoogleSignInButton />
-          </CardFooter>
-        </form>
-      </Card>
-    </main>
-  );
-}
+          )}
+        />
 
-type FieldErrorProps = {
-  errors: Array<unknown>;
-  id: string;
-};
+        <form.Field
+          name="password"
+          validators={{
+            onBlur: loginSchema.shape.password,
+            onSubmit: loginSchema.shape.password,
+          }}
+          children={(field) => (
+            <div className="grid gap-2">
+              <Label htmlFor={field.name}>Password</Label>
+              <Input
+                autoComplete="current-password"
+                id={field.name}
+                name={field.name}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+                placeholder="Enter your password"
+                aria-describedby={`${field.name}-error`}
+                aria-invalid={field.state.meta.errors.length > 0}
+                type="password"
+                value={field.state.value}
+              />
+              <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
+            </div>
+          )}
+        />
 
-function FieldError({ errors, id }: FieldErrorProps) {
-  if (errors.length === 0) {
-    return null;
-  }
+        <form.Field
+          name="rememberMe"
+          children={(field) => (
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                checked={field.state.value}
+                className="h-4 w-4 rounded border-input"
+                name={field.name}
+                onChange={(event) => field.handleChange(event.target.checked)}
+                type="checkbox"
+              />
+              Remember me for 60 days
+            </label>
+          )}
+        />
+      </div>
 
-  return (
-    <p className="text-sm font-medium text-destructive" id={id} role="alert">
-      {getErrorMessage(errors[0])}
-    </p>
+      <div className="grid gap-4">
+        <form.Subscribe
+          selector={(state) => [state.canSubmit, state.isSubmitting]}
+          children={([canSubmit, isSubmitting]) => (
+            <Button disabled={!canSubmit} type="submit">
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
+            </Button>
+          )}
+        />
+
+        <p className="text-center text-sm text-muted-foreground">
+          New here?{' '}
+          <button
+            className="font-semibold text-primary underline-offset-4 hover:underline"
+            onClick={() => open('register')}
+            type="button"
+          >
+            Create an account
+          </button>
+        </p>
+
+        <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          or
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <GoogleSignInButton />
+      </div>
+    </form>
   );
 }

@@ -1,6 +1,6 @@
-import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { UserMenu } from '@/components/layout/user-menu';
+import { useAuthModal } from '@/features/auth/use-auth-modal';
 import { Button } from '@/components/ui/button';
 import { appConfig } from '@/config/app-config';
 import { userQueries } from '@/services/user-service';
@@ -20,6 +20,7 @@ function CreditBadge() {
 }
 
 export function SimpleHeader() {
+  const { open: openAuth } = useAuthModal();
   const user = useAuthStore(selectUser);
   const isInitializing = useAuthStore(selectIsInitializing);
 
@@ -45,11 +46,11 @@ export function SimpleHeader() {
           </>
         ) : (
           <>
-            <Button asChild variant="ghost">
-              <Link to="/login">Login</Link>
+            <Button onClick={() => openAuth('login')} type="button" variant="ghost">
+              Login
             </Button>
-            <Button asChild>
-              <Link to="/register">Register</Link>
+            <Button onClick={() => openAuth('register')} type="button">
+              Register
             </Button>
           </>
         )}
