@@ -92,6 +92,17 @@ describe('UserMenu', () => {
     await waitFor(() => expect(useAuthStore.getState().user).toBeNull());
   });
 
+  it('returns focus to the trigger when the menu is closed with Escape', async () => {
+    renderMenu();
+    const trigger = await screen.findByRole('button', { name: /jane@example.com/ });
+    fireEvent.keyDown(trigger, { key: 'Enter' });
+    await screen.findByRole('menuitem', { name: 'Settings' });
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
   it('shows the avatar image when the account has one', async () => {
     useAuthStore.setState({
       user: { email: 'jane@example.com', avatar: 'https://pic/a.png' },

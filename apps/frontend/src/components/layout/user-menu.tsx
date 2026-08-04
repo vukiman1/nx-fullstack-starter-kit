@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronDown, LogOut, Settings } from 'lucide-react';
 import {
@@ -15,6 +16,9 @@ export function UserMenu() {
   const navigate = useNavigate();
   const user = useAuthStore(selectUser);
   const clearUser = useAuthStore((state) => state.clearUser);
+  // Radix returns focus to the trigger on close, which keyboard users need but leaves a focus ring
+  // sitting on the trigger after a click outside. Track how the menu was dismissed.
+  const dismissedByPointer = useRef(false);
 
   if (!user) {
     return null;
@@ -41,7 +45,18 @@ export function UserMenu() {
         <ChevronDown className="size-4" />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(event) => {
+          if (dismissedByPointer.current) {
+            event.preventDefault();
+            dismissedByPointer.current = false;
+          }
+        }}
+        onPointerDownOutside={() => {
+          dismissedByPointer.current = true;
+        }}
+      >
         <DropdownMenuLabel className="flex items-center gap-2 font-normal">
           <Avatar user={user} />
           <span className="truncate text-sm font-medium text-foreground">{user.email}</span>
