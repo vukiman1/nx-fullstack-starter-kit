@@ -110,6 +110,13 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
     return this.authService.listSessions(user, request);
   }
 
+  @Delete('sessions')
+  @HttpCode(200)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async revokeOtherSessions(@User() user: UserEntity, @Req() request: Request) {
+    return this.authService.revokeOtherDeviceSessions(user, request);
+  }
+
   @Delete('sessions/:id')
   @HttpCode(200)
   @UseGuards(AuthGuard(StrategyKey.JWT.USER))

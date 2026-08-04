@@ -10,6 +10,7 @@ import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
 import { SessionPersistence } from '../enums/session-persistence.enum';
+import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 import { AuthProvider } from '@org/backend-enum';
 import { GoogleOneTapVerifier } from './social/google-one-tap.verifier';
 import { SocialAuthService } from './social/social-auth.service';
@@ -340,6 +341,34 @@ describe('AuthService', () => {
         }),
       );
       expect(result.user.email).toBe('jane@example.com');
+    });
+  });
+
+  describe('revokeOtherDeviceSessions', () => {
+    it('revokes every session but the caller and records the reason', async () => {
+      const result = await service.revokeOtherDeviceSessions(
+        { id: 'user-1' } as never,
+        {
+          headers: {},
+          sessionJti: 'jti-current',
+        } as never,
+      );
+
+      expect(sessionService.revokeOtherSessions).toHaveBeenCalledWith('user-1', 'jti-current');
+      expect(userSessionService.revokeOtherSessions).toHaveBeenCalledWith(
+        'user-1',
+        'jti-current',
+        SessionRevokeReason.REVOKED_BY_USER,
+      );
+      expect(result.message).toBe('Other sessions revoked');
+    });
+
+    it('rejects when the request carries no session', async () => {
+      await expect(
+        service.revokeOtherDeviceSessions({ id: 'user-1' } as never, { headers: {} } as never),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      expect(sessionService.revokeOtherSessions).not.toHaveBeenCalled();
     });
   });
 
