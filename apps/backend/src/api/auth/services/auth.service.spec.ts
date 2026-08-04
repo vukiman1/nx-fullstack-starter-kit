@@ -341,6 +341,35 @@ describe('AuthService', () => {
       );
       expect(result.user.email).toBe('jane@example.com');
     });
+
+    it('issues no session when the credential fails verification', async () => {
+      const response = mockResponse();
+      verifier.verify.mockRejectedValue(new UnauthorizedException('Invalid Google token'));
+
+      await expect(service.loginWithGoogle('bad', response, request)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+
+      expect(socialAuthService.findOrLinkIdentity).not.toHaveBeenCalled();
+      expect(response.cookie).not.toHaveBeenCalled();
+    });
+
+    it('issues no session when the identity cannot be linked', async () => {
+      const response = mockResponse();
+      verifier.verify.mockResolvedValue({
+        provider: AuthProvider.GOOGLE,
+        providerAccountId: 'sub-1',
+        email: 'jane@example.com',
+        emailVerified: true,
+      });
+      socialAuthService.findOrLinkIdentity.mockRejectedValue(new Error('db is down'));
+
+      await expect(service.loginWithGoogle('cred', response, request)).rejects.toThrow(
+        'db is down',
+      );
+
+      expect(response.cookie).not.toHaveBeenCalled();
+    });
   });
 
   describe('logout', () => {

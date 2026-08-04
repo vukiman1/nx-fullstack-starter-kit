@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { appConfig } from '@/config/app-config';
 import { useGoogleOneTap } from './use-google-one-tap';
 import { ensureGoogleIdentity, promptGoogleOneTap } from '@/lib/google-identity';
 import { authService } from '@/services/auth-service';
@@ -25,6 +26,8 @@ jest.mock('@tanstack/react-router', () => ({ useNavigate: () => mockNavigate }))
 describe('useGoogleOneTap', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    appConfig.google.clientId = 'test-client-id';
+    jest.mocked(ensureGoogleIdentity).mockResolvedValue(undefined as never);
     useAuthStore.setState({ user: null, isInitializing: false });
   });
 
@@ -67,5 +70,37 @@ describe('useGoogleOneTap', () => {
     expect(authService.googleOneTap).toHaveBeenCalledWith('cred-1');
     expect(useAuthStore.getState().user).toEqual({ email: 'jane@example.com' });
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith({ to: '/' }));
+  });
+
+  it('stays silent when no client id is configured', async () => {
+    appConfig.google.clientId = '';
+
+    renderHook(() => useGoogleOneTap());
+
+    await Promise.resolve();
+    expect(ensureGoogleIdentity).not.toHaveBeenCalled();
+    expect(promptGoogleOneTap).not.toHaveBeenCalled();
+  });
+
+  it('survives the Google script failing to load', async () => {
+    jest.mocked(ensureGoogleIdentity).mockRejectedValue(new Error('blocked by the network'));
+
+    renderHook(() => useGoogleOneTap());
+
+    await waitFor(() => expect(ensureGoogleIdentity).toHaveBeenCalled());
+    await Promise.resolve();
+    expect(promptGoogleOneTap).not.toHaveBeenCalled();
+  });
+
+  it('does not let a failed sign-in escape as an unhandled rejection', async () => {
+    jest.mocked(authService.googleOneTap).mockRejectedValue(new Error('401 Unauthorized'));
+    renderHook(() => useGoogleOneTap());
+    await waitFor(() => expect(ensureGoogleIdentity).toHaveBeenCalled());
+    const onCredential = jest.mocked(ensureGoogleIdentity).mock.calls[0][0].callback;
+
+    await expect(onCredential('cred-1')).resolves.toBeUndefined();
+
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });
