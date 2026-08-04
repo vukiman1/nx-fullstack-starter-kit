@@ -99,6 +99,24 @@ export interface RevokeUserLoginSessionResponse {
   message: string;
 }
 
+export interface RevokeOtherSessionsResponse {
+  message: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  message: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
 // User
 export interface UserCredit {
   balance: number | string;

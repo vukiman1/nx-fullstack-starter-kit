@@ -18,3 +18,41 @@ describe('authService.googleOneTap', () => {
     expect(result).toEqual(response);
   });
 });
+
+describe('authService account management', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('sends a password change to the change-password endpoint', async () => {
+    jest.mocked(httpRequest.post).mockResolvedValue({ message: 'ok' });
+
+    await authService.changePassword({
+      currentPassword: 'old-one',
+      newPassword: 'new-one',
+      confirmPassword: 'new-one',
+    });
+
+    expect(httpRequest.post).toHaveBeenCalledWith('/auth/change-password', {
+      currentPassword: 'old-one',
+      newPassword: 'new-one',
+      confirmPassword: 'new-one',
+    });
+  });
+
+  it('asks for a password reset email', async () => {
+    jest.mocked(httpRequest.post).mockResolvedValue({ message: 'ok' });
+
+    await authService.forgotPassword('jane@example.com');
+
+    expect(httpRequest.post).toHaveBeenCalledWith('/auth/forgot-password', {
+      email: 'jane@example.com',
+    });
+  });
+
+  it('revokes other sessions through the collection route', async () => {
+    jest.mocked(httpRequest.delete).mockResolvedValue({ message: 'ok' });
+
+    await authService.revokeOtherSessions();
+
+    expect(httpRequest.delete).toHaveBeenCalledWith('/auth/sessions');
+  });
+});
