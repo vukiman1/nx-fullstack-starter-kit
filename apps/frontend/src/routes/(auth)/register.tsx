@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { RegisterPage } from '@/features/auth/pages/register-page';
-import { requireAnonymous } from '@/features/auth/route-guards';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
+// Registration moved into a modal driven by the `auth` search param; kept as a bridge for old links.
 export const Route = createFileRoute('/(auth)/register')({
-  beforeLoad: requireAnonymous,
-  component: RegisterPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/', search: { auth: 'register' } });
+  },
 });

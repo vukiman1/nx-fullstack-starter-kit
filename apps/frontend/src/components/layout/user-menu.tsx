@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { selectUser, useAuthStore } from '@/stores/auth-store';
 
@@ -33,6 +34,7 @@ export function UserMenu() {
       console.warn('Logout request failed; clearing the local session anyway', error);
     } finally {
       clearUser();
+      notify.success('Signed out.');
       await navigate({ to: '/' });
     }
   };

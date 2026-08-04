@@ -13,9 +13,11 @@ interface BeforeLoadContext {
 export async function requireAuth({ location }: BeforeLoadContext) {
   await bootstrapAuth();
   if (!useAuthStore.getState().user) {
+    // Sign-in is a modal now, so send them to the home page with it open. `redirect` carries the
+    // page they were reaching for, and the form returns there once they are in.
     throw redirect({
-      to: '/login',
-      search: { redirect: location.href },
+      to: '/',
+      search: { auth: 'login', redirect: location.href },
     });
   }
 }

@@ -1,14 +1,15 @@
-import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Monitor, RefreshCw, Smartphone, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import type { UserLoginSession } from '@org/shared-contracts';
 
 export function SessionsCard() {
   const queryClient = useQueryClient();
-  const [confirming, setConfirming] = useState(false);
+  const confirm = useConfirm();
 
   const sessionsQuery = useQuery({
     queryKey: ['auth', 'sessions'],
@@ -18,15 +19,32 @@ export function SessionsCard() {
 
   const revokeMutation = useMutation({
     mutationFn: (sessionId: string) => authService.revokeSession(sessionId),
-    onSuccess: invalidate,
+    onSuccess: async () => {
+      notify.success('Session revoked.');
+      await invalidate();
+    },
+    onError: () => notify.error('Could not revoke that session.'),
   });
   const revokeOthersMutation = useMutation({
     mutationFn: () => authService.revokeOtherSessions(),
     onSuccess: async () => {
-      setConfirming(false);
+      notify.success('Signed out of every other device.');
       await invalidate();
     },
+    onError: () => notify.error('Could not sign out the other devices.'),
   });
+
+  const askThenRevokeOthers = async () => {
+    const confirmed = await confirm({
+      title: 'Sign out other devices?',
+      description: 'Every device except this one will be signed out. This cannot be undone.',
+      confirmLabel: 'Yes, sign them out',
+      destructive: true,
+    });
+    if (confirmed) {
+      revokeOthersMutation.mutate();
+    }
+  };
 
   const sessions = sessionsQuery.data?.sessions ?? [];
   const hasOtherSessions = sessions.some((session) => !session.isCurrent);
@@ -87,29 +105,15 @@ export function SessionsCard() {
             </div>
 
             {hasOtherSessions && (
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                {confirming ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      Every device except this one will be signed out.
-                    </p>
-                    <Button
-                      disabled={revokeOthersMutation.isPending}
-                      onClick={() => revokeOthersMutation.mutate()}
-                      type="button"
-                      variant="destructive"
-                    >
-                      Yes, sign them out
-                    </Button>
-                    <Button onClick={() => setConfirming(false)} type="button" variant="ghost">
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <Button onClick={() => setConfirming(true)} type="button" variant="outline">
-                    Sign out other devices
-                  </Button>
-                )}
+              <div className="mt-6">
+                <Button
+                  disabled={revokeOthersMutation.isPending}
+                  onClick={askThenRevokeOthers}
+                  type="button"
+                  variant="outline"
+                >
+                  Sign out other devices
+                </Button>
               </div>
             )}
           </>

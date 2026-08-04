@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ConfirmProvider } from '@/components/ui/confirm-dialog';
 import {
   RouterProvider,
   createMemoryHistory,
@@ -37,7 +38,9 @@ function renderPage() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ConfirmProvider>
+        <RouterProvider router={router} />
+      </ConfirmProvider>
     </QueryClientProvider>,
   );
 }

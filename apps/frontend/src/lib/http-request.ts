@@ -12,6 +12,7 @@ import type {
 } from '@org/shared-contracts';
 import { useAuthStore } from '@/stores/auth-store';
 import { ApiError, isApiErrorEnvelope } from './api-error';
+import { notify } from './toast';
 
 const REFRESH_PATH = '/auth/refresh-token';
 const LOGIN_PATH = '/auth/login';
@@ -57,9 +58,32 @@ instance.interceptors.response.use(
       }
     }
 
+    reportInfrastructureFailure(error);
     return Promise.reject(toApiError(error));
   },
 );
+
+/**
+ * Only the failures no screen can act on: the server being unreachable, or breaking on its own.
+ * Business errors (wrong password, duplicate email) carry a message the form shows inline, and
+ * toasting those as well would say the same thing twice.
+ */
+export function infrastructureFailureMessage(status: number | undefined): string | null {
+  if (status === undefined) {
+    return 'Could not reach the server. Check your connection and try again.';
+  }
+  if (status >= 500) {
+    return 'Something went wrong on our side. Please try again.';
+  }
+  return null;
+}
+
+function reportInfrastructureFailure(error: AxiosError): void {
+  const message = infrastructureFailureMessage(error.response?.status);
+  if (message) {
+    notify.error(message);
+  }
+}
 
 function toApiError(error: unknown): unknown {
   if (axios.isAxiosError(error)) {

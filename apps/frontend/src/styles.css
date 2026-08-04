@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'react-toastify/dist/ReactToastify.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -87,4 +88,80 @@
       'Segoe UI',
       sans-serif;
   }
+}
+
+/*
+ * Animate the `scale` property, never `transform`. Tailwind centres the dialog with the individual
+ * `translate` property, and a `transform: translate(...)` in a keyframe stacks on top of it instead
+ * of replacing it — which throws the modal into the top-left corner for the length of the animation.
+ */
+@theme {
+  --animate-modal-in: modal-in 0.3s;
+  --animate-modal-out: modal-out 0.15s;
+  --animate-backdrop-in: backdrop-in 0.3s;
+  --animate-backdrop-out: backdrop-out 0.15s;
+
+  @keyframes modal-in {
+    0% {
+      opacity: 0;
+      scale: 0.7;
+    }
+    45% {
+      scale: 1.05;
+    }
+    80% {
+      scale: 0.95;
+    }
+    100% {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  @keyframes modal-out {
+    0% {
+      opacity: 1;
+      scale: 1;
+    }
+    100% {
+      opacity: 0;
+      scale: 0.5;
+    }
+  }
+
+  @keyframes backdrop-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes backdrop-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='modal'],
+  [data-slot='modal-backdrop'] {
+    animation: none;
+  }
+}
+
+/* react-toastify ships its own palette; point it at the app tokens so toasts follow the theme. */
+:root {
+  --toastify-color-light: var(--background);
+  --toastify-color-dark: var(--background);
+  --toastify-text-color-light: var(--foreground);
+  --toastify-text-color-dark: var(--foreground);
+  --toastify-color-success: var(--primary);
+  --toastify-color-error: var(--destructive);
+  --toastify-font-family: inherit;
 }

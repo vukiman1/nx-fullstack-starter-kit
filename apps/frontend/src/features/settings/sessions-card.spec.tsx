@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ConfirmProvider } from '@/components/ui/confirm-dialog';
 import { SessionsCard } from './sessions-card';
 import { authService } from '@/services/auth-service';
 
@@ -28,7 +29,9 @@ function renderCard() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <SessionsCard />
+      <ConfirmProvider>
+        <SessionsCard />
+      </ConfirmProvider>
     </QueryClientProvider>,
   );
 }
