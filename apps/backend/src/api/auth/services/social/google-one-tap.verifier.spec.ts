@@ -62,4 +62,38 @@ describe('GoogleOneTapVerifier', () => {
     verifyIdToken.mockRejectedValue(new Error('bad token'));
     await expect(verifier.verify('t')).rejects.toBeInstanceOf(UnauthorizedException);
   });
+
+  it('rejects a token whose audience belongs to another app', async () => {
+    // google-auth-library throws when aud does not match the audience we pass in; the point of
+    // this test is that we do pass it, so a valid token minted for a different client is refused
+    verifyIdToken.mockRejectedValue(new Error('Wrong recipient, payload audience != requiredAud'));
+
+    await expect(verifier.verify('token-for-another-app')).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+    expect(verifyIdToken).toHaveBeenCalledWith(expect.objectContaining({ audience: 'client-123' }));
+  });
+
+  it('rejects a token that verifies but carries no payload', async () => {
+    verifyIdToken.mockResolvedValue({ getPayload: () => undefined });
+    await expect(verifier.verify('t')).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('treats a missing email_verified claim as unverified', async () => {
+    verifyIdToken.mockResolvedValue(ticket({ email_verified: undefined }));
+    await expect(verifier.verify('t')).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('accepts a token without optional profile fields', async () => {
+    verifyIdToken.mockResolvedValue(ticket({ name: undefined, picture: undefined }));
+
+    const identity = await verifier.verify('t');
+
+    expect(identity).toMatchObject({
+      providerAccountId: 'google-sub-1',
+      email: 'jane@example.com',
+      displayName: undefined,
+      avatar: undefined,
+    });
+  });
 });

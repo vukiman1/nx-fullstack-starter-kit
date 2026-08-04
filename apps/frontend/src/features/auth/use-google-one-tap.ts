@@ -17,17 +17,28 @@ export function useGoogleOneTap(): void {
     }
     let cancelled = false;
 
+    // Both paths below are invoked by Google, not by us, so a rejection here has nobody to catch
+    // it. One Tap is an optional shortcut — a blocked script or a refused credential must leave
+    // the rest of the page working, with the normal login form still available.
     const onCredential = async (credential: string) => {
-      const result = await authService.googleOneTap(credential);
-      useAuthStore.getState().setUser(result.user);
-      await navigate({ to: '/' });
+      try {
+        const result = await authService.googleOneTap(credential);
+        useAuthStore.getState().setUser(result.user);
+        await navigate({ to: '/' });
+      } catch (error) {
+        console.error('Google One Tap sign-in failed', error);
+      }
     };
 
-    void ensureGoogleIdentity({ clientId, callback: onCredential }).then(() => {
-      if (!cancelled) {
-        promptGoogleOneTap();
-      }
-    });
+    void ensureGoogleIdentity({ clientId, callback: onCredential })
+      .then(() => {
+        if (!cancelled) {
+          promptGoogleOneTap();
+        }
+      })
+      .catch((error) => {
+        console.warn('Google One Tap unavailable', error);
+      });
 
     return () => {
       cancelled = true;
