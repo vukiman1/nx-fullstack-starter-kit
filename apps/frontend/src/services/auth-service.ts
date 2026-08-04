@@ -1,10 +1,14 @@
 import { httpRequest } from '@/lib/http-request';
 import type {
+  ChangePasswordPayload,
+  ChangePasswordResponse,
+  ForgotPasswordResponse,
   LoginPayload,
   LoginResponse,
   LogoutResponse,
   MeResponse,
   RefreshTokenResponse,
+  RevokeOtherSessionsResponse,
   RevokeUserLoginSessionResponse,
   RegisterPayload,
   RegisterResponse,
@@ -35,6 +39,15 @@ export const authService = {
   },
   revokeSession(sessionId: string) {
     return httpRequest.delete<RevokeUserLoginSessionResponse>(`/auth/sessions/${sessionId}`);
+  },
+  revokeOtherSessions() {
+    return httpRequest.delete<RevokeOtherSessionsResponse>('/auth/sessions');
+  },
+  changePassword(payload: ChangePasswordPayload) {
+    return httpRequest.post<ChangePasswordResponse>('/auth/change-password', payload);
+  },
+  forgotPassword(email: string) {
+    return httpRequest.post<ForgotPasswordResponse>('/auth/forgot-password', { email });
   },
 };
 

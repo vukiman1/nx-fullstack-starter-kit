@@ -58,9 +58,9 @@ export class AuthService {
   ) {}
 
   me(user: UserEntity) {
-    const { email, avatar, balance } = user;
+    const { email, avatar, balance, isEmailVerified } = user;
     return {
-      user: { email, avatar, balance },
+      user: { email, avatar, balance, isEmailVerified, hasPassword: Boolean(user.password) },
     };
   }
 
@@ -298,6 +298,22 @@ export class AuthService {
     );
 
     return { message: 'Session revoked successfully' };
+  }
+
+  async revokeOtherDeviceSessions(user: UserEntity, request: Request) {
+    const currentJti = request.sessionJti;
+    if (!currentJti) {
+      throw new UnauthorizedException();
+    }
+
+    await this.sessionService.revokeOtherSessions(user.id, currentJti);
+    await this.userSessionService.revokeOtherSessions(
+      user.id,
+      currentJti,
+      SessionRevokeReason.REVOKED_BY_USER,
+    );
+
+    return { message: 'Other sessions revoked' };
   }
 
   private async sendVerification(userId: string, email: string): Promise<void> {

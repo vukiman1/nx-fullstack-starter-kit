@@ -33,6 +33,8 @@ export interface User {
   email: string;
   avatar?: string | null;
   balance?: number | string;
+  isEmailVerified?: boolean;
+  hasPassword?: boolean;
 }
 
 export interface LoginPayload {
@@ -94,6 +96,24 @@ export interface UserLoginSessionsResponse {
 }
 
 export interface RevokeUserLoginSessionResponse {
+  message: string;
+}
+
+export interface RevokeOtherSessionsResponse {
+  message: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  message: string;
+}
+
+export interface ForgotPasswordResponse {
   message: string;
 }
 
