@@ -58,9 +58,9 @@ export class AuthService {
   ) {}
 
   me(user: UserEntity) {
-    const { email, avatar, balance } = user;
+    const { email, avatar, balance, isEmailVerified } = user;
     return {
-      user: { email, avatar, balance },
+      user: { email, avatar, balance, isEmailVerified, hasPassword: Boolean(user.password) },
     };
   }
 

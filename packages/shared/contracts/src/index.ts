@@ -33,6 +33,8 @@ export interface User {
   email: string;
   avatar?: string | null;
   balance?: number | string;
+  isEmailVerified?: boolean;
+  hasPassword?: boolean;
 }
 
 export interface LoginPayload {

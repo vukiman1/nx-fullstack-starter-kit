@@ -343,6 +343,50 @@ describe('AuthService', () => {
     });
   });
 
+  describe('me', () => {
+    it('reports that a password account has a password', () => {
+      const result = service.me({
+        email: 'a@b.c',
+        avatar: null,
+        balance: 0,
+        isEmailVerified: true,
+        password: '$argon2id$hash',
+      } as never);
+
+      expect(result.user).toEqual({
+        email: 'a@b.c',
+        avatar: null,
+        balance: 0,
+        isEmailVerified: true,
+        hasPassword: true,
+      });
+    });
+
+    it('reports no password for an account created through Google', () => {
+      const result = service.me({
+        email: 'g@b.c',
+        avatar: 'https://pic',
+        balance: 0,
+        isEmailVerified: true,
+        password: null,
+      } as never);
+
+      expect(result.user.hasPassword).toBe(false);
+    });
+
+    it('never leaks the password hash', () => {
+      const result = service.me({
+        email: 'a@b.c',
+        avatar: null,
+        balance: 0,
+        isEmailVerified: true,
+        password: '$argon2id$hash',
+      } as never);
+
+      expect(JSON.stringify(result)).not.toContain('argon2id');
+    });
+  });
+
   describe('logout', () => {
     it('rejects when there is no authenticated session jti', async () => {
       await expect(
