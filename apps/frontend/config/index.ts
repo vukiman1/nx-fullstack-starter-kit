@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
-import type { FrontendPublicConfig } from '../src/config/types';
+import type { FrontendPublicConfig } from '../src/config/types.js';
 
 interface NodeConfig {
   util: { toObject: () => Record<string, unknown> };
@@ -35,8 +36,10 @@ const frontendPublicConfigSchema = z.object({
   }),
 });
 
+const requireFromCwd = createRequire(join(process.cwd(), 'noop.js'));
+
 function resolveFrontendRoot() {
-  const candidates = [process.cwd(), join(process.cwd(), 'apps/frontend'), join(__dirname, '..')];
+  const candidates = [process.cwd(), join(process.cwd(), 'apps/frontend')];
   return (
     candidates.find((candidate) => existsSync(join(candidate, 'config/default.yml'))) ||
     join(process.cwd(), 'apps/frontend')
@@ -45,7 +48,7 @@ function resolveFrontendRoot() {
 
 export function loadFrontendConfig(
   mode = process.env.NODE_ENV || 'development',
-  requireFn: RequireFn = require,
+  requireFn: RequireFn = requireFromCwd,
 ): FrontendPublicConfig {
   const nodeEnv = mode || 'development';
   const frontendRoot = resolveFrontendRoot();

@@ -5,7 +5,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
-import { loadFrontendConfig } from './config/index';
+import { loadFrontendConfig } from './config/index.ts';
 
 const requireFromHere = createRequire(import.meta.url);
 const isAnalyze = process.env.ANALYZE === 'true';
