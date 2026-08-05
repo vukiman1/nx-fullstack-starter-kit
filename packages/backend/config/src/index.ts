@@ -4,10 +4,14 @@ import { join } from 'path';
 import { z } from 'zod';
 import { applyConnectionUrls } from './connection-urls';
 
+export { applyConnectionUrls } from './connection-urls';
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 const backendRoot = resolveBackendRoot();
 const configDir = join(backendRoot, 'config');
 
+// .env.example is documentation, not configuration: it is committed with localhost defaults,
+// and loading it would override production.yml wherever a variable is left unset.
 export const envFilePaths = [
   join(backendRoot, `.env.${nodeEnv}`),
   join(backendRoot, '.env.local'),
@@ -15,8 +19,6 @@ export const envFilePaths = [
   `.env.${nodeEnv}`,
   '.env.local',
   '.env',
-  join(backendRoot, '.env.example'),
-  '.env.example',
 ];
 
 dotenv.config({

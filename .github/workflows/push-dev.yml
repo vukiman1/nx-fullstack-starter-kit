@@ -129,6 +129,46 @@ jobs:
       - run: pnpm nx run-many -t build
       - run: pnpm nx run-many -t docker-build
 
+  migrate:
+    name: migrate database
+    runs-on: ubuntu-latest
+    # Schema changes must not reach production before the code that produced them is known good.
+    needs: [test, build]
+    # Two runs applying the same migration concurrently would race; queue them instead of cancelling,
+    # since a half-applied schema is worse than a slow pipeline.
+    concurrency:
+      group: migrate-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      # Neon's pooled endpoint runs PgBouncer in transaction mode, which cannot be trusted with DDL.
+      - name: Run pending migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL_UNPOOLED is not set — skipping migrations."
+            exit 0
+          fi
+          pnpm db:migration:show
+          pnpm db:migration:run
+
   security-scan:
     name: security-scan
     runs-on: ubuntu-latest
