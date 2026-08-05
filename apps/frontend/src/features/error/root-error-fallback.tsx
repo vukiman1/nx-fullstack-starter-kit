@@ -1,7 +1,7 @@
-import type { FallbackRender } from '@sentry/react';
+import type { ErrorFallbackProps } from '@/components/error-boundary';
 import { Button } from '@/components/ui/button';
 
-export const RootErrorFallback: FallbackRender = ({ error, resetError }) => {
+export function RootErrorFallback({ error, resetError }: ErrorFallbackProps) {
   const message =
     error instanceof Error
       ? error.message
@@ -33,4 +33,4 @@ export const RootErrorFallback: FallbackRender = ({ error, resetError }) => {
       </section>
     </main>
   );
-};
+}
