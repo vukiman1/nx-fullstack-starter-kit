@@ -12,5 +12,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   setupFiles: ['<rootDir>/src/test-setup.ts'],
+  // Comfortably above asyncUtilTimeout so a wait reports what it could not find, not a bare timeout.
+  testTimeout: 15_000,
   coverageDirectory: 'test-output/jest/coverage',
 };
