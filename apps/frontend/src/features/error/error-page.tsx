@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { Link, type ErrorComponentProps } from '@tanstack/react-router';
-import * as Sentry from '@sentry/react';
 import { Button } from '@/components/ui/button';
+import { reportError } from '@/lib/error-reporting';
 
 export function ErrorPage({ error, reset }: ErrorComponentProps) {
   useEffect(() => {
-    Sentry.captureException(error);
+    reportError(error);
   }, [error]);
 
   return (
