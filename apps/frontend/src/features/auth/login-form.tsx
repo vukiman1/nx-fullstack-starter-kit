@@ -8,14 +8,13 @@ import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api-error';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
-import { useAuthStore } from '@/stores/auth-store';
+import { startSession } from './session';
 import { loginSchema, type LoginFormValues } from './schemas';
 import { GoogleSignInButton } from './google-sign-in-button';
 import { useAuthModal } from './use-auth-modal';
 
 export function LoginForm() {
   const { open, finish } = useAuthModal();
-  const setUser = useAuthStore((state) => state.setUser);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm({
@@ -31,7 +30,7 @@ export function LoginForm() {
       setSubmitError(null);
       try {
         const result = await authService.login(value);
-        setUser(result.user);
+        startSession(result.user);
         notify.success('Signed in.');
         await finish();
       } catch (error) {

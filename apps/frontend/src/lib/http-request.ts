@@ -10,7 +10,7 @@ import type {
   PaginatedResult,
   PaginationMetadata,
 } from '@org/shared-contracts';
-import { useAuthStore } from '@/stores/auth-store';
+import { endSession } from '@/features/auth/session';
 import { ApiError, isApiErrorEnvelope } from './api-error';
 import { notify } from './toast';
 
@@ -51,7 +51,7 @@ instance.interceptors.response.use(
         await refreshPromise;
         return instance(originalRequest);
       } catch (refreshError) {
-        useAuthStore.getState().clearUser();
+        endSession();
         return Promise.reject(toApiError(refreshError));
       } finally {
         refreshPromise = null;

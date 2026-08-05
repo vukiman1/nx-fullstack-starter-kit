@@ -4,6 +4,7 @@ import { appConfig } from '@/config/app-config';
 import { ensureGoogleIdentity, promptGoogleOneTap } from '@/lib/google-identity';
 import { authService } from '@/services/auth-service';
 import { selectIsAuthenticated, selectIsInitializing, useAuthStore } from '@/stores/auth-store';
+import { startSession } from './session';
 
 export function useGoogleOneTap(): void {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export function useGoogleOneTap(): void {
     const onCredential = async (credential: string) => {
       try {
         const result = await authService.googleOneTap(credential);
-        useAuthStore.getState().setUser(result.user);
+        startSession(result.user);
         await navigate({ to: '/' });
       } catch (error) {
         console.error('Google One Tap sign-in failed', error);
