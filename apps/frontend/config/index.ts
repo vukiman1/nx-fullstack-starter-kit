@@ -62,8 +62,6 @@ export function loadFrontendConfig(
       `.env.${nodeEnv}`,
       '.env.local',
       '.env',
-      join(frontendRoot, '.env.example'),
-      '.env.example',
     ],
   });
 
