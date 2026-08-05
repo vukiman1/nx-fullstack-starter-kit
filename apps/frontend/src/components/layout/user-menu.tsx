@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { endSession } from '@/features/auth/session';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { selectUser, useAuthStore } from '@/stores/auth-store';
@@ -16,7 +17,6 @@ import { selectUser, useAuthStore } from '@/stores/auth-store';
 export function UserMenu() {
   const navigate = useNavigate();
   const user = useAuthStore(selectUser);
-  const clearUser = useAuthStore((state) => state.clearUser);
   // Radix returns focus to the trigger on close, which keyboard users need but leaves a focus ring
   // sitting on the trigger after a click outside. Track how the menu was dismissed.
   const dismissedByPointer = useRef(false);
@@ -33,7 +33,7 @@ export function UserMenu() {
       // user can do about it here, and leaving them apparently signed in would be worse.
       console.warn('Logout request failed; clearing the local session anyway', error);
     } finally {
-      clearUser();
+      endSession();
       notify.success('Signed out.');
       await navigate({ to: '/' });
     }
