@@ -1,4 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { applyConnectionUrls } from '@org/backend-config';
 import dotenv from 'dotenv';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -16,18 +17,26 @@ interface DatabaseConfig {
 const backendRoot = resolveBackendRoot();
 const nodeEnv = process.env.NODE_ENV || 'development';
 
+// Expanded before the files are read so a DATABASE_URL passed on the command line wins: dotenv
+// never overwrites what is already set, so filling DB_* from a file first would silently send a
+// production migration to whatever database the local files point at.
+applyConnectionUrls();
+
+// .env.example is deliberately absent: it is documentation, and it pins DB_* to localhost, so
+// loading it would override the call above. Defaults belong in config/default.yml.
 dotenv.config({
   path: [
     join(backendRoot, `.env.${nodeEnv}`),
     join(backendRoot, '.env.local'),
     join(backendRoot, '.env'),
-    join(backendRoot, '.env.example'),
     `.env.${nodeEnv}`,
     '.env.local',
     '.env',
-    '.env.example',
   ],
 });
+
+// A DATABASE_URL that came from one of those files still needs expanding.
+applyConnectionUrls();
 
 const dbConfig: DatabaseConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -43,6 +52,9 @@ const migrationExtension = isTsRuntime ? 'ts' : 'js';
 export const options: DataSourceOptions = {
   type: 'postgres',
   ...dbConfig,
+  // Hosted Postgres refuses plaintext connections; without this, migrations cannot reach Neon
+  // and friends at all. Mirrors the runtime setting in database.module.ts.
+  ssl: process.env.DB_TLS === 'true' ? { rejectUnauthorized: false } : false,
   entities: [UserEntity, UserSessionEntity],
   migrationsTableName: 'migrations',
   migrations: [join(__dirname, `src/migrations/*.${migrationExtension}`)],
@@ -55,7 +67,7 @@ function resolveBackendRoot() {
   const candidates = [join(process.cwd(), 'apps/backend'), process.cwd(), join(__dirname, '..')];
 
   return (
-    candidates.find((candidate) => existsSync(join(candidate, '.env.example'))) ||
+    candidates.find((candidate) => existsSync(join(candidate, 'config/default.yml'))) ||
     join(process.cwd(), 'apps/backend')
   );
 }
