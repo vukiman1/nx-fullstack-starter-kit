@@ -157,6 +157,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # ormconfigs.ts imports @org/backend-config to expand DATABASE_URL, and that package resolves
+      # to its build output rather than its source.
+      - run: pnpm nx build backend-config
+
       # Neon's pooled endpoint runs PgBouncer in transaction mode, which cannot be trusted with DDL.
       - name: Run pending migrations
         env:
