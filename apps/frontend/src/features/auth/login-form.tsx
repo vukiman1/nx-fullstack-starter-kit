@@ -9,6 +9,7 @@ import { ApiError } from '@/lib/api-error';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { startSession } from './session';
+import { TwoFactorStep } from './two-factor-step';
 import { loginSchema, type LoginFormValues } from './schemas';
 import { GoogleSignInButton } from './google-sign-in-button';
 import { useAuthModal } from './use-auth-modal';
@@ -16,6 +17,7 @@ import { useAuthModal } from './use-auth-modal';
 export function LoginForm() {
   const { open, finish } = useAuthModal();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
 
   const form = useForm({
     defaultValues: {
@@ -30,6 +32,10 @@ export function LoginForm() {
       setSubmitError(null);
       try {
         const result = await authService.login(value);
+        if ('twoFactorRequired' in result) {
+          setChallengeToken(result.challengeToken);
+          return;
+        }
         startSession(result.user);
         notify.success('Signed in.');
         await finish();
@@ -42,6 +48,12 @@ export function LoginForm() {
       }
     },
   });
+
+  if (challengeToken) {
+    return (
+      <TwoFactorStep challengeToken={challengeToken} onExpired={() => setChallengeToken(null)} />
+    );
+  }
 
   return (
     <form

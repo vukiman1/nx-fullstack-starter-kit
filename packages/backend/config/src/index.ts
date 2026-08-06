@@ -36,6 +36,8 @@ interface ConfigReader {
 }
 
 interface AppConfig {
+  /** Shown as the issuer in authenticator apps, so it has to name the product. */
+  name: string;
   port: number | string;
   nodeEnv: string;
   url: string;
@@ -120,6 +122,7 @@ const durationSchema = z.string().regex(/^\d+(s|m|h|d)$/, 'Expected a duration l
 
 const backendConfigSchema = z.object({
   app: z.object({
+    name: z.string().min(1),
     port: z.coerce.number().int().positive(),
     nodeEnv: z.string().min(1),
     url: z.string().min(1),

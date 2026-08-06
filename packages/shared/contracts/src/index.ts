@@ -47,8 +47,43 @@ export interface GoogleOneTapPayload {
   credential: string;
 }
 
-export interface LoginResponse {
+export interface LoginSucceeded {
   user: User;
+}
+
+/**
+ * Sign-in stops here when a second factor is due. No session exists yet — the challenge token only
+ * buys the right to try a code.
+ */
+export interface TwoFactorRequired {
+  twoFactorRequired: true;
+  challengeToken: string;
+}
+
+/** A union so callers cannot read `user` without first ruling out the challenge case. */
+export type LoginResponse = LoginSucceeded | TwoFactorRequired;
+
+export interface ResetPasswordPayload {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface MessageResponse {
+  message: string;
+}
+
+export interface TwoFactorStatusResponse {
+  enabled: boolean;
+  unusedRecoveryCodes: number;
+}
+
+export interface TwoFactorSetupResponse {
+  otpauthUri: string;
+}
+
+export interface TwoFactorEnabledResponse {
+  recoveryCodes: string[];
 }
 
 export interface RefreshTokenResponse {

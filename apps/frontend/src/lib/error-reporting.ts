@@ -5,9 +5,8 @@ type SentryModule = typeof import('@sentry/react');
 let sentryModule: Promise<SentryModule> | null = null;
 
 /**
- * Sentry is a quarter of the bundle, and it is inert without a DSN. Importing it dynamically keeps
- * it out of the initial download entirely for anyone who has not configured one. The cost is that
- * failures in the first few hundred milliseconds — before the chunk arrives — go unreported.
+ * Sentry is a quarter of the bundle and inert without a DSN, so it is loaded dynamically. The cost
+ * is that failures before the chunk arrives go unreported.
  */
 function loadSentry(): Promise<SentryModule> {
   sentryModule ??= import('@sentry/react');

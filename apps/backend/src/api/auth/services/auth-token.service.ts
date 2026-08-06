@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 export enum OneTimeTokenKind {
   EMAIL_VERIFY = 'EMAIL_VERIFY',
   PASSWORD_RESET = 'PASSWORD_RESET',
+  TWO_FACTOR_RECOVERY = 'TWO_FACTOR_RECOVERY',
 }
 
 const TOKEN_BYTES = 32;

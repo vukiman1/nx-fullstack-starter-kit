@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  GoneException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as argon2 from 'argon2';
 import type { Request, Response } from 'express';
 import { CryptoService } from '@org/backend-crypto';
@@ -14,6 +19,8 @@ import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 import { AuthProvider } from '@org/backend-enum';
 import { GoogleOneTapVerifier } from './social/google-one-tap.verifier';
 import { SocialAuthService } from './social/social-auth.service';
+import { TwoFactorService } from './two-factor.service';
+import { TwoFactorChallengeService } from './two-factor-challenge.service';
 
 const ACCESS_TTL_MS = 900_000;
 const REFRESH_TTL_MS = 86_400_000;
@@ -39,6 +46,7 @@ describe('AuthService', () => {
     sendWelcomeEmail: jest.Mock;
     sendVerificationEmail: jest.Mock;
     sendPasswordResetEmail: jest.Mock;
+    sendTwoFactorRecoveryEmail: jest.Mock;
   };
   let audit: { record: jest.Mock };
   let userSessionService: {
@@ -51,6 +59,21 @@ describe('AuthService', () => {
     revokeOtherSessions: jest.Mock;
   };
   let verifier: { verify: jest.Mock };
+  let twoFactorService: {
+    isEnabled: jest.Mock;
+    consumeCode: jest.Mock;
+    startEnrolment: jest.Mock;
+    confirmEnrolment: jest.Mock;
+    disable: jest.Mock;
+    regenerateRecoveryCodes: jest.Mock;
+    countUnusedRecoveryCodes: jest.Mock;
+  };
+  let twoFactorChallenge: {
+    issue: jest.Mock;
+    peek: jest.Mock;
+    recordFailure: jest.Mock;
+    consume: jest.Mock;
+  };
   let socialAuthService: { findOrLinkIdentity: jest.Mock };
   let service: AuthService;
 
@@ -89,6 +112,7 @@ describe('AuthService', () => {
       sendWelcomeEmail: jest.fn(),
       sendVerificationEmail: jest.fn(),
       sendPasswordResetEmail: jest.fn(),
+      sendTwoFactorRecoveryEmail: jest.fn(),
     };
     audit = { record: jest.fn() };
     userSessionService = {
@@ -103,6 +127,21 @@ describe('AuthService', () => {
 
     verifier = { verify: jest.fn() };
     socialAuthService = { findOrLinkIdentity: jest.fn() };
+    twoFactorService = {
+      isEnabled: jest.fn().mockResolvedValue(false),
+      consumeCode: jest.fn(),
+      startEnrolment: jest.fn(),
+      confirmEnrolment: jest.fn(),
+      disable: jest.fn(),
+      regenerateRecoveryCodes: jest.fn(),
+      countUnusedRecoveryCodes: jest.fn().mockResolvedValue(0),
+    };
+    twoFactorChallenge = {
+      issue: jest.fn().mockResolvedValue('challenge-1'),
+      peek: jest.fn(),
+      recordFailure: jest.fn(),
+      consume: jest.fn(),
+    };
 
     service = new AuthService(
       crypto as unknown as CryptoService,
@@ -114,6 +153,8 @@ describe('AuthService', () => {
       userSessionService as unknown as UserSessionService,
       verifier as unknown as GoogleOneTapVerifier,
       socialAuthService as unknown as SocialAuthService,
+      twoFactorService as unknown as TwoFactorService,
+      twoFactorChallenge as unknown as TwoFactorChallengeService,
     );
   });
 
@@ -282,7 +323,84 @@ describe('AuthService', () => {
         AuthEvent.LOGIN_SUCCEEDED,
         expect.objectContaining({ jti: 'jti-1' }),
       );
-      expect(result.user.email).toBe('a@b.c');
+      expect('user' in result && result.user.email).toBe('a@b.c');
+    });
+  });
+
+  describe('two-factor at sign-in', () => {
+    const user = { id: 'user-1', email: 'a@b.c', password: 'hashed' } as never;
+
+    it('issues no session at all while a second factor is outstanding', async () => {
+      twoFactorService.isEnabled.mockResolvedValue(true);
+      const response = mockResponse();
+
+      const result = await service.login(user, response, request, true);
+
+      expect(result).toEqual({ twoFactorRequired: true, challengeToken: 'challenge-1' });
+      expect(sessionService.createSession).not.toHaveBeenCalled();
+      expect(response.cookie).not.toHaveBeenCalled();
+    });
+
+    it('creates the session only once the code checks out', async () => {
+      twoFactorChallenge.peek.mockResolvedValue({ userId: 'user-1', rememberMe: false });
+      twoFactorService.consumeCode.mockResolvedValue(true);
+      userService.getOneOrFail.mockResolvedValue(user);
+      const response = mockResponse();
+
+      await service.verifyTwoFactor('challenge-1', '123456', response, request);
+
+      expect(sessionService.createSession).toHaveBeenCalled();
+      expect(twoFactorChallenge.consume).toHaveBeenCalledWith('challenge-1');
+    });
+
+    it('rejects a wrong code without creating anything', async () => {
+      twoFactorChallenge.peek.mockResolvedValue({ userId: 'user-1', rememberMe: false });
+      twoFactorService.consumeCode.mockResolvedValue(false);
+      twoFactorChallenge.recordFailure.mockResolvedValue(true);
+      const response = mockResponse();
+
+      await expect(
+        service.verifyTwoFactor('challenge-1', '000000', response, request),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(sessionService.createSession).not.toHaveBeenCalled();
+      expect(twoFactorChallenge.consume).not.toHaveBeenCalled();
+    });
+
+    it('answers 410 for a challenge that is gone, so the client can tell it apart', async () => {
+      twoFactorChallenge.peek.mockResolvedValue(null);
+
+      await expect(
+        service.verifyTwoFactor('nope', '123456', mockResponse(), request),
+      ).rejects.toBeInstanceOf(GoneException);
+      expect(twoFactorService.consumeCode).not.toHaveBeenCalled();
+    });
+
+    it('answers 410 once the attempts are used up, and 401 before that', async () => {
+      twoFactorChallenge.peek.mockResolvedValue({ userId: 'user-1', rememberMe: false });
+      twoFactorService.consumeCode.mockResolvedValue(false);
+
+      twoFactorChallenge.recordFailure.mockResolvedValue(true);
+      await expect(
+        service.verifyTwoFactor('c', '000000', mockResponse(), request),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+
+      twoFactorChallenge.recordFailure.mockResolvedValue(false);
+      await expect(
+        service.verifyTwoFactor('c', '000000', mockResponse(), request),
+      ).rejects.toBeInstanceOf(GoneException);
+    });
+
+    it('carries rememberMe from the password step through to the session', async () => {
+      twoFactorChallenge.peek.mockResolvedValue({ userId: 'user-1', rememberMe: true });
+      twoFactorService.consumeCode.mockResolvedValue(true);
+      userService.getOneOrFail.mockResolvedValue(user);
+
+      await service.verifyTwoFactor('challenge-1', '123456', mockResponse(), request);
+
+      expect(sessionService.createSession).toHaveBeenCalledWith(
+        'user-1',
+        SessionPersistence.REMEMBER,
+      );
     });
   });
 

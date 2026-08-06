@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  GoneException,
   ConflictException,
   Injectable,
   Logger,
@@ -25,6 +26,8 @@ import { SessionPersistence } from '../enums/session-persistence.enum';
 import { AuthProvider } from '@org/backend-enum';
 import { GoogleOneTapVerifier } from './social/google-one-tap.verifier';
 import { SocialAuthService } from './social/social-auth.service';
+import { TwoFactorService } from './two-factor.service';
+import { TwoFactorChallengeService } from './two-factor-challenge.service';
 
 const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
@@ -55,6 +58,8 @@ export class AuthService {
     private readonly userSessionService: UserSessionService,
     private readonly googleOneTapVerifier: GoogleOneTapVerifier,
     private readonly socialAuthService: SocialAuthService,
+    private readonly twoFactorService: TwoFactorService,
+    private readonly twoFactorChallengeService: TwoFactorChallengeService,
   ) {}
 
   me(user: UserEntity) {
@@ -65,10 +70,52 @@ export class AuthService {
   }
 
   async login(user: UserEntity, response: Response, request: Request, rememberMe: boolean) {
+    // Issuing a session before the code would make the code optional: a caller could skip the
+    // prompt and use the cookie straight away.
+    if (await this.twoFactorService.isEnabled(user.id)) {
+      const challengeToken = await this.twoFactorChallengeService.issue(user.id, rememberMe);
+      this.auditService.record(AuthEvent.LOGIN_TWO_FACTOR_REQUIRED, { userId: user.id, request });
+      return { twoFactorRequired: true as const, challengeToken };
+    }
+
     const persistence = rememberMe ? SessionPersistence.REMEMBER : SessionPersistence.STANDARD;
     return this.issueSession(user, response, request, {
       persistence,
       rememberMe,
+      authProvider: AuthProvider.LOCAL,
+    });
+  }
+
+  async verifyTwoFactor(
+    challengeToken: string,
+    code: string,
+    response: Response,
+    request: Request,
+  ) {
+    const claim = await this.twoFactorChallengeService.peek(challengeToken);
+    if (!claim) {
+      // 410 rather than 401: the client has to tell "wrong code, try again" apart from "this
+      // challenge is gone, start over", and matching on message text would break on rewording.
+      throw new GoneException('That sign-in attempt has expired. Please start again.');
+    }
+
+    if (!(await this.twoFactorService.consumeCode(claim.userId, code))) {
+      const stillAlive = await this.twoFactorChallengeService.recordFailure(challengeToken);
+      this.auditService.record(AuthEvent.LOGIN_TWO_FACTOR_FAILED, {
+        userId: claim.userId,
+        request,
+      });
+      if (!stillAlive) {
+        throw new GoneException('Too many attempts. Please sign in again.');
+      }
+      throw new UnauthorizedException('That code is not valid');
+    }
+
+    await this.twoFactorChallengeService.consume(challengeToken);
+    const user = await this.userService.getOneOrFail({ id: claim.userId });
+    return this.issueSession(user, response, request, {
+      persistence: claim.rememberMe ? SessionPersistence.REMEMBER : SessionPersistence.STANDARD,
+      rememberMe: claim.rememberMe,
       authProvider: AuthProvider.LOCAL,
     });
   }

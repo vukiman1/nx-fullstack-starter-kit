@@ -14,6 +14,12 @@ import { UserLocalStrategy } from './strategies/local/user.local.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { UserSessionEntity } from './entities/user-session.entity';
 import { AuthIdentityEntity } from './entities/auth-identity.entity';
+import { UserTotpEntity } from './entities/user-totp.entity';
+import { UserRecoveryCodeEntity } from './entities/user-recovery-code.entity';
+import { TotpService } from './services/totp.service';
+import { TwoFactorService } from './services/two-factor.service';
+import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
+import { TwoFactorAccountService } from './services/two-factor-account.service';
 import { GoogleOneTapVerifier } from './services/social/google-one-tap.verifier';
 import { SocialAuthService } from './services/social/social-auth.service';
 
@@ -21,7 +27,12 @@ import { SocialAuthService } from './services/social/social-auth.service';
   imports: [
     UserModule,
     PassportModule,
-    TypeOrmModule.forFeature([UserSessionEntity, AuthIdentityEntity]),
+    TypeOrmModule.forFeature([
+      UserSessionEntity,
+      AuthIdentityEntity,
+      UserTotpEntity,
+      UserRecoveryCodeEntity,
+    ]),
   ],
   controllers: [AuthUserController],
   providers: [
@@ -36,6 +47,10 @@ import { SocialAuthService } from './services/social/social-auth.service';
     UserLocalStrategy,
     GoogleOneTapVerifier,
     SocialAuthService,
+    TotpService,
+    TwoFactorService,
+    TwoFactorChallengeService,
+    TwoFactorAccountService,
   ],
 })
 export class AuthModule {}

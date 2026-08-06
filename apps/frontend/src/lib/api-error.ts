@@ -5,9 +5,7 @@ function extractMessage(errors: ApiErrorPayload): string {
     const message = (errors as { message: unknown }).message;
     if (typeof message === 'string') return message;
   }
-  const firstValue = Object.values(errors ?? {}).find(
-    (value) => typeof value === 'string',
-  );
+  const firstValue = Object.values(errors ?? {}).find((value) => typeof value === 'string');
   return typeof firstValue === 'string' ? firstValue : 'Request failed';
 }
 

@@ -12,6 +12,12 @@ export enum AuthEvent {
   PASSWORD_RESET_REQUESTED = 'auth.password.reset_requested',
   PASSWORD_RESET = 'auth.password.reset',
   PASSWORD_CHANGED = 'auth.password.changed',
+  LOGIN_TWO_FACTOR_REQUIRED = 'auth.login.two_factor_required',
+  LOGIN_TWO_FACTOR_FAILED = 'auth.login.two_factor_failed',
+  TWO_FACTOR_ENABLED = 'auth.two_factor.enabled',
+  TWO_FACTOR_DISABLED = 'auth.two_factor.disabled',
+  TWO_FACTOR_RECOVERY_REQUESTED = 'auth.two_factor.recovery_requested',
+  TWO_FACTOR_RECOVERED = 'auth.two_factor.recovered',
 }
 
 interface AuthEventContext {

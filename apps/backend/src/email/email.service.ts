@@ -6,9 +6,11 @@ import { EmailSendError } from './email.errors';
 import { WelcomeEmail } from './templates/welcome.email';
 import { VerifyEmail } from './templates/verify-email.email';
 import { ResetPasswordEmail } from './templates/reset-password.email';
+import { TwoFactorRecoveryEmail } from './templates/two-factor-recovery.email';
 
 const VERIFY_EMAIL_PATH = '/verify-email';
 const RESET_PASSWORD_PATH = '/reset-password';
+const TWO_FACTOR_RECOVERY_PATH = '/two-factor-recovery';
 
 interface SendEmailParams {
   to: string;
@@ -49,6 +51,12 @@ export class EmailService {
     const resetUrl = this.buildLink(RESET_PASSWORD_PATH, token);
     const html = await render(ResetPasswordEmail({ resetUrl }));
     await this.send({ to, subject: 'Reset your password', html });
+  }
+
+  async sendTwoFactorRecoveryEmail(to: string, token: string): Promise<void> {
+    const recoveryUrl = this.buildLink(TWO_FACTOR_RECOVERY_PATH, token);
+    const html = await render(TwoFactorRecoveryEmail({ recoveryUrl }));
+    await this.send({ to, subject: 'Turn off two-factor authentication', html });
   }
 
   private buildLink(path: string, token: string): string {
