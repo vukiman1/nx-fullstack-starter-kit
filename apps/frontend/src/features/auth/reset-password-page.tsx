@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api-error';
 import { authService } from '@/services/auth-service';
-import { strongPassword } from '@/features/settings/schemas';
+import { strongPassword } from './schemas';
 
 const fields = z.object({
   password: strongPassword,

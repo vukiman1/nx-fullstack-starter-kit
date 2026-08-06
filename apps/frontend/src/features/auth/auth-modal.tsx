@@ -37,11 +37,9 @@ export function AuthModal() {
       <DialogContent aria-describedby="auth-modal-description">
         <DialogHeader>
           <p className="text-sm font-extrabold uppercase text-primary">Account access</p>
-          <DialogTitle>{isLogin ? 'Sign in' : 'Register'}</DialogTitle>
+          <DialogTitle>{isLogin ? 'Sign in' : 'Create your account'}</DialogTitle>
           <DialogDescription id="auth-modal-description">
-            {isLogin
-              ? 'Enter your credentials to continue.'
-              : 'Create account flow will live here.'}
+            {isLogin ? 'Enter your credentials to continue.' : 'Create an account to get started.'}
           </DialogDescription>
         </DialogHeader>
 

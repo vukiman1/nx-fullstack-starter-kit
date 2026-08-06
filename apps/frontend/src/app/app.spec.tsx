@@ -55,12 +55,12 @@ describe('App', () => {
   });
 
   it('switches from sign-in to register inside the modal', async () => {
-    const { findByRole, findByText } = render(<App />);
+    const { findByLabelText, findByRole } = render(<App />);
 
     fireEvent.click(await findByRole('button', { name: /login/i }));
     fireEvent.click(await findByRole('button', { name: /create an account/i }));
 
-    expect(await findByRole('heading', { name: /register/i })).toBeTruthy();
-    expect(await findByText(/create account flow/i)).toBeTruthy();
+    expect(await findByRole('heading', { name: /create your account/i })).toBeTruthy();
+    expect(await findByLabelText('Confirm password')).toBeTruthy();
   });
 });
