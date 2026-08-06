@@ -1,10 +1,5 @@
 import { z } from 'zod';
-
-/** Mirrors IsStrongPassword on the backend — keep the two in step or the server rejects what the form accepted. */
-export const strongPassword = z
-  .string()
-  .min(8, 'Password must be at least 8 characters.')
-  .regex(/^(?=.*[A-Za-z])(?=.*\d).+$/, 'Password must contain at least one letter and one number.');
+import { strongPassword } from '@/features/auth/schemas';
 
 const changePasswordFields = z.object({
   currentPassword: z.string().min(1, 'Enter your current password.'),
