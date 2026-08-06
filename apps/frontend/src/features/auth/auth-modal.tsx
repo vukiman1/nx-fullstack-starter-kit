@@ -1,14 +1,8 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { selectIsAuthenticated, useAuthStore } from '@/stores/auth-store';
-import { LoginForm } from './login-form';
-import { RegisterForm } from './register-form';
+import { SignInPanel } from './sign-in-panel';
+import { SignUpPanel } from './sign-up-panel';
 import { useAuthModal, type AuthModalView } from './use-auth-modal';
 
 export function AuthModal() {
@@ -35,15 +29,7 @@ export function AuthModal() {
       }}
     >
       <DialogContent aria-describedby="auth-modal-description">
-        <DialogHeader>
-          <p className="text-sm font-extrabold uppercase text-primary">Account access</p>
-          <DialogTitle>{isLogin ? 'Sign in' : 'Create your account'}</DialogTitle>
-          <DialogDescription id="auth-modal-description">
-            {isLogin ? 'Enter your credentials to continue.' : 'Create an account to get started.'}
-          </DialogDescription>
-        </DialogHeader>
-
-        {isLogin ? <LoginForm /> : <RegisterForm />}
+        {isLogin ? <SignInPanel /> : <SignUpPanel />}
       </DialogContent>
     </Dialog>
   );

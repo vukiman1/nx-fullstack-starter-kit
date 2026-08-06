@@ -19,6 +19,10 @@ export class UserEntity extends BaseEntity {
   })
   email!: string;
 
+  /** Optional: accounts created through Google can arrive without one. */
+  @Column({ type: 'varchar', nullable: true, length: 255, name: 'display_name' })
+  displayName!: string | null;
+
   @Column({
     type: 'varchar',
     nullable: true,

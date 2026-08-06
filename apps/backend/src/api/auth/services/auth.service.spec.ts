@@ -11,7 +11,6 @@ import { UserService } from '../../user/user.service';
 import { EmailService } from '../../../email/email.service';
 import { AuthService } from './auth.service';
 import { SessionService } from './session.service';
-import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
 import { SessionPersistence } from '../enums/session-persistence.enum';
@@ -21,6 +20,7 @@ import { GoogleOneTapVerifier } from './social/google-one-tap.verifier';
 import { SocialAuthService } from './social/social-auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { TwoFactorChallengeService } from './two-factor-challenge.service';
+import { EmailCodeService } from './email-code.service';
 
 const ACCESS_TTL_MS = 900_000;
 const REFRESH_TTL_MS = 86_400_000;
@@ -41,12 +41,11 @@ describe('AuthService', () => {
     revokeAllSessions: jest.Mock;
     revokeOtherSessions: jest.Mock;
   };
-  let authToken: { issue: jest.Mock; consume: jest.Mock };
   let email: {
     sendWelcomeEmail: jest.Mock;
-    sendVerificationEmail: jest.Mock;
-    sendPasswordResetEmail: jest.Mock;
-    sendTwoFactorRecoveryEmail: jest.Mock;
+    sendVerificationCode: jest.Mock;
+    sendPasswordResetCode: jest.Mock;
+    sendTwoFactorRecoveryCode: jest.Mock;
   };
   let audit: { record: jest.Mock };
   let userSessionService: {
@@ -74,6 +73,7 @@ describe('AuthService', () => {
     recordFailure: jest.Mock;
     consume: jest.Mock;
   };
+  let emailCode: { issue: jest.Mock; consume: jest.Mock };
   let socialAuthService: { findOrLinkIdentity: jest.Mock };
   let service: AuthService;
 
@@ -107,12 +107,11 @@ describe('AuthService', () => {
       revokeAllSessions: jest.fn(),
       revokeOtherSessions: jest.fn(),
     };
-    authToken = { issue: jest.fn().mockResolvedValue('one-time-token'), consume: jest.fn() };
     email = {
       sendWelcomeEmail: jest.fn(),
-      sendVerificationEmail: jest.fn(),
-      sendPasswordResetEmail: jest.fn(),
-      sendTwoFactorRecoveryEmail: jest.fn(),
+      sendVerificationCode: jest.fn(),
+      sendPasswordResetCode: jest.fn(),
+      sendTwoFactorRecoveryCode: jest.fn(),
     };
     audit = { record: jest.fn() };
     userSessionService = {
@@ -142,12 +141,12 @@ describe('AuthService', () => {
       recordFailure: jest.fn(),
       consume: jest.fn(),
     };
+    emailCode = { issue: jest.fn().mockResolvedValue('123456'), consume: jest.fn() };
 
     service = new AuthService(
       crypto as unknown as CryptoService,
       userService as unknown as UserService,
       sessionService as unknown as SessionService,
-      authToken as unknown as AuthTokenService,
       email as unknown as EmailService,
       audit as unknown as AuthAuditService,
       userSessionService as unknown as UserSessionService,
@@ -155,11 +154,17 @@ describe('AuthService', () => {
       socialAuthService as unknown as SocialAuthService,
       twoFactorService as unknown as TwoFactorService,
       twoFactorChallenge as unknown as TwoFactorChallengeService,
+      emailCode as unknown as EmailCodeService,
     );
   });
 
   describe('register', () => {
-    const dto = { email: 'a@b.c', password: 'passw0rd', confirmPassword: 'passw0rd' };
+    const dto = {
+      displayName: 'Jane Doe',
+      email: 'a@b.c',
+      password: 'passw0rd',
+      confirmPassword: 'passw0rd',
+    };
 
     it('rejects a duplicate email', async () => {
       userService.getOne.mockResolvedValue({ id: 'user-1' });
@@ -172,13 +177,21 @@ describe('AuthService', () => {
 
       const result = await service.register(dto, request);
 
-      expect(userService.create).toHaveBeenCalledWith({ email: 'a@b.c', password: 'passw0rd' });
-      expect(authToken.issue).toHaveBeenCalledWith(
-        OneTimeTokenKind.EMAIL_VERIFY,
+      expect(userService.create).toHaveBeenCalledWith({
+        displayName: 'Jane Doe',
+        email: 'a@b.c',
+        password: 'passw0rd',
+      });
+      expect(emailCode.issue).toHaveBeenCalledWith(
+        expect.stringContaining('EMAIL_CODE_VERIFY'),
         'user-1',
         expect.any(Number),
       );
-      expect(email.sendVerificationEmail).toHaveBeenCalledWith('a@b.c', 'one-time-token');
+      expect(email.sendVerificationCode).toHaveBeenCalledWith(
+        'a@b.c',
+        '123456',
+        expect.any(Number),
+      );
       expect(email.sendWelcomeEmail).not.toHaveBeenCalled();
       expect(audit.record).toHaveBeenCalledWith(
         AuthEvent.REGISTERED,
@@ -189,20 +202,32 @@ describe('AuthService', () => {
   });
 
   describe('verifyEmail', () => {
-    it('rejects an invalid or expired token', async () => {
-      authToken.consume.mockResolvedValue(null);
-      await expect(service.verifyEmail('bad', request)).rejects.toBeInstanceOf(BadRequestException);
+    const dto = { email: 'a@b.c', code: '123456' };
+
+    it('rejects a code that is wrong or has expired', async () => {
+      userService.getOne.mockResolvedValue({ id: 'user-1' });
+      emailCode.consume.mockResolvedValue(null);
+      await expect(service.verifyEmail(dto, request)).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('answers the same way for an address that has no account', async () => {
+      userService.getOne.mockResolvedValue(null);
+
+      await expect(service.verifyEmail(dto, request)).rejects.toBeInstanceOf(BadRequestException);
+      // Never even looked: a different answer here would confirm who has an account.
+      expect(emailCode.consume).not.toHaveBeenCalled();
     });
 
     it('marks the user verified and sends the welcome email', async () => {
-      authToken.consume.mockResolvedValue('user-1');
+      userService.getOne.mockResolvedValue({ id: 'user-1' });
+      emailCode.consume.mockResolvedValue('user-1');
       userService.getOneOrFail.mockResolvedValue({
         id: 'user-1',
         email: 'a@b.c',
         isEmailVerified: false,
       });
 
-      await service.verifyEmail('tok', request);
+      await service.verifyEmail(dto, request);
 
       expect(userService.update).toHaveBeenCalledWith(expect.objectContaining({ id: 'user-1' }), {
         isEmailVerified: true,
@@ -218,34 +243,45 @@ describe('AuthService', () => {
 
       await service.forgotPassword('nobody@b.c', request);
 
-      expect(authToken.issue).not.toHaveBeenCalled();
-      expect(email.sendPasswordResetEmail).not.toHaveBeenCalled();
+      expect(emailCode.issue).not.toHaveBeenCalled();
+      expect(email.sendPasswordResetCode).not.toHaveBeenCalled();
     });
 
-    it('issues a reset token and emails it when the user exists', async () => {
+    it('issues a reset code and emails it when the user exists', async () => {
       userService.getOne.mockResolvedValue({ id: 'user-1' });
 
       await service.forgotPassword('a@b.c', request);
 
-      expect(authToken.issue).toHaveBeenCalledWith(
-        OneTimeTokenKind.PASSWORD_RESET,
+      expect(emailCode.issue).toHaveBeenCalledWith(
+        expect.stringContaining('EMAIL_CODE_PASSWORD_RESET'),
         'user-1',
         expect.any(Number),
       );
-      expect(email.sendPasswordResetEmail).toHaveBeenCalledWith('a@b.c', 'one-time-token');
+      expect(email.sendPasswordResetCode).toHaveBeenCalledWith(
+        'a@b.c',
+        '123456',
+        expect.any(Number),
+      );
     });
   });
 
   describe('resetPassword', () => {
-    const dto = { token: 'tok', password: 'newpass1', confirmPassword: 'newpass1' };
+    const dto = {
+      email: 'a@b.c',
+      code: '123456',
+      password: 'newpass1',
+      confirmPassword: 'newpass1',
+    };
 
-    it('rejects an invalid or expired token', async () => {
-      authToken.consume.mockResolvedValue(null);
+    it('rejects a code that is wrong or has expired', async () => {
+      userService.getOne.mockResolvedValue({ id: 'user-1' });
+      emailCode.consume.mockResolvedValue(null);
       await expect(service.resetPassword(dto, request)).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('updates the password and revokes every session', async () => {
-      authToken.consume.mockResolvedValue('user-1');
+      userService.getOne.mockResolvedValue({ id: 'user-1' });
+      emailCode.consume.mockResolvedValue('user-1');
       userService.getOneOrFail.mockResolvedValue({ id: 'user-1', email: 'a@b.c' });
 
       await service.resetPassword(dto, request);

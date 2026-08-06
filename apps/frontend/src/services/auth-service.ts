@@ -72,8 +72,8 @@ export const authService = {
     return httpRequest.post<TwoFactorEnabledResponse>('/auth/2fa/recovery-codes');
   },
 
-  verifyEmail(token: string) {
-    return httpRequest.post<MessageResponse>('/auth/verify-email', { token });
+  verifyEmail(email: string, code: string) {
+    return httpRequest.post<MessageResponse>('/auth/verify-email', { email, code });
   },
 
   resendVerification(email: string) {
@@ -88,8 +88,11 @@ export const authService = {
     return httpRequest.post<{ message: string }>('/auth/2fa/recover', { challengeToken });
   },
 
-  confirmTwoFactorRecovery(token: string) {
-    return httpRequest.post<{ message: string }>('/auth/2fa/recover/confirm', { token });
+  confirmTwoFactorRecovery(challengeToken: string, code: string) {
+    return httpRequest.post<{ message: string }>('/auth/2fa/recover/confirm', {
+      challengeToken,
+      code,
+    });
   },
 
   verifyTwoFactor(challengeToken: string, code: string) {

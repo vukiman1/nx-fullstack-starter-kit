@@ -18,6 +18,7 @@ export const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 const registerFields = z.object({
+  displayName: z.string().min(1, 'Enter your name.').max(255, 'That name is too long.'),
   email: z.email('Enter a valid email address.'),
   password: strongPassword,
   confirmPassword: z.string().min(1, 'Confirm your password.'),

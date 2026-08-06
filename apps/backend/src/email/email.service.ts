@@ -1,16 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { render } from '@react-email/render';
+import { VerificationCodeEmail } from './templates/verification-code.email';
 import { Resend } from 'resend';
 import { EmailSendError } from './email.errors';
 import { WelcomeEmail } from './templates/welcome.email';
-import { VerifyEmail } from './templates/verify-email.email';
-import { ResetPasswordEmail } from './templates/reset-password.email';
-import { TwoFactorRecoveryEmail } from './templates/two-factor-recovery.email';
-
-const VERIFY_EMAIL_PATH = '/verify-email';
-const RESET_PASSWORD_PATH = '/reset-password';
-const TWO_FACTOR_RECOVERY_PATH = '/two-factor-recovery';
 
 interface SendEmailParams {
   to: string;
@@ -41,26 +35,41 @@ export class EmailService {
     await this.send({ to, subject: 'Welcome aboard 🎉', html });
   }
 
-  async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const verifyUrl = this.buildLink(VERIFY_EMAIL_PATH, token);
-    const html = await render(VerifyEmail({ verifyUrl }));
-    await this.send({ to, subject: 'Confirm your email', html });
+  async sendVerificationCode(to: string, code: string, expiryMinutes: number): Promise<void> {
+    const html = await render(
+      VerificationCodeEmail({
+        heading: 'Confirm your email',
+        intro: 'Enter this code to finish setting up your account.',
+        code,
+        expiryMinutes,
+      }),
+    );
+    await this.send({ to, subject: `${code} is your confirmation code`, html });
   }
 
-  async sendPasswordResetEmail(to: string, token: string): Promise<void> {
-    const resetUrl = this.buildLink(RESET_PASSWORD_PATH, token);
-    const html = await render(ResetPasswordEmail({ resetUrl }));
-    await this.send({ to, subject: 'Reset your password', html });
+  async sendPasswordResetCode(to: string, code: string, expiryMinutes: number): Promise<void> {
+    const html = await render(
+      VerificationCodeEmail({
+        heading: 'Reset your password',
+        intro: 'Enter this code to choose a new password.',
+        code,
+        expiryMinutes,
+      }),
+    );
+    await this.send({ to, subject: `${code} is your password reset code`, html });
   }
 
-  async sendTwoFactorRecoveryEmail(to: string, token: string): Promise<void> {
-    const recoveryUrl = this.buildLink(TWO_FACTOR_RECOVERY_PATH, token);
-    const html = await render(TwoFactorRecoveryEmail({ recoveryUrl }));
-    await this.send({ to, subject: 'Turn off two-factor authentication', html });
-  }
-
-  private buildLink(path: string, token: string): string {
-    return `${this.appUrl}${path}?token=${encodeURIComponent(token)}`;
+  async sendTwoFactorRecoveryCode(to: string, code: string, expiryMinutes: number): Promise<void> {
+    const html = await render(
+      VerificationCodeEmail({
+        heading: 'Turn off two-factor authentication',
+        intro:
+          'Enter this code to switch two-factor off. Every signed-in device will be signed out.',
+        code,
+        expiryMinutes,
+      }),
+    );
+    await this.send({ to, subject: `${code} is your recovery code`, html });
   }
 
   private async send({ to, subject, html }: SendEmailParams): Promise<void> {

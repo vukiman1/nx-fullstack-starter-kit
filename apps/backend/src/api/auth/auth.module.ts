@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from './services/auth.service';
 import { SessionService } from './services/session.service';
-import { AuthTokenService } from './services/auth-token.service';
 import { AuthAuditService } from './services/auth-audit.service';
 import { UserSessionService } from './services/user-session.service';
 import { GeoIpService } from './services/geo-ip.service';
@@ -20,6 +19,7 @@ import { TotpService } from './services/totp.service';
 import { TwoFactorService } from './services/two-factor.service';
 import { TwoFactorChallengeService } from './services/two-factor-challenge.service';
 import { TwoFactorAccountService } from './services/two-factor-account.service';
+import { EmailCodeService } from './services/email-code.service';
 import { GoogleOneTapVerifier } from './services/social/google-one-tap.verifier';
 import { SocialAuthService } from './services/social/social-auth.service';
 
@@ -38,7 +38,6 @@ import { SocialAuthService } from './services/social/social-auth.service';
   providers: [
     AuthService,
     SessionService,
-    AuthTokenService,
     AuthAuditService,
     UserSessionService,
     GeoIpService,
@@ -51,6 +50,7 @@ import { SocialAuthService } from './services/social/social-auth.service';
     TwoFactorService,
     TwoFactorChallengeService,
     TwoFactorAccountService,
+    EmailCodeService,
   ],
 })
 export class AuthModule {}

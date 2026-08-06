@@ -96,6 +96,20 @@
  * of replacing it — which throws the modal into the top-left corner for the length of the animation.
  */
 @theme {
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
+
   --animate-modal-in: modal-in 0.3s;
   --animate-modal-out: modal-out 0.15s;
   --animate-backdrop-in: backdrop-in 0.3s;

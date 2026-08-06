@@ -31,6 +31,7 @@ export interface PaginatedResult<T> {
 // Auth
 export interface User {
   email: string;
+  displayName?: string | null;
   avatar?: string | null;
   balance?: number | string;
   isEmailVerified?: boolean;
@@ -64,7 +65,8 @@ export interface TwoFactorRequired {
 export type LoginResponse = LoginSucceeded | TwoFactorRequired;
 
 export interface ResetPasswordPayload {
-  token: string;
+  email: string;
+  code: string;
   password: string;
   confirmPassword: string;
 }
@@ -95,6 +97,7 @@ export interface MeResponse {
 }
 
 export interface RegisterPayload {
+  displayName: string;
   email: string;
   password: string;
   confirmPassword: string;

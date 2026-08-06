@@ -62,6 +62,7 @@ export class SocialAuthService {
       email: identity.email,
       isEmailVerified: identity.emailVerified,
       avatar: identity.avatar,
+      displayName: identity.displayName ?? null,
     });
     await this.saveIdentity(user.id, identity);
     return user;
