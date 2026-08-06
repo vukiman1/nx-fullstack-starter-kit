@@ -5,6 +5,9 @@ import type {
   ForgotPasswordResponse,
   LoginPayload,
   LoginResponse,
+  LoginSucceeded,
+  MessageResponse,
+  ResetPasswordPayload,
   LogoutResponse,
   MeResponse,
   RefreshTokenResponse,
@@ -12,6 +15,9 @@ import type {
   RevokeUserLoginSessionResponse,
   RegisterPayload,
   RegisterResponse,
+  TwoFactorEnabledResponse,
+  TwoFactorSetupResponse,
+  TwoFactorStatusResponse,
   UserLoginSessionsResponse,
 } from '@org/shared-contracts';
 
@@ -20,7 +26,7 @@ export const authService = {
     return httpRequest.post<LoginResponse>('/auth/login', payload);
   },
   googleOneTap(credential: string) {
-    return httpRequest.post<LoginResponse>('/auth/google/one-tap', { credential });
+    return httpRequest.post<LoginSucceeded>('/auth/google/one-tap', { credential });
   },
   register(payload: RegisterPayload) {
     return httpRequest.post<RegisterResponse>('/auth/register', payload);
@@ -46,6 +52,50 @@ export const authService = {
   changePassword(payload: ChangePasswordPayload) {
     return httpRequest.post<ChangePasswordResponse>('/auth/change-password', payload);
   },
+  getTwoFactorStatus() {
+    return httpRequest.get<TwoFactorStatusResponse>('/auth/2fa');
+  },
+
+  startTwoFactorSetup() {
+    return httpRequest.post<TwoFactorSetupResponse>('/auth/2fa/setup');
+  },
+
+  confirmTwoFactorSetup(code: string) {
+    return httpRequest.post<TwoFactorEnabledResponse>('/auth/2fa/confirm', { code });
+  },
+
+  disableTwoFactor(password: string) {
+    return httpRequest.delete<{ message: string }>('/auth/2fa', { data: { password } });
+  },
+
+  regenerateRecoveryCodes() {
+    return httpRequest.post<TwoFactorEnabledResponse>('/auth/2fa/recovery-codes');
+  },
+
+  verifyEmail(token: string) {
+    return httpRequest.post<MessageResponse>('/auth/verify-email', { token });
+  },
+
+  resendVerification(email: string) {
+    return httpRequest.post<MessageResponse>('/auth/resend-verification', { email });
+  },
+
+  resetPassword(payload: ResetPasswordPayload) {
+    return httpRequest.post<MessageResponse>('/auth/reset-password', payload);
+  },
+
+  requestTwoFactorRecovery(challengeToken: string) {
+    return httpRequest.post<{ message: string }>('/auth/2fa/recover', { challengeToken });
+  },
+
+  confirmTwoFactorRecovery(token: string) {
+    return httpRequest.post<{ message: string }>('/auth/2fa/recover/confirm', { token });
+  },
+
+  verifyTwoFactor(challengeToken: string, code: string) {
+    return httpRequest.post<LoginResponse>('/auth/2fa/verify', { challengeToken, code });
+  },
+
   forgotPassword(email: string) {
     return httpRequest.post<ForgotPasswordResponse>('/auth/forgot-password', { email });
   },

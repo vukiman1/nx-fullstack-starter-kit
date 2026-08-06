@@ -18,6 +18,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
+import { TwoFactorAccountService } from '../services/two-factor-account.service';
 import { AuthBaseController } from './auth.base.controller';
 import { ApiChangePassword } from '../auth.swagger';
 import { UserEntity } from '../../user/entities/user.entity';
@@ -28,6 +29,13 @@ import { ChangePasswordDto } from '../dto/change-password.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ResendVerificationDto } from '../dto/resend-verification.dto';
 import { GoogleOneTapDto } from '../dto/google-one-tap.dto';
+import {
+  ConfirmTwoFactorDto,
+  ConfirmTwoFactorRecoveryDto,
+  DisableTwoFactorDto,
+  RequestTwoFactorRecoveryDto,
+  VerifyTwoFactorDto,
+} from '../dto/two-factor.dto';
 
 const STRICT_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
@@ -37,7 +45,10 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
   'user',
   StrategyKey.LOCAL.USER,
 ) {
-  constructor(public readonly authService: AuthService) {
+  constructor(
+    public readonly authService: AuthService,
+    private readonly twoFactorAccountService: TwoFactorAccountService,
+  ) {
     super(authService);
   }
 
@@ -101,6 +112,84 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
       throw new UnauthorizedException();
     }
     return this.authService.changePassword(user, jti, body, request);
+  }
+
+  @Post('2fa/verify')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async verifyTwoFactor(
+    @Body() body: VerifyTwoFactorDto,
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
+  ) {
+    return this.authService.verifyTwoFactor(body.challengeToken, body.code, response, request);
+  }
+
+  @Post('2fa/recover')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async requestTwoFactorRecovery(
+    @Body() body: RequestTwoFactorRecoveryDto,
+    @Req() request: Request,
+  ) {
+    return this.twoFactorAccountService.requestRecovery(body.challengeToken, request);
+  }
+
+  @Post('2fa/recover/confirm')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  async confirmTwoFactorRecovery(
+    @Body() body: ConfirmTwoFactorRecoveryDto,
+    @Req() request: Request,
+  ) {
+    return this.twoFactorAccountService.confirmRecovery(body.token, request);
+  }
+
+  @Get('2fa')
+  @HttpCode(200)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async twoFactorStatus(@User() user: UserEntity) {
+    return this.twoFactorAccountService.getStatus(user);
+  }
+
+  @Post('2fa/setup')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async startTwoFactorSetup(@User() user: UserEntity) {
+    return this.twoFactorAccountService.startSetup(user);
+  }
+
+  @Post('2fa/confirm')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async confirmTwoFactorSetup(
+    @User() user: UserEntity,
+    @Body() body: ConfirmTwoFactorDto,
+    @Req() request: Request,
+  ) {
+    return this.twoFactorAccountService.confirmSetup(user, body.code, request);
+  }
+
+  @Delete('2fa')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async disableTwoFactor(
+    @User() user: UserEntity,
+    @Body() body: DisableTwoFactorDto,
+    @Req() request: Request,
+  ) {
+    return this.twoFactorAccountService.disable(user, body.password, request);
+  }
+
+  @Post('2fa/recovery-codes')
+  @HttpCode(200)
+  @Throttle(STRICT_THROTTLE)
+  @UseGuards(AuthGuard(StrategyKey.JWT.USER))
+  async regenerateRecoveryCodes(@User() user: UserEntity) {
+    return this.twoFactorAccountService.regenerateRecoveryCodes(user);
   }
 
   @Get('sessions')

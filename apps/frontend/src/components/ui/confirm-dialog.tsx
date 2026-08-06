@@ -22,10 +22,7 @@ type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;
 
 const ConfirmContext = createContext<ConfirmFn | null>(null);
 
-/**
- * Hosts the single confirmation dialog for the app so callers get a plain `await confirm(...)`
- * without having to render anything themselves.
- */
+/** Hosts the app's one confirmation dialog so callers get `await confirm(...)` and render nothing. */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -42,8 +39,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  // `options` deliberately survives settling: Radix animates the close before unmounting, and
-  // clearing it here would blank the dialog out mid-animation.
+  // `options` survives settling: Radix animates the close, and clearing it would blank the dialog.
   const settle = (confirmed: boolean) => {
     resolveRef.current?.(confirmed);
     resolveRef.current = null;

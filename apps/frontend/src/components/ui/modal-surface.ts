@@ -1,9 +1,7 @@
 /**
- * The shared look and motion behind every modal (Dialog, AlertDialog). Kept in one place so a
- * change to the animation cannot land on one of them and miss the other.
- *
- * `data-slot` is what the reduced-motion rule in styles.css targets — a modal without it will
- * keep bouncing for users who asked the system to stop animating things.
+ * Shared by Dialog and AlertDialog so an animation change cannot land on one and miss the other.
+ * `data-slot` is what the reduced-motion rule in styles.css targets; a modal without it keeps
+ * animating for users who asked the system to stop.
  */
 export const MODAL_BACKDROP_PROPS = {
   className:

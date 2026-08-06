@@ -64,9 +64,8 @@ instance.interceptors.response.use(
 );
 
 /**
- * Only the failures no screen can act on: the server being unreachable, or breaking on its own.
- * Business errors (wrong password, duplicate email) carry a message the form shows inline, and
- * toasting those as well would say the same thing twice.
+ * Only failures no screen can act on. Business errors already appear inline on the form, and
+ * toasting those too would say the same thing twice.
  */
 export function infrastructureFailureMessage(status: number | undefined): string | null {
   if (status === undefined) {

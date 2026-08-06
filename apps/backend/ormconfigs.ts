@@ -5,6 +5,8 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { UserEntity } from './src/api/user/entities/user.entity';
 import { UserSessionEntity } from './src/api/auth/entities/user-session.entity';
+import { UserTotpEntity } from './src/api/auth/entities/user-totp.entity';
+import { UserRecoveryCodeEntity } from './src/api/auth/entities/user-recovery-code.entity';
 
 interface DatabaseConfig {
   host: string;
@@ -17,13 +19,13 @@ interface DatabaseConfig {
 const backendRoot = resolveBackendRoot();
 const nodeEnv = process.env.NODE_ENV || 'development';
 
-// Expanded before the files are read so a DATABASE_URL passed on the command line wins: dotenv
-// never overwrites what is already set, so filling DB_* from a file first would silently send a
-// production migration to whatever database the local files point at.
+// Before the files are read, so a DATABASE_URL on the command line wins: dotenv never overwrites
+// what is already set, and filling DB_* from a file first would send a production migration to
+// whatever database the local files point at.
 applyConnectionUrls();
 
-// .env.example is deliberately absent: it is documentation, and it pins DB_* to localhost, so
-// loading it would override the call above. Defaults belong in config/default.yml.
+// .env.example is deliberately absent: it pins DB_* to localhost and would override the call
+// above. Defaults belong in config/default.yml.
 dotenv.config({
   path: [
     join(backendRoot, `.env.${nodeEnv}`),
@@ -52,10 +54,9 @@ const migrationExtension = isTsRuntime ? 'ts' : 'js';
 export const options: DataSourceOptions = {
   type: 'postgres',
   ...dbConfig,
-  // Hosted Postgres refuses plaintext connections; without this, migrations cannot reach Neon
-  // and friends at all. Mirrors the runtime setting in database.module.ts.
+  // Hosted Postgres refuses plaintext connections, so without this migrations cannot connect.
   ssl: process.env.DB_TLS === 'true' ? { rejectUnauthorized: false } : false,
-  entities: [UserEntity, UserSessionEntity],
+  entities: [UserEntity, UserSessionEntity, UserTotpEntity, UserRecoveryCodeEntity],
   migrationsTableName: 'migrations',
   migrations: [join(__dirname, `src/migrations/*.${migrationExtension}`)],
   synchronize: false,

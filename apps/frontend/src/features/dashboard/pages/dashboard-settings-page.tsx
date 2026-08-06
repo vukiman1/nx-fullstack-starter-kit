@@ -3,6 +3,7 @@ import { SimpleHeader } from '@/components/layout/simple-header';
 import { Button } from '@/components/ui/button';
 import { ProfileCard } from '@/features/settings/profile-card';
 import { SecurityCard } from '@/features/settings/security-card';
+import { TwoFactorCard } from '@/features/settings/two-factor-card';
 import { SessionsCard } from '@/features/settings/sessions-card';
 
 export function DashboardSettingsPage() {
@@ -17,6 +18,7 @@ export function DashboardSettingsPage() {
         <div className="mt-8 grid gap-8">
           <ProfileCard />
           <SecurityCard />
+          <TwoFactorCard />
           <SessionsCard />
         </div>
 

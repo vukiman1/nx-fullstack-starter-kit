@@ -28,6 +28,9 @@ module.exports = {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'html'],
+  // otplib and its base32 dependency ship ESM only; jest runs CommonJS, so they have to be
+  // transformed rather than skipped along with the rest of node_modules.
+  transformIgnorePatterns: ['node_modules/(?!.*(?:otplib|@scure|@noble))'],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/dist/'],
   coverageDirectory: 'test-output/jest/coverage',
 };

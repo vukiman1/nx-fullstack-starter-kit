@@ -3,9 +3,8 @@ import { queryClient } from '@/lib/query-client';
 import { useAuthStore } from '@/stores/auth-store';
 
 /**
- * Every cached query belongs to whoever was signed in when it was fetched, so switching identity
- * has to throw the cache away. Without this, signing in as someone else serves the previous
- * account's data until the entries go stale — the settings page shows the wrong user outright.
+ * Cached queries belong to whoever was signed in when they were fetched, so switching identity has
+ * to discard the cache — otherwise the next account is served the previous one's data.
  */
 export function startSession(user: User): void {
   queryClient.clear();
