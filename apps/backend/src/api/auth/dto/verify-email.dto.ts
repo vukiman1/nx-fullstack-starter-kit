@@ -1,7 +1,11 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class VerifyEmailDto {
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
-  token!: string;
+  email!: string;
+
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'code must be six digits' })
+  code!: string;
 }

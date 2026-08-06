@@ -74,7 +74,7 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
   @HttpCode(200)
   @Throttle(STRICT_THROTTLE)
   async verifyEmail(@Body() body: VerifyEmailDto, @Req() request: Request) {
-    return this.authService.verifyEmail(body.token, request);
+    return this.authService.verifyEmail(body, request);
   }
 
   @Post('resend-verification')
@@ -142,7 +142,7 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
     @Body() body: ConfirmTwoFactorRecoveryDto,
     @Req() request: Request,
   ) {
-    return this.twoFactorAccountService.confirmRecovery(body.token, request);
+    return this.twoFactorAccountService.confirmRecovery(body.challengeToken, body.code, request);
   }
 
   @Get('2fa')

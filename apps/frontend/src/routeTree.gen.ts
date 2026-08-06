@@ -12,9 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as authRegisterRouteImport } from './routes/(auth)/register'
-import { Route as authResetPasswordRouteImport } from './routes/(auth)/reset-password'
-import { Route as authTwoFactorRecoveryRouteImport } from './routes/(auth)/two-factor-recovery'
-import { Route as authVerifyEmailRouteImport } from './routes/(auth)/verify-email'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard/settings'
 
@@ -33,21 +30,6 @@ const authRegisterRoute = authRegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authResetPasswordRoute = authResetPasswordRouteImport.update({
-  id: '/(auth)/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const authTwoFactorRecoveryRoute = authTwoFactorRecoveryRouteImport.update({
-  id: '/(auth)/two-factor-recovery',
-  path: '/two-factor-recovery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const authVerifyEmailRoute = authVerifyEmailRouteImport.update({
-  id: '/(auth)/verify-email',
-  path: '/verify-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
@@ -63,9 +45,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof authLoginRoute
   '/register': typeof authRegisterRoute
-  '/reset-password': typeof authResetPasswordRoute
-  '/two-factor-recovery': typeof authTwoFactorRecoveryRoute
-  '/verify-email': typeof authVerifyEmailRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
@@ -73,9 +52,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof authLoginRoute
   '/register': typeof authRegisterRoute
-  '/reset-password': typeof authResetPasswordRoute
-  '/two-factor-recovery': typeof authTwoFactorRecoveryRoute
-  '/verify-email': typeof authVerifyEmailRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard': typeof DashboardIndexRoute
 }
@@ -84,41 +60,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/register': typeof authRegisterRoute
-  '/(auth)/reset-password': typeof authResetPasswordRoute
-  '/(auth)/two-factor-recovery': typeof authTwoFactorRecoveryRoute
-  '/(auth)/verify-email': typeof authVerifyEmailRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/two-factor-recovery'
-    | '/verify-email'
-    | '/dashboard/settings'
-    | '/dashboard/'
+    '/' | '/login' | '/register' | '/dashboard/settings' | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/two-factor-recovery'
-    | '/verify-email'
-    | '/dashboard/settings'
-    | '/dashboard'
+  to: '/' | '/login' | '/register' | '/dashboard/settings' | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/(auth)/login'
     | '/(auth)/register'
-    | '/(auth)/reset-password'
-    | '/(auth)/two-factor-recovery'
-    | '/(auth)/verify-email'
     | '/dashboard/settings'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
@@ -127,9 +82,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   authLoginRoute: typeof authLoginRoute
   authRegisterRoute: typeof authRegisterRoute
-  authResetPasswordRoute: typeof authResetPasswordRoute
-  authTwoFactorRecoveryRoute: typeof authTwoFactorRecoveryRoute
-  authVerifyEmailRoute: typeof authVerifyEmailRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
@@ -157,27 +109,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/reset-password': {
-      id: '/(auth)/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof authResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(auth)/two-factor-recovery': {
-      id: '/(auth)/two-factor-recovery'
-      path: '/two-factor-recovery'
-      fullPath: '/two-factor-recovery'
-      preLoaderRoute: typeof authTwoFactorRecoveryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(auth)/verify-email': {
-      id: '/(auth)/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof authVerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/dashboard'
@@ -199,9 +130,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   authLoginRoute: authLoginRoute,
   authRegisterRoute: authRegisterRoute,
-  authResetPasswordRoute: authResetPasswordRoute,
-  authTwoFactorRecoveryRoute: authTwoFactorRecoveryRoute,
-  authVerifyEmailRoute: authVerifyEmailRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }

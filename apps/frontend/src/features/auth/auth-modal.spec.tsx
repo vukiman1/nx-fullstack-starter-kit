@@ -70,7 +70,29 @@ describe('AuthModal', () => {
     renderAt('/?auth=login');
 
     expect(await screen.findByRole('dialog')).toBeTruthy();
-    expect(await screen.findByLabelText(/email/i)).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /continue with email/i })).toBeTruthy();
+  });
+
+  it('reaches the password form through the email option', async () => {
+    renderAt('/?auth=login');
+    await screen.findByRole('dialog');
+
+    fireEvent.click(screen.getByRole('button', { name: /continue with email/i }));
+
+    expect(await screen.findByLabelText('Email')).toBeTruthy();
+    expect(screen.getByLabelText('Password')).toBeTruthy();
+  });
+
+  it('goes back to the provider choice from the password form', async () => {
+    renderAt('/?auth=login');
+    await screen.findByRole('dialog');
+    fireEvent.click(screen.getByRole('button', { name: /continue with email/i }));
+    await screen.findByLabelText('Email');
+
+    fireEvent.click(screen.getByRole('button', { name: /back to the other options/i }));
+
+    expect(await screen.findByRole('button', { name: /continue with email/i })).toBeTruthy();
+    expect(screen.queryByLabelText('Password')).toBeNull();
   });
 
   it('does not open for someone already signed in', async () => {
@@ -95,6 +117,8 @@ describe('AuthModal', () => {
     jest.mocked(authService.login).mockResolvedValue({ user: { email: 'a@b.c' } } as never);
     const router = renderAt('/?auth=login&redirect=%2Fdashboard%2Fsettings');
     await screen.findByRole('dialog');
+    fireEvent.click(screen.getByRole('button', { name: /continue with email/i }));
+    await screen.findByLabelText('Email');
 
     fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
@@ -105,6 +129,8 @@ describe('AuthModal', () => {
     jest.mocked(authService.login).mockResolvedValue({ user: { email: 'a@b.c' } } as never);
     const router = renderAt('/?auth=login');
     await screen.findByRole('dialog');
+    fireEvent.click(screen.getByRole('button', { name: /continue with email/i }));
+    await screen.findByLabelText('Email');
 
     fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 

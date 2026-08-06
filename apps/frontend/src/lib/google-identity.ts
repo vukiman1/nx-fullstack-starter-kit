@@ -1,6 +1,8 @@
 import type { GoogleIdentityApi } from '@/types/google-identity';
 
-const GIS_SRC = 'https://accounts.google.com/gsi/client';
+// hl pins the language for everything Google renders, the One Tap prompt included. Left off, it
+// follows the browser, so one part of an English app speaks whatever the visitor's browser does.
+const GIS_SRC = 'https://accounts.google.com/gsi/client?hl=en';
 
 let scriptPromise: Promise<GoogleIdentityApi> | null = null;
 let initialized = false;

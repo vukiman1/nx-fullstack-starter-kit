@@ -36,8 +36,13 @@ export class RequestTwoFactorRecoveryDto {
 }
 
 export class ConfirmTwoFactorRecoveryDto {
-  @ApiProperty({ description: 'Token from the recovery email' })
+  @ApiProperty({ description: 'Issued by /auth/login when two-factor is enabled' })
   @IsString()
   @IsNotEmpty()
-  token!: string;
+  challengeToken!: string;
+
+  @ApiProperty({ description: 'Six-digit code from the recovery email' })
+  @IsString()
+  @Matches(/^\d{6}$/, { message: 'code must be six digits' })
+  code!: string;
 }

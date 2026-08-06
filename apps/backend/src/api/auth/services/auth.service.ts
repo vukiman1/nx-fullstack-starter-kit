@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 import * as argon2 from 'argon2';
 import { RegisterDto } from '../dto/register.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { CryptoService } from '@org/backend-crypto';
 import { UserEntity } from '../../user/entities/user.entity';
@@ -18,7 +19,6 @@ import { clearCookie, CookieName, setCookie } from '@org/backend-helpers';
 import { EmailService } from '../../../email/email.service';
 import { UserType } from '../interfaces/auth.interface';
 import { SessionService } from './session.service';
-import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
 import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
@@ -28,8 +28,10 @@ import { GoogleOneTapVerifier } from './social/google-one-tap.verifier';
 import { SocialAuthService } from './social/social-auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { TwoFactorChallengeService } from './two-factor-challenge.service';
+import { EmailCodeKind, EmailCodeService } from './email-code.service';
 
-const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+// Short, because a code that a person retypes is far easier to guess than a link token.
+const EMAIL_VERIFY_TTL_MS = 15 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
 
 interface SessionCookiePayload {
@@ -52,7 +54,6 @@ export class AuthService {
     private readonly cryptoService: CryptoService,
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
-    private readonly authTokenService: AuthTokenService,
     private readonly emailService: EmailService,
     private readonly auditService: AuthAuditService,
     private readonly userSessionService: UserSessionService,
@@ -60,12 +61,20 @@ export class AuthService {
     private readonly socialAuthService: SocialAuthService,
     private readonly twoFactorService: TwoFactorService,
     private readonly twoFactorChallengeService: TwoFactorChallengeService,
+    private readonly emailCodeService: EmailCodeService,
   ) {}
 
   me(user: UserEntity) {
-    const { email, avatar, balance, isEmailVerified } = user;
+    const { email, avatar, balance, isEmailVerified, displayName } = user;
     return {
-      user: { email, avatar, balance, isEmailVerified, hasPassword: Boolean(user.password) },
+      user: {
+        email,
+        displayName,
+        avatar,
+        balance,
+        isEmailVerified,
+        hasPassword: Boolean(user.password),
+      },
     };
   }
 
@@ -167,12 +176,12 @@ export class AuthService {
     });
   }
 
-  async register({ email, password }: RegisterDto, request: Request) {
+  async register({ email, password, displayName }: RegisterDto, request: Request) {
     const existingUser = await this.userService.getOne({ email });
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
-    const user = await this.userService.create({ email, password });
+    const user = await this.userService.create({ email, password, displayName });
     await this.sendVerification(user.id, email);
     this.auditService.record(AuthEvent.REGISTERED, { userId: user.id, email, request });
 
@@ -182,10 +191,14 @@ export class AuthService {
     };
   }
 
-  async verifyEmail(token: string, request: Request) {
-    const userId = await this.authTokenService.consume(OneTimeTokenKind.EMAIL_VERIFY, token);
+  async verifyEmail({ email, code }: VerifyEmailDto, request: Request) {
+    const pending = await this.userService.getOne({ email });
+    // Answering the same way for an unknown address keeps this from confirming who has an account.
+    const userId = pending
+      ? await this.emailCodeService.consume(EmailCodeKind.EMAIL_VERIFY, pending.id, code)
+      : null;
     if (!userId) {
-      throw new BadRequestException('Invalid or expired verification token');
+      throw new BadRequestException('That code is not valid or has expired');
     }
     const user = await this.userService.getOneOrFail({ id: userId });
     if (!user.isEmailVerified) {
@@ -203,19 +216,23 @@ export class AuthService {
       await this.sendVerification(user.id, email);
     }
     return {
-      message: 'If the email is registered and unverified, a verification link has been sent.',
+      message: 'If the email is registered and unverified, a code has been sent.',
     };
   }
 
   async forgotPassword(email: string, request: Request) {
     const user = await this.userService.getOne({ email });
     if (user) {
-      const token = await this.authTokenService.issue(
-        OneTimeTokenKind.PASSWORD_RESET,
+      const code = await this.emailCodeService.issue(
+        EmailCodeKind.PASSWORD_RESET,
         user.id,
         PASSWORD_RESET_TTL_MS,
       );
-      await this.trySend(() => this.emailService.sendPasswordResetEmail(email, token), email);
+      await this.trySend(
+        () =>
+          this.emailService.sendPasswordResetCode(email, code, toMinutes(PASSWORD_RESET_TTL_MS)),
+        email,
+      );
       this.auditService.record(AuthEvent.PASSWORD_RESET_REQUESTED, {
         userId: user.id,
         email,
@@ -225,10 +242,13 @@ export class AuthService {
     return { message: 'If the email is registered, a reset link has been sent.' };
   }
 
-  async resetPassword({ token, password }: ResetPasswordDto, request: Request) {
-    const userId = await this.authTokenService.consume(OneTimeTokenKind.PASSWORD_RESET, token);
+  async resetPassword({ email, code, password }: ResetPasswordDto, request: Request) {
+    const pending = await this.userService.getOne({ email });
+    const userId = pending
+      ? await this.emailCodeService.consume(EmailCodeKind.PASSWORD_RESET, pending.id, code)
+      : null;
     if (!userId) {
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new BadRequestException('That code is not valid or has expired');
     }
     const user = await this.userService.getOneOrFail({ id: userId });
     await this.userService.update(user, { password });
@@ -364,12 +384,15 @@ export class AuthService {
   }
 
   private async sendVerification(userId: string, email: string): Promise<void> {
-    const token = await this.authTokenService.issue(
-      OneTimeTokenKind.EMAIL_VERIFY,
+    const code = await this.emailCodeService.issue(
+      EmailCodeKind.EMAIL_VERIFY,
       userId,
       EMAIL_VERIFY_TTL_MS,
     );
-    await this.trySend(() => this.emailService.sendVerificationEmail(email, token), email);
+    await this.trySend(
+      () => this.emailService.sendVerificationCode(email, code, toMinutes(EMAIL_VERIFY_TTL_MS)),
+      email,
+    );
   }
 
   private async trySend(send: () => Promise<void>, recipient: string): Promise<void> {
@@ -468,4 +491,8 @@ function coercePersistence(record: Record<string, unknown>): SessionPersistence 
   }
   // Legacy cookies stored `remember: boolean`; map it onto the persistence policy.
   return record.remember === true ? SessionPersistence.REMEMBER : SessionPersistence.STANDARD;
+}
+
+function toMinutes(milliseconds: number): number {
+  return Math.round(milliseconds / 60_000);
 }

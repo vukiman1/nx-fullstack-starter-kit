@@ -2,7 +2,6 @@ import { BadRequestException, GoneException, UnauthorizedException } from '@nest
 import * as argon2 from 'argon2';
 import type { Request } from 'express';
 import { TwoFactorAccountService } from './two-factor-account.service';
-import { OneTimeTokenKind } from './auth-token.service';
 import { AuthEvent } from './auth-audit.service';
 
 const request = { headers: {} } as Request;
@@ -10,7 +9,7 @@ const request = { headers: {} } as Request;
 describe('TwoFactorAccountService', () => {
   let twoFactor: Record<string, jest.Mock>;
   let challenge: Record<string, jest.Mock>;
-  let authToken: Record<string, jest.Mock>;
+  let emailCode: Record<string, jest.Mock>;
   let userService: Record<string, jest.Mock>;
   let email: Record<string, jest.Mock>;
   let sessions: Record<string, jest.Mock>;
@@ -28,9 +27,9 @@ describe('TwoFactorAccountService', () => {
       regenerateRecoveryCodes: jest.fn(),
     };
     challenge = { peek: jest.fn() };
-    authToken = { issue: jest.fn().mockResolvedValue('token-1'), consume: jest.fn() };
+    emailCode = { issue: jest.fn().mockResolvedValue('123456'), consume: jest.fn() };
     userService = { getOneOrFail: jest.fn() };
-    email = { sendTwoFactorRecoveryEmail: jest.fn() };
+    email = { sendTwoFactorRecoveryCode: jest.fn() };
     sessions = { revokeAllSessions: jest.fn() };
     userSessions = { revokeAllSessions: jest.fn() };
     audit = { record: jest.fn() };
@@ -38,7 +37,7 @@ describe('TwoFactorAccountService', () => {
     service = new TwoFactorAccountService(
       twoFactor as never,
       challenge as never,
-      authToken as never,
+      emailCode as never,
       userService as never,
       email as never,
       sessions as never,
@@ -92,7 +91,7 @@ describe('TwoFactorAccountService', () => {
       challenge.peek.mockResolvedValue(null);
 
       await expect(service.requestRecovery('nope', request)).rejects.toBeInstanceOf(GoneException);
-      expect(email.sendTwoFactorRecoveryEmail).not.toHaveBeenCalled();
+      expect(email.sendTwoFactorRecoveryCode).not.toHaveBeenCalled();
     });
 
     it('sends to the address on the account, never one supplied by the caller', async () => {
@@ -101,22 +100,24 @@ describe('TwoFactorAccountService', () => {
 
       await service.requestRecovery('challenge-1', request);
 
-      expect(email.sendTwoFactorRecoveryEmail).toHaveBeenCalledWith('a@b.c', 'token-1');
+      expect(email.sendTwoFactorRecoveryCode).toHaveBeenCalledWith('a@b.c', '123456', 15);
     });
 
-    it('rejects a token that was never issued or has expired', async () => {
-      authToken.consume.mockResolvedValue(null);
+    it('rejects a code that was never issued or has expired', async () => {
+      challenge.peek.mockResolvedValue({ userId: 'u1', rememberMe: false });
+      emailCode.consume.mockResolvedValue(null);
 
-      await expect(service.confirmRecovery('bad', request)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.confirmRecovery('challenge-1', '000000', request),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(twoFactor.disable).not.toHaveBeenCalled();
     });
 
     it('turns two-factor off and drops every session', async () => {
-      authToken.consume.mockResolvedValue('u1');
+      challenge.peek.mockResolvedValue({ userId: 'u1', rememberMe: false });
+      emailCode.consume.mockResolvedValue('u1');
 
-      await service.confirmRecovery('good', request);
+      await service.confirmRecovery('challenge-1', '123456', request);
 
       expect(twoFactor.disable).toHaveBeenCalledWith('u1');
       // The link proves control of the mailbox, not of the account: existing sessions must go.
@@ -124,12 +125,17 @@ describe('TwoFactorAccountService', () => {
       expect(userSessions.revokeAllSessions).toHaveBeenCalledWith('u1');
     });
 
-    it('spends the token so the link cannot be replayed', async () => {
-      authToken.consume.mockResolvedValue('u1');
+    it('spends the code so it cannot be replayed', async () => {
+      challenge.peek.mockResolvedValue({ userId: 'u1', rememberMe: false });
+      emailCode.consume.mockResolvedValue('u1');
 
-      await service.confirmRecovery('good', request);
+      await service.confirmRecovery('challenge-1', '123456', request);
 
-      expect(authToken.consume).toHaveBeenCalledWith(OneTimeTokenKind.TWO_FACTOR_RECOVERY, 'good');
+      expect(emailCode.consume).toHaveBeenCalledWith(
+        expect.stringContaining('TWO_FACTOR_RECOVERY'),
+        'u1',
+        '123456',
+      );
     });
   });
 

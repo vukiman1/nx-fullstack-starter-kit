@@ -4,17 +4,26 @@ import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { ApiError } from '@/lib/api-error';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { registerFieldSchemas, registerSchema, type RegisterFormValues } from './schemas';
-import { useAuthModal } from './use-auth-modal';
+import { VerificationCodeForm } from './verification-code-form';
 
-const EMPTY_FORM: RegisterFormValues = { email: '', password: '', confirmPassword: '' };
+const EMPTY_FORM: RegisterFormValues = {
+  displayName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+};
 
-export function RegisterForm() {
-  const { open } = useAuthModal();
+interface RegisterFormProps {
+  onVerified: () => void;
+}
+
+export function RegisterForm({ onVerified }: RegisterFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
@@ -35,7 +44,18 @@ export function RegisterForm() {
   });
 
   if (registeredEmail) {
-    return <CheckInbox email={registeredEmail} onBackToSignIn={() => open('login')} />;
+    return (
+      <VerificationCodeForm
+        onResend={async () => (await authService.resendVerification(registeredEmail)).message}
+        onSubmit={async (code) => {
+          await authService.verifyEmail(registeredEmail, code);
+          notify.success('Email confirmed. You can sign in now.');
+          onVerified();
+        }}
+        sentTo={registeredEmail}
+        submitLabel="Confirm email"
+      />
+    );
   }
 
   return (
@@ -48,6 +68,29 @@ export function RegisterForm() {
       }}
     >
       <FormError message={submitError} />
+
+      <form.Field
+        name="displayName"
+        validators={{
+          onBlur: registerFieldSchemas.displayName,
+          onSubmit: registerFieldSchemas.displayName,
+        }}
+        children={(field) => (
+          <div className="grid gap-2">
+            <Label htmlFor={field.name}>Your name</Label>
+            <Input
+              aria-invalid={field.state.meta.errors.length > 0}
+              autoComplete="name"
+              id={field.name}
+              onBlur={field.handleBlur}
+              onChange={(event) => field.handleChange(event.target.value)}
+              placeholder="Jane Doe"
+              value={field.state.value}
+            />
+            <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
+          </div>
+        )}
+      />
 
       <form.Field
         name="email"
@@ -82,13 +125,12 @@ export function RegisterForm() {
         children={(field) => (
           <div className="grid gap-2">
             <Label htmlFor={field.name}>Password</Label>
-            <Input
+            <PasswordInput
               aria-invalid={field.state.meta.errors.length > 0}
               autoComplete="new-password"
               id={field.name}
               onBlur={field.handleBlur}
               onChange={(event) => field.handleChange(event.target.value)}
-              type="password"
               value={field.state.value}
             />
             <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
@@ -105,13 +147,12 @@ export function RegisterForm() {
         children={(field) => (
           <div className="grid gap-2">
             <Label htmlFor={field.name}>Confirm password</Label>
-            <Input
+            <PasswordInput
               aria-invalid={field.state.meta.errors.length > 0}
               autoComplete="new-password"
               id={field.name}
               onBlur={field.handleBlur}
               onChange={(event) => field.handleChange(event.target.value)}
-              type="password"
               value={field.state.value}
             />
             <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
@@ -127,54 +168,6 @@ export function RegisterForm() {
           </Button>
         )}
       />
-
-      <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
-        <button
-          className="font-semibold text-primary underline-offset-4 hover:underline"
-          onClick={() => open('login')}
-          type="button"
-        >
-          Sign in
-        </button>
-      </p>
     </form>
-  );
-}
-
-function CheckInbox({ email, onBackToSignIn }: { email: string; onBackToSignIn: () => void }) {
-  const [isResending, setIsResending] = useState(false);
-
-  const resend = async () => {
-    setIsResending(true);
-    try {
-      const { message } = await authService.resendVerification(email);
-      notify.success(message);
-    } catch {
-      notify.error('Could not resend the email. Please try again.');
-    } finally {
-      setIsResending(false);
-    }
-  };
-
-  return (
-    <div className="grid gap-4 text-center">
-      <p className="text-sm text-muted-foreground">
-        We sent a confirmation link to <span className="font-medium text-foreground">{email}</span>.
-        Follow it to finish setting up your account.
-      </p>
-
-      <Button disabled={isResending} onClick={resend} type="button" variant="outline">
-        {isResending ? 'Sending...' : 'Resend the email'}
-      </Button>
-
-      <button
-        className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-        onClick={onBackToSignIn}
-        type="button"
-      >
-        Back to sign in
-      </button>
-    </div>
   );
 }

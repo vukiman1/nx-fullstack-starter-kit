@@ -29,11 +29,12 @@ describe('App', () => {
     const { findByLabelText, findByRole, findByText } = render(<App />);
 
     fireEvent.click(await findByRole('button', { name: /login/i }));
+    fireEvent.click(await findByRole('button', { name: /continue with email/i }));
 
     expect(await findByRole('dialog')).toBeTruthy();
-    expect(await findByText(/enter your credentials/i)).toBeTruthy();
-    expect(await findByLabelText(/email/i)).toBeTruthy();
-    expect(await findByLabelText(/password/i)).toBeTruthy();
+    expect(await findByText(/welcome back/i)).toBeTruthy();
+    expect(await findByLabelText('Email')).toBeTruthy();
+    expect(await findByLabelText('Password')).toBeTruthy();
     expect(await findByRole('button', { name: /^sign in$/i })).toBeTruthy();
     expect(window.location.pathname).toBe('/');
   });
@@ -42,9 +43,10 @@ describe('App', () => {
     const { findByLabelText, findByRole, findByText } = render(<App />);
 
     fireEvent.click(await findByRole('button', { name: /login/i }));
+    fireEvent.click(await findByRole('button', { name: /continue with email/i }));
 
-    const emailInput = await findByLabelText(/email/i);
-    const passwordInput = await findByLabelText(/password/i);
+    const emailInput = await findByLabelText('Email');
+    const passwordInput = await findByLabelText('Password');
     fireEvent.change(emailInput, { target: { value: '' } });
     fireEvent.change(passwordInput, { target: { value: '' } });
 
@@ -61,6 +63,9 @@ describe('App', () => {
     fireEvent.click(await findByRole('button', { name: /create an account/i }));
 
     expect(await findByRole('heading', { name: /create your account/i })).toBeTruthy();
+
+    // Register opens on the same provider choice as sign-in; the fields are one step in.
+    fireEvent.click(await findByRole('button', { name: /continue with email/i }));
     expect(await findByLabelText('Confirm password')).toBeTruthy();
   });
 });

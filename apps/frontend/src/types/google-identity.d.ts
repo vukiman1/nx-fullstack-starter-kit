@@ -16,6 +16,8 @@ export interface GoogleButtonOptions {
   text?: 'signin_with' | 'signup_with' | 'continue_with';
   shape?: 'rectangular' | 'pill';
   width?: number;
+  /** BCP-47 tag. Google localises the button label by browser language unless this is set. */
+  locale?: string;
 }
 
 export interface GoogleIdentityApi {

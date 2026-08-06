@@ -10,7 +10,7 @@ import { EmailService } from '../../../email/email.service';
 import { UserEntity } from '../../user/entities/user.entity';
 import { UserService } from '../../user/user.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
-import { AuthTokenService, OneTimeTokenKind } from './auth-token.service';
+import { EmailCodeKind, EmailCodeService } from './email-code.service';
 import { SessionService } from './session.service';
 import { TwoFactorChallengeService } from './two-factor-challenge.service';
 import { TwoFactorService } from './two-factor.service';
@@ -27,7 +27,7 @@ export class TwoFactorAccountService {
   constructor(
     private readonly twoFactorService: TwoFactorService,
     private readonly twoFactorChallengeService: TwoFactorChallengeService,
-    private readonly authTokenService: AuthTokenService,
+    private readonly emailCodeService: EmailCodeService,
     private readonly userService: UserService,
     private readonly emailService: EmailService,
     private readonly sessionService: SessionService,
@@ -86,12 +86,16 @@ export class TwoFactorAccountService {
     }
 
     const user = await this.userService.getOneOrFail({ id: claim.userId });
-    const token = await this.authTokenService.issue(
-      OneTimeTokenKind.TWO_FACTOR_RECOVERY,
+    const code = await this.emailCodeService.issue(
+      EmailCodeKind.TWO_FACTOR_RECOVERY,
       user.id,
       RECOVERY_TTL_MS,
     );
-    await this.emailService.sendTwoFactorRecoveryEmail(user.email, token);
+    await this.emailService.sendTwoFactorRecoveryCode(
+      user.email,
+      code,
+      Math.round(RECOVERY_TTL_MS / 60_000),
+    );
     this.auditService.record(AuthEvent.TWO_FACTOR_RECOVERY_REQUESTED, {
       userId: user.id,
       request,
@@ -104,10 +108,19 @@ export class TwoFactorAccountService {
    * Drops every session as well: whoever followed this link proved control of the mailbox, not of
    * the account, so anyone already signed in has to authenticate again.
    */
-  async confirmRecovery(token: string, request: Request) {
-    const userId = await this.authTokenService.consume(OneTimeTokenKind.TWO_FACTOR_RECOVERY, token);
+  async confirmRecovery(challengeToken: string, code: string, request: Request) {
+    const claim = await this.twoFactorChallengeService.peek(challengeToken);
+    if (!claim) {
+      throw new GoneException('That sign-in attempt has expired. Please start again.');
+    }
+
+    const userId = await this.emailCodeService.consume(
+      EmailCodeKind.TWO_FACTOR_RECOVERY,
+      claim.userId,
+      code,
+    );
     if (!userId) {
-      throw new BadRequestException('That link is invalid or has expired');
+      throw new BadRequestException('That code is not valid or has expired');
     }
 
     await this.twoFactorService.disable(userId);
