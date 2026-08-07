@@ -1,11 +1,9 @@
 import { cn } from '@/lib/utils';
 
 type TextLinkProps = Omit<React.ComponentProps<'button'>, 'type'> & {
-  /** Muted reads as secondary; the default carries the brand colour. */
   tone?: 'brand' | 'muted';
 };
 
-/** An inline action that reads as a link but is a button, because it does not navigate. */
 export function TextLink({ className, tone = 'brand', ...props }: TextLinkProps) {
   return (
     <button

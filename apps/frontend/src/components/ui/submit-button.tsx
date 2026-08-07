@@ -6,10 +6,6 @@ interface SubmitState {
   isSubmitting: boolean;
 }
 
-/**
- * Structural, for the same reason FormField's field prop is: naming the real FormApi would drag its
- * generics through every caller.
- */
 interface SubscribableForm {
   Subscribe: (props: {
     selector: (state: SubmitState) => SubmitState;
@@ -23,11 +19,9 @@ interface SubmitButtonProps extends Omit<
 > {
   form: SubscribableForm;
   label: string;
-  /** Shown while the submission is in flight. */
   pendingLabel: string;
 }
 
-/** Stays disabled until the form says it can submit, so no screen has to remember to check. */
 export function SubmitButton({ form, label, pendingLabel, ...props }: SubmitButtonProps) {
   return (
     <form.Subscribe

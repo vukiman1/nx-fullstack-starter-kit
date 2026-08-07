@@ -32,10 +32,6 @@ export function isApiErrorEnvelope(value: unknown): value is ApiErrorEnvelope {
   );
 }
 
-/**
- * The message to show a person for a failed request. Only an ApiError carries wording the backend
- * meant for them; anything else is a crash or a network fault, whose message would be noise.
- */
 export function errorMessage(caught: unknown, fallback: string): string {
   return caught instanceof ApiError ? caught.message : fallback;
 }
