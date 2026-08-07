@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ApiError } from '@/lib/api-error';
+import { TextLink } from '@/components/ui/text-link';
+import { ApiError, errorMessage } from '@/lib/api-error';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { startSession } from './session';
@@ -24,8 +26,7 @@ export function TwoFactorStep({ challengeToken, onExpired }: TwoFactorStepProps)
   const [isRecovering, setIsRecovering] = useState(false);
   const [recoverySent, setRecoverySent] = useState(false);
 
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const submit = async () => {
     setIsSubmitting(true);
     setError(null);
 
@@ -38,7 +39,7 @@ export function TwoFactorStep({ challengeToken, onExpired }: TwoFactorStepProps)
       notify.success('Signed in.');
       await finish();
     } catch (caught) {
-      const message = caught instanceof ApiError ? caught.message : 'Could not verify that code.';
+      const message = errorMessage(caught, 'Could not verify that code.');
       setError(message);
       // 410 means the challenge is gone, not that the code was wrong: the only way on is the
       // password step.
@@ -64,14 +65,14 @@ export function TwoFactorStep({ challengeToken, onExpired }: TwoFactorStepProps)
         onExpired();
         return;
       }
-      setError(caught instanceof ApiError ? caught.message : 'Could not send the email.');
+      setError(errorMessage(caught, 'Could not send the email.'));
     } finally {
       setIsRecovering(false);
     }
   };
 
   return (
-    <form className="grid gap-4" onSubmit={submit}>
+    <Form className="grid gap-4" onSubmit={() => void submit()}>
       <p className="text-sm text-muted-foreground">
         Enter the six-digit code from your authenticator app, or one of your recovery codes.
       </p>
@@ -96,20 +97,15 @@ export function TwoFactorStep({ challengeToken, onExpired }: TwoFactorStepProps)
       </Button>
 
       <div className="grid gap-2 text-center text-sm text-muted-foreground">
-        <button
-          className="underline-offset-4 hover:underline disabled:no-underline disabled:opacity-60"
-          disabled={isRecovering || recoverySent}
-          onClick={requestRecovery}
-          type="button"
-        >
+        <TextLink disabled={isRecovering || recoverySent} onClick={requestRecovery} tone="muted">
           {recoverySent
             ? 'Check your inbox for the recovery link'
             : 'Lost your device and recovery codes?'}
-        </button>
-        <button className="underline-offset-4 hover:underline" onClick={onExpired} type="button">
+        </TextLink>
+        <TextLink onClick={onExpired} tone="muted">
           Back to sign in
-        </button>
+        </TextLink>
       </div>
-    </form>
+    </Form>
   );
 }

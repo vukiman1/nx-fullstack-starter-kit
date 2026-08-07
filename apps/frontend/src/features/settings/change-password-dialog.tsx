@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -9,10 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { FieldError } from '@/components/ui/field-error';
+import { Form } from '@/components/ui/form';
 import { FormError } from '@/components/ui/form-error';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FormField } from '@/components/ui/form-field';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { ApiError } from '@/lib/api-error';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
@@ -78,21 +77,19 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
   });
 
   return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        form.handleSubmit();
-      }}
-    >
+    <Form className="grid gap-4" onSubmit={form.handleSubmit}>
       <FormError message={submitError} />
 
       <form.Field
         name="currentPassword"
         validators={{ onBlur: changePasswordFieldSchemas.currentPassword }}
         children={(field) => (
-          <PasswordField autoComplete="current-password" field={field} label="Current password" />
+          <FormField
+            autoComplete="current-password"
+            field={field}
+            label="Current password"
+            type="password"
+          />
         )}
       />
 
@@ -100,7 +97,12 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         name="newPassword"
         validators={{ onBlur: changePasswordFieldSchemas.newPassword }}
         children={(field) => (
-          <PasswordField autoComplete="new-password" field={field} label="New password" />
+          <FormField
+            autoComplete="new-password"
+            field={field}
+            label="New password"
+            type="password"
+          />
         )}
       />
 
@@ -108,51 +110,16 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         name="confirmPassword"
         validators={{ onBlur: changePasswordFieldSchemas.confirmPassword }}
         children={(field) => (
-          <PasswordField autoComplete="new-password" field={field} label="Confirm new password" />
+          <FormField
+            autoComplete="new-password"
+            field={field}
+            label="Confirm new password"
+            type="password"
+          />
         )}
       />
 
-      <form.Subscribe
-        selector={(state) => [state.canSubmit, state.isSubmitting] as const}
-        children={([canSubmit, isSubmitting]) => (
-          <Button disabled={!canSubmit} type="submit">
-            {isSubmitting ? 'Saving...' : 'Change password'}
-          </Button>
-        )}
-      />
-    </form>
-  );
-}
-
-interface PasswordFieldProps {
-  field: {
-    name: string;
-    state: { value: string; meta: { errors: ReadonlyArray<unknown> } };
-    handleBlur: () => void;
-    handleChange: (value: string) => void;
-  };
-  label: string;
-  autoComplete: string;
-}
-
-function PasswordField({ field, label, autoComplete }: PasswordFieldProps) {
-  const errorId = `${field.name}-error`;
-
-  return (
-    <div className="grid gap-2">
-      <Label htmlFor={field.name}>{label}</Label>
-      <Input
-        aria-describedby={errorId}
-        aria-invalid={field.state.meta.errors.length > 0}
-        autoComplete={autoComplete}
-        id={field.name}
-        name={field.name}
-        onBlur={field.handleBlur}
-        onChange={(event) => field.handleChange(event.target.value)}
-        type="password"
-        value={field.state.value}
-      />
-      <FieldError errors={field.state.meta.errors} id={errorId} />
-    </div>
+      <SubmitButton form={form} label="Change password" pendingLabel="Saving..." />
+    </Form>
   );
 }

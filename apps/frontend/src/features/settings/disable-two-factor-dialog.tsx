@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 import {
   Dialog,
   DialogContent,
@@ -49,13 +50,7 @@ function ConfirmForm({
   const [password, setPassword] = useState('');
 
   return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onConfirm(password);
-      }}
-    >
+    <Form className="grid gap-4" onSubmit={() => onConfirm(password)}>
       <FormError message={error} />
 
       <div className="grid gap-2">
@@ -72,6 +67,6 @@ function ConfirmForm({
       <Button disabled={isPending || !password} type="submit" variant="destructive">
         {isPending ? 'Turning off...' : 'Turn off'}
       </Button>
-    </form>
+    </Form>
   );
 }

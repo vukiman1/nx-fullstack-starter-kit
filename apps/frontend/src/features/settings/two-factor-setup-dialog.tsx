@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +13,7 @@ import {
 import { FormError } from '@/components/ui/form-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ApiError } from '@/lib/api-error';
+import { errorMessage } from '@/lib/api-error';
 import { authService } from '@/services/auth-service';
 
 interface TwoFactorSetupDialogProps {
@@ -57,8 +58,7 @@ function SetupSteps({ onEnabled }: Pick<TwoFactorSetupDialogProps, 'onEnabled'>)
   const confirmMutation = useMutation({
     mutationFn: () => authService.confirmTwoFactorSetup(code.trim()),
     onSuccess: ({ recoveryCodes }) => onEnabled(recoveryCodes),
-    onError: (caught: unknown) =>
-      setError(caught instanceof ApiError ? caught.message : 'That code is not valid.'),
+    onError: (caught: unknown) => setError(errorMessage(caught, 'That code is not valid.')),
   });
 
   const { data } = setupQuery;
@@ -70,10 +70,9 @@ function SetupSteps({ onEnabled }: Pick<TwoFactorSetupDialogProps, 'onEnabled'>)
   }, [data?.otpauthUri]);
 
   return (
-    <form
+    <Form
       className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
+      onSubmit={() => {
         setError(null);
         confirmMutation.mutate();
       }}
@@ -112,6 +111,6 @@ function SetupSteps({ onEnabled }: Pick<TwoFactorSetupDialogProps, 'onEnabled'>)
       <Button disabled={confirmMutation.isPending || code.trim().length !== 6} type="submit">
         {confirmMutation.isPending ? 'Verifying...' : 'Turn on'}
       </Button>
-    </form>
+    </Form>
   );
 }

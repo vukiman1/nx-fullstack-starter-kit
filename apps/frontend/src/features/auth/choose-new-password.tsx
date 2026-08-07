@@ -1,13 +1,12 @@
-import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
+import { Form } from '@/components/ui/form';
 import { FormError } from '@/components/ui/form-error';
+import { FormField } from '@/components/ui/form-field';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
-import { ApiError } from '@/lib/api-error';
+import { useFormWithSubmitError } from '@/lib/use-form-with-submit-error';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { strongPassword } from './schemas';
@@ -20,6 +19,8 @@ const fields = z.object({
   confirmPassword: z.string().min(1, 'Confirm your new password.'),
 });
 
+type ResetFormValues = z.infer<typeof fields>;
+
 const schema = fields.refine((values) => values.password === values.confirmPassword, {
   message: 'Passwords do not match.',
   path: ['confirmPassword'],
@@ -30,34 +31,19 @@ const schema = fields.refine((values) => values.password === values.confirmPassw
  * steps, which is a second thing to expire and get wrong.
  */
 export function ChooseNewPassword({ email, onDone }: { email: string; onDone: () => void }) {
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const form = useForm({
+  const { form, submitError } = useFormWithSubmitError<ResetFormValues>({
     defaultValues: { code: '', password: '', confirmPassword: '' },
-    validators: { onSubmit: schema },
-    onSubmit: async ({ value }) => {
-      setSubmitError(null);
-      try {
-        await authService.resetPassword({ email, ...value });
-        notify.success('Password updated. Every device was signed out.');
-        onDone();
-      } catch (caught) {
-        setSubmitError(
-          caught instanceof ApiError ? caught.message : 'Could not reset your password.',
-        );
-      }
+    schema,
+    fallbackError: 'Could not reset your password.',
+    onSubmit: async (values) => {
+      await authService.resetPassword({ email, ...values });
+      notify.success('Password updated. Every device was signed out.');
+      onDone();
     },
   });
 
   return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        form.handleSubmit();
-      }}
-    >
+    <Form className="grid gap-4" onSubmit={form.handleSubmit}>
       <p className="text-center text-sm text-muted-foreground">
         Enter the code sent to <span className="font-medium text-foreground">{email}</span> and pick
         a new password.
@@ -94,18 +80,12 @@ export function ChooseNewPassword({ email, onDone }: { email: string; onDone: ()
         name="password"
         validators={{ onBlur: fields.shape.password, onSubmit: fields.shape.password }}
         children={(field) => (
-          <div className="grid gap-2">
-            <Label htmlFor={field.name}>New password</Label>
-            <PasswordInput
-              aria-invalid={field.state.meta.errors.length > 0}
-              autoComplete="new-password"
-              id={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              value={field.state.value}
-            />
-            <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-          </div>
+          <FormField
+            autoComplete="new-password"
+            control={PasswordInput}
+            field={field}
+            label="New password"
+          />
         )}
       />
 
@@ -113,29 +93,16 @@ export function ChooseNewPassword({ email, onDone }: { email: string; onDone: ()
         name="confirmPassword"
         validators={{ onBlur: fields.shape.confirmPassword }}
         children={(field) => (
-          <div className="grid gap-2">
-            <Label htmlFor={field.name}>Confirm new password</Label>
-            <PasswordInput
-              aria-invalid={field.state.meta.errors.length > 0}
-              autoComplete="new-password"
-              id={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              value={field.state.value}
-            />
-            <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-          </div>
+          <FormField
+            autoComplete="new-password"
+            control={PasswordInput}
+            field={field}
+            label="Confirm new password"
+          />
         )}
       />
 
-      <form.Subscribe
-        selector={(state) => [state.canSubmit, state.isSubmitting] as const}
-        children={([canSubmit, isSubmitting]) => (
-          <Button disabled={!canSubmit} type="submit">
-            {isSubmitting ? 'Saving...' : 'Reset password'}
-          </Button>
-        )}
-      />
-    </form>
+      <SubmitButton form={form} label="Reset password" pendingLabel="Saving..." />
+    </Form>
   );
 }
