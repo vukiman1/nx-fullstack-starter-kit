@@ -2,6 +2,8 @@ import { BadRequestException, GoneException, UnauthorizedException } from '@nest
 import * as argon2 from 'argon2';
 import type { Request } from 'express';
 import { TwoFactorAccountService } from './two-factor-account.service';
+import { SessionRevocationService } from './session-revocation.service';
+import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 import { AuthEvent } from './auth-audit.service';
 
 const request = { headers: {} } as Request;
@@ -40,8 +42,7 @@ describe('TwoFactorAccountService', () => {
       emailCode as never,
       userService as never,
       email as never,
-      sessions as never,
-      userSessions as never,
+      new SessionRevocationService(sessions as never, userSessions as never),
       audit as never,
     );
   });
@@ -122,7 +123,11 @@ describe('TwoFactorAccountService', () => {
       expect(twoFactor.disable).toHaveBeenCalledWith('u1');
       // The link proves control of the mailbox, not of the account: existing sessions must go.
       expect(sessions.revokeAllSessions).toHaveBeenCalledWith('u1');
-      expect(userSessions.revokeAllSessions).toHaveBeenCalledWith('u1');
+      // Mailbox control, not account control — the trail has to say security, not a plain logout.
+      expect(userSessions.revokeAllSessions).toHaveBeenCalledWith(
+        'u1',
+        SessionRevokeReason.SECURITY,
+      );
     });
 
     it('spends the code so it cannot be replayed', async () => {

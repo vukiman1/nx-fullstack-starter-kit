@@ -10,6 +10,8 @@ import { CryptoService } from '@org/backend-crypto';
 import { UserService } from '../../user/user.service';
 import { EmailService } from '../../../email/email.service';
 import { AuthService } from './auth.service';
+import { SessionRevocationService } from './session-revocation.service';
+import { SessionCookieService } from './session-cookie.service';
 import { SessionService } from './session.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
@@ -143,13 +145,19 @@ describe('AuthService', () => {
     };
     emailCode = { issue: jest.fn().mockResolvedValue('123456'), consume: jest.fn() };
 
+    // The extracted collaborators are real, built over the same mocks: that keeps these tests
+    // asserting the behaviour they always did rather than that a delegate was called.
     service = new AuthService(
-      crypto as unknown as CryptoService,
       userService as unknown as UserService,
       sessionService as unknown as SessionService,
       email as unknown as EmailService,
       audit as unknown as AuthAuditService,
       userSessionService as unknown as UserSessionService,
+      new SessionRevocationService(
+        sessionService as unknown as SessionService,
+        userSessionService as unknown as UserSessionService,
+      ),
+      new SessionCookieService(crypto as unknown as CryptoService),
       verifier as unknown as GoogleOneTapVerifier,
       socialAuthService as unknown as SocialAuthService,
       twoFactorService as unknown as TwoFactorService,
@@ -616,7 +624,11 @@ describe('AuthService', () => {
       );
 
       expect(sessionService.revokeSession).toHaveBeenCalledWith('user-1', 'jti-1');
-      expect(userSessionService.revokeSession).toHaveBeenCalledWith('user-1', 'jti-1');
+      expect(userSessionService.revokeSession).toHaveBeenCalledWith(
+        'user-1',
+        'jti-1',
+        SessionRevokeReason.LOGOUT,
+      );
       expect(response.clearCookie).toHaveBeenCalledTimes(2);
     });
   });
@@ -667,7 +679,7 @@ describe('AuthService', () => {
       const response = mockResponse();
 
       await expect(
-        service.refreshToken({ cookies: {} } as Request, response, 'user'),
+        service.refreshToken({ cookies: {} } as Request, response),
       ).rejects.toBeInstanceOf(UnauthorizedException);
       expect(response.clearCookie).toHaveBeenCalledTimes(2);
     });
@@ -684,11 +696,7 @@ describe('AuthService', () => {
         balance: 0,
       });
 
-      await service.refreshToken(
-        { cookies: { sub: 'enc' } } as unknown as Request,
-        response,
-        'user',
-      );
+      await service.refreshToken({ cookies: { sub: 'enc' } } as unknown as Request, response);
 
       expect(sessionService.rotateSession).toHaveBeenCalledWith(
         'user-1',

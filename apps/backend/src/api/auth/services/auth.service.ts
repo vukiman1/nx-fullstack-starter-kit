@@ -12,15 +12,14 @@ import { RegisterDto } from '../dto/register.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { CryptoService } from '@org/backend-crypto';
 import { UserEntity } from '../../user/entities/user.entity';
 import { UserService } from '../../user/user.service';
-import { clearCookie, CookieName, setCookie } from '@org/backend-helpers';
 import { EmailService } from '../../../email/email.service';
-import { UserType } from '../interfaces/auth.interface';
 import { SessionService } from './session.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { UserSessionService } from './user-session.service';
+import { SessionRevocationService } from './session-revocation.service';
+import { SessionCookieService } from './session-cookie.service';
 import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 import { SessionPersistence } from '../enums/session-persistence.enum';
 import { AuthProvider } from '@org/backend-enum';
@@ -29,16 +28,11 @@ import { SocialAuthService } from './social/social-auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { TwoFactorChallengeService } from './two-factor-challenge.service';
 import { EmailCodeKind, EmailCodeService } from './email-code.service';
+import { requireSessionJti } from '../session-request';
 
 // Short, because a code that a person retypes is far easier to guess than a link token.
 const EMAIL_VERIFY_TTL_MS = 15 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
-
-interface SessionCookiePayload {
-  id: string;
-  jti: string;
-  persistence: SessionPersistence;
-}
 
 interface IssueSessionOptions {
   persistence: SessionPersistence;
@@ -51,12 +45,13 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private readonly cryptoService: CryptoService,
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
     private readonly emailService: EmailService,
     private readonly auditService: AuthAuditService,
     private readonly userSessionService: UserSessionService,
+    private readonly sessionRevocationService: SessionRevocationService,
+    private readonly sessionCookieService: SessionCookieService,
     private readonly googleOneTapVerifier: GoogleOneTapVerifier,
     private readonly socialAuthService: SocialAuthService,
     private readonly twoFactorService: TwoFactorService,
@@ -146,14 +141,7 @@ export class AuthService {
       request,
     });
 
-    this.setSessionCookies(response, {
-      id,
-      jti: session.jti,
-      persistence,
-      accessToken: session.accessToken,
-      accessTokenTtlMs: session.accessTokenTtlMs,
-      refreshTokenTtlMs: session.refreshTokenTtlMs,
-    });
+    this.sessionCookieService.issue(response, { id, jti: session.jti, persistence }, session);
     this.auditService.record(AuthEvent.LOGIN_SUCCEEDED, {
       userId: id,
       email,
@@ -192,20 +180,16 @@ export class AuthService {
   }
 
   async verifyEmail({ email, code }: VerifyEmailDto, request: Request) {
-    const pending = await this.userService.getOne({ email });
-    // Answering the same way for an unknown address keeps this from confirming who has an account.
-    const userId = pending
-      ? await this.emailCodeService.consume(EmailCodeKind.EMAIL_VERIFY, pending.id, code)
-      : null;
-    if (!userId) {
-      throw new BadRequestException('That code is not valid or has expired');
-    }
-    const user = await this.userService.getOneOrFail({ id: userId });
+    const user = await this.consumeEmailCode(EmailCodeKind.EMAIL_VERIFY, email, code);
     if (!user.isEmailVerified) {
       await this.userService.update(user, { isEmailVerified: true });
       await this.trySend(() => this.emailService.sendWelcomeEmail(user.email), user.email);
     }
-    this.auditService.record(AuthEvent.EMAIL_VERIFIED, { userId, email: user.email, request });
+    this.auditService.record(AuthEvent.EMAIL_VERIFIED, {
+      userId: user.id,
+      email: user.email,
+      request,
+    });
 
     return { message: 'Email verified successfully' };
   }
@@ -239,22 +223,18 @@ export class AuthService {
         request,
       });
     }
-    return { message: 'If the email is registered, a reset link has been sent.' };
+    return { message: 'If the email is registered, a code has been sent.' };
   }
 
   async resetPassword({ email, code, password }: ResetPasswordDto, request: Request) {
-    const pending = await this.userService.getOne({ email });
-    const userId = pending
-      ? await this.emailCodeService.consume(EmailCodeKind.PASSWORD_RESET, pending.id, code)
-      : null;
-    if (!userId) {
-      throw new BadRequestException('That code is not valid or has expired');
-    }
-    const user = await this.userService.getOneOrFail({ id: userId });
+    const user = await this.consumeEmailCode(EmailCodeKind.PASSWORD_RESET, email, code);
     await this.userService.update(user, { password });
-    await this.sessionService.revokeAllSessions(userId);
-    await this.userSessionService.revokeAllSessions(userId, SessionRevokeReason.PASSWORD_RESET);
-    this.auditService.record(AuthEvent.PASSWORD_RESET, { userId, email: user.email, request });
+    await this.sessionRevocationService.revokeAll(user.id, SessionRevokeReason.PASSWORD_RESET);
+    this.auditService.record(AuthEvent.PASSWORD_RESET, {
+      userId: user.id,
+      email: user.email,
+      request,
+    });
 
     return { message: 'Password reset successfully' };
   }
@@ -265,8 +245,7 @@ export class AuthService {
       throw new UnauthorizedException('Current password is incorrect');
     }
     await this.userService.update(user, { password: dto.newPassword });
-    await this.sessionService.revokeOtherSessions(user.id, jti);
-    await this.userSessionService.revokeOtherSessions(
+    await this.sessionRevocationService.revokeOthers(
       user.id,
       jti,
       SessionRevokeReason.PASSWORD_CHANGED,
@@ -282,13 +261,9 @@ export class AuthService {
   }
 
   async logout(user: UserEntity, request: Request, response: Response) {
-    const jti = request.sessionJti;
-    if (!jti) {
-      throw new UnauthorizedException();
-    }
-    await this.sessionService.revokeSession(user.id, jti);
-    await this.userSessionService.revokeSession(user.id, jti);
-    this.clearSessionCookies(response);
+    const jti = requireSessionJti(request);
+    await this.sessionRevocationService.revokeOne(user.id, jti, SessionRevokeReason.LOGOUT);
+    this.sessionCookieService.clear(response);
     this.auditService.record(AuthEvent.LOGOUT, { userId: user.id, jti, request });
 
     return {
@@ -297,9 +272,8 @@ export class AuthService {
   }
 
   async logoutAll(user: UserEntity, response: Response, request: Request) {
-    await this.sessionService.revokeAllSessions(user.id);
-    await this.userSessionService.revokeAllSessions(user.id);
-    this.clearSessionCookies(response);
+    await this.sessionRevocationService.revokeAll(user.id, SessionRevokeReason.LOGOUT_ALL);
+    this.sessionCookieService.clear(response);
     this.auditService.record(AuthEvent.LOGOUT_ALL, { userId: user.id, request });
 
     return {
@@ -307,21 +281,14 @@ export class AuthService {
     };
   }
 
-  async refreshToken(request: Request, response: Response, userType: UserType) {
+  async refreshToken(request: Request, response: Response) {
     try {
-      const { id, jti, persistence } = this.decodeSessionCookie(request);
-      const { email, avatar, balance } = await this.getUserById(id, userType);
+      const { id, jti, persistence } = this.sessionCookieService.read(request);
+      const { email, avatar, balance } = await this.userService.getOneOrFail({ id });
       const tokens = await this.sessionService.rotateSession(id, jti, persistence);
       await this.userSessionService.touchSession(id, jti, request, tokens.refreshTokenTtlMs);
 
-      this.setSessionCookies(response, {
-        id,
-        jti,
-        persistence,
-        accessToken: tokens.accessToken,
-        accessTokenTtlMs: tokens.accessTokenTtlMs,
-        refreshTokenTtlMs: tokens.refreshTokenTtlMs,
-      });
+      this.sessionCookieService.issue(response, { id, jti, persistence }, tokens);
       this.auditService.record(AuthEvent.TOKEN_REFRESHED, { userId: id, jti, request });
 
       return {
@@ -330,16 +297,13 @@ export class AuthService {
     } catch (error) {
       // A failed refresh means the session is gone — drop the stale cookies so the
       // browser stops sending them instead of waiting for them to expire.
-      this.clearSessionCookies(response);
+      this.sessionCookieService.clear(response);
       throw error;
     }
   }
 
   async listSessions(user: UserEntity, request: Request) {
-    const jti = request.sessionJti;
-    if (!jti) {
-      throw new UnauthorizedException();
-    }
+    const jti = requireSessionJti(request);
 
     return {
       sessions: await this.userSessionService.listActiveSessions(user.id, jti),
@@ -347,18 +311,13 @@ export class AuthService {
   }
 
   async revokeDeviceSession(user: UserEntity, sessionId: string, request: Request) {
-    const currentJti = request.sessionJti;
-    if (!currentJti) {
-      throw new UnauthorizedException();
-    }
-
+    const currentJti = requireSessionJti(request);
     const session = await this.userSessionService.getActiveSessionOrFail(user.id, sessionId);
     if (session.jti === currentJti) {
       throw new BadRequestException('Use logout to revoke the current session');
     }
 
-    await this.sessionService.revokeSession(user.id, session.jti);
-    await this.userSessionService.revokeSession(
+    await this.sessionRevocationService.revokeOne(
       user.id,
       session.jti,
       SessionRevokeReason.REVOKED_BY_USER,
@@ -368,19 +327,31 @@ export class AuthService {
   }
 
   async revokeOtherDeviceSessions(user: UserEntity, request: Request) {
-    const currentJti = request.sessionJti;
-    if (!currentJti) {
-      throw new UnauthorizedException();
-    }
-
-    await this.sessionService.revokeOtherSessions(user.id, currentJti);
-    await this.userSessionService.revokeOtherSessions(
+    const currentJti = requireSessionJti(request);
+    await this.sessionRevocationService.revokeOthers(
       user.id,
       currentJti,
       SessionRevokeReason.REVOKED_BY_USER,
     );
 
     return { message: 'Other sessions revoked' };
+  }
+
+  /**
+   * Answering the same way for an unknown address keeps this from confirming who has an account,
+   * so the lookup failing and the code failing land on one message.
+   */
+  private async consumeEmailCode(
+    kind: EmailCodeKind,
+    email: string,
+    code: string,
+  ): Promise<UserEntity> {
+    const pending = await this.userService.getOne({ email });
+    const userId = pending ? await this.emailCodeService.consume(kind, pending.id, code) : null;
+    if (!userId) {
+      throw new BadRequestException('That code is not valid or has expired');
+    }
+    return this.userService.getOneOrFail({ id: userId });
   }
 
   private async sendVerification(userId: string, email: string): Promise<void> {
@@ -405,92 +376,6 @@ export class AuthService {
       );
     }
   }
-
-  private setSessionCookies(
-    response: Response,
-    params: SessionCookiePayload & {
-      accessToken: string;
-      accessTokenTtlMs: number;
-      refreshTokenTtlMs: number;
-    },
-  ) {
-    const { id, jti, persistence, accessToken, accessTokenTtlMs, refreshTokenTtlMs } = params;
-    setCookie(response, CookieName.SESSION, this.encodeSessionCookie({ id, jti, persistence }), {
-      maxAge: refreshTokenTtlMs,
-    });
-    setCookie(response, CookieName.ACCESS_TOKEN, accessToken, {
-      maxAge: accessTokenTtlMs,
-    });
-  }
-
-  private clearSessionCookies(response: Response) {
-    clearCookie(response, CookieName.ACCESS_TOKEN);
-    clearCookie(response, CookieName.SESSION);
-  }
-
-  private getUserById(id: string, userType: UserType) {
-    return this.getService(userType).getOneOrFail({ id });
-  }
-
-  private encodeSessionCookie(payload: SessionCookiePayload): string {
-    return this.cryptoService.encryptData(JSON.stringify(payload));
-  }
-
-  private decodeSessionCookie(request: Request): SessionCookiePayload {
-    const raw = request.cookies?.[CookieName.SESSION];
-    if (!raw) {
-      throw new UnauthorizedException();
-    }
-    const payload = this.parseSessionCookie(raw);
-    if (!payload) {
-      throw new UnauthorizedException();
-    }
-    return payload;
-  }
-
-  private parseSessionCookie(raw: string): SessionCookiePayload | null {
-    try {
-      const parsed: unknown = JSON.parse(this.cryptoService.decryptData(raw));
-      if (
-        typeof parsed === 'object' &&
-        parsed !== null &&
-        typeof (parsed as Record<string, unknown>).id === 'string' &&
-        typeof (parsed as Record<string, unknown>).jti === 'string'
-      ) {
-        const record = parsed as Record<string, unknown>;
-        return {
-          id: record.id as string,
-          jti: record.jti as string,
-          persistence: coercePersistence(record),
-        };
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  private getService(type: UserType) {
-    switch (type) {
-      case 'user':
-        return this.userService;
-      default:
-        return this.userService;
-    }
-  }
-}
-
-function coercePersistence(record: Record<string, unknown>): SessionPersistence {
-  const value = record.persistence;
-  if (
-    value === SessionPersistence.STANDARD ||
-    value === SessionPersistence.REMEMBER ||
-    value === SessionPersistence.OAUTH
-  ) {
-    return value;
-  }
-  // Legacy cookies stored `remember: boolean`; map it onto the persistence policy.
-  return record.remember === true ? SessionPersistence.REMEMBER : SessionPersistence.STANDARD;
 }
 
 function toMinutes(milliseconds: number): number {

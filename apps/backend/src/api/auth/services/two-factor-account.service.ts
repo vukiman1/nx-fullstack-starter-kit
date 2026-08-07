@@ -11,10 +11,10 @@ import { UserEntity } from '../../user/entities/user.entity';
 import { UserService } from '../../user/user.service';
 import { AuthAuditService, AuthEvent } from './auth-audit.service';
 import { EmailCodeKind, EmailCodeService } from './email-code.service';
-import { SessionService } from './session.service';
+import { SessionRevocationService } from './session-revocation.service';
+import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 import { TwoFactorChallengeService } from './two-factor-challenge.service';
 import { TwoFactorService } from './two-factor.service';
-import { UserSessionService } from './user-session.service';
 
 const RECOVERY_TTL_MS = 15 * 60 * 1000;
 
@@ -30,8 +30,7 @@ export class TwoFactorAccountService {
     private readonly emailCodeService: EmailCodeService,
     private readonly userService: UserService,
     private readonly emailService: EmailService,
-    private readonly sessionService: SessionService,
-    private readonly userSessionService: UserSessionService,
+    private readonly sessionRevocationService: SessionRevocationService,
     private readonly auditService: AuthAuditService,
   ) {}
 
@@ -124,8 +123,7 @@ export class TwoFactorAccountService {
     }
 
     await this.twoFactorService.disable(userId);
-    await this.sessionService.revokeAllSessions(userId);
-    await this.userSessionService.revokeAllSessions(userId);
+    await this.sessionRevocationService.revokeAll(userId, SessionRevokeReason.SECURITY);
     this.auditService.record(AuthEvent.TWO_FACTOR_RECOVERED, { userId, request });
 
     return { message: 'Two-factor authentication is off. Sign in with your password.' };
