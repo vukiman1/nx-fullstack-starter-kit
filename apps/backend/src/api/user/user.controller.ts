@@ -1,22 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
-import { UserService } from './user.service';
-import { BaseController } from '@org/backend-base';
-import { UserEntity } from './entities/user.entity';
-import { User } from '@org/backend-decorators';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { StrategyKey } from '@org/backend-constants';
-import { UseGuards } from '@nestjs/common';
+import { User } from '@org/backend-decorators';
+import { UserEntity } from './entities/user.entity';
+import { UserService } from './user.service';
 
 @UseGuards(AuthGuard(StrategyKey.JWT.USER))
 @Controller('user')
-export class UserController extends BaseController<UserEntity>(
-  UserEntity,
-  'User',
-) {
-  relations: string[] = [];
-  constructor(private readonly userService: UserService) {
-    super(userService);
-  }
+export class UserController {
+  constructor(private readonly userService: UserService) {}
 
   @Get('credit')
   async getUserCredit(@User() user: UserEntity) {
