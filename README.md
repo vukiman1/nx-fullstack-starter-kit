@@ -104,9 +104,10 @@ Swagger API docs: http://localhost:3000/docs
 
 Routes are served under the `api` prefix; the health probes and the Swagger UI sit outside it.
 
-There is no seed account. Sign up through the UI and confirm the code sent to your address —
-which means `RESEND_API_KEY` has to be set first. Without it the send is skipped and only the
-subject reaches the log, so the code never arrives and registration cannot be completed.
+There is no seed account — sign up through the UI and confirm the emailed code. `RESEND_API_KEY`
+is optional for this: with it empty the send is skipped, but the code is part of the subject line
+the backend logs, so registration, password reset and two-factor recovery all still complete
+locally. Read the code off the backend output.
 
 ## 🧰 Common Commands
 
