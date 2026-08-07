@@ -145,8 +145,7 @@ describe('AuthService', () => {
     };
     emailCode = { issue: jest.fn().mockResolvedValue('123456'), consume: jest.fn() };
 
-    // The extracted collaborators are real, built over the same mocks: that keeps these tests
-    // asserting the behaviour they always did rather than that a delegate was called.
+    // Real, over the same mocks: these keep asserting behaviour, not that a delegate was called.
     service = new AuthService(
       userService as unknown as UserService,
       sessionService as unknown as SessionService,

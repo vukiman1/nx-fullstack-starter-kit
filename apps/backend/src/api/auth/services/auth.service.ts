@@ -337,10 +337,7 @@ export class AuthService {
     return { message: 'Other sessions revoked' };
   }
 
-  /**
-   * Answering the same way for an unknown address keeps this from confirming who has an account,
-   * so the lookup failing and the code failing land on one message.
-   */
+  // One message for both failures, so an unknown address is not confirmed as unregistered.
   private async consumeEmailCode(
     kind: EmailCodeKind,
     email: string,

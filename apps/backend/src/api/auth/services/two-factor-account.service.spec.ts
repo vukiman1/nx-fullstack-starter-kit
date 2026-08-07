@@ -123,7 +123,6 @@ describe('TwoFactorAccountService', () => {
       expect(twoFactor.disable).toHaveBeenCalledWith('u1');
       // The link proves control of the mailbox, not of the account: existing sessions must go.
       expect(sessions.revokeAllSessions).toHaveBeenCalledWith('u1');
-      // Mailbox control, not account control — the trail has to say security, not a plain logout.
       expect(userSessions.revokeAllSessions).toHaveBeenCalledWith(
         'u1',
         SessionRevokeReason.SECURITY,

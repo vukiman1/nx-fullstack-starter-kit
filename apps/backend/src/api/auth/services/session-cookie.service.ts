@@ -16,7 +16,6 @@ interface IssuedTokens {
   refreshTokenTtlMs: number;
 }
 
-/** Reads and writes the encrypted pair of cookies that carries a session between requests. */
 @Injectable()
 export class SessionCookieService {
   constructor(private readonly cryptoService: CryptoService) {}

@@ -3,15 +3,9 @@ import { SessionRevokeReason } from '../enums/session-revoke-reason.enum';
 import { SessionService } from './session.service';
 import { UserSessionService } from './user-session.service';
 
-/**
- * A session lives in two stores: Redis holds the tokens that authenticate it, Postgres holds the
- * device record the owner sees. Revoking one without the other leaves either a session that still
- * works but is invisible, or a dead row the owner cannot get rid of — so both are revoked here and
- * nowhere else.
- *
- * The reason is required. The underlying repositories default it, which lets a caller that forgets
- * record a plausible but wrong one.
- */
+// Redis holds the tokens, Postgres the device row: revoking one alone leaves a session that still
+// works but is invisible, or a row its owner cannot remove. Reason is required — the repositories
+// default it, so a caller that forgets records a plausible but wrong one.
 @Injectable()
 export class SessionRevocationService {
   constructor(
