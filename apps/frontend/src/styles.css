@@ -29,47 +29,71 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/*
+ * One hue drives the whole palette. The neutrals carry a trace of it rather than being pure grey,
+ * so surfaces sit with the brand colour instead of looking washed against it.
+ *
+ * Every foreground/background pair here was measured against WCAG AA (4.5:1), muted text included
+ * — that is the pair usually left failing.
+ */
 :root {
+  --brand-hue: 45;
   --radius: 0.5rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+
+  /* Surfaces */
+  --background: oklch(0.99 0.004 var(--brand-hue));
+  --foreground: oklch(0.16 0.01 var(--brand-hue));
+  --card: oklch(1 0.002 var(--brand-hue));
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+
+  /* Brand */
+  --primary: oklch(0.52 0.13 var(--brand-hue));
+  --primary-foreground: oklch(0.99 0 0);
+
+  /* Supporting surfaces */
+  --secondary: oklch(0.96 0.008 var(--brand-hue));
+  --secondary-foreground: oklch(0.28 0.03 var(--brand-hue));
+  --muted: var(--secondary);
+  --muted-foreground: oklch(0.52 0.02 var(--brand-hue));
+  --accent: oklch(0.95 0.015 var(--brand-hue));
+  --accent-foreground: var(--secondary-foreground);
+
+  /* Feedback */
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+
+  /* Lines and focus */
+  --border: oklch(0.9 0.008 var(--brand-hue));
+  --input: var(--border);
+  --ring: var(--primary);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.16 0.012 var(--brand-hue));
+  --foreground: oklch(0.97 0.004 var(--brand-hue));
+  --card: oklch(0.21 0.014 var(--brand-hue));
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+
+  /* Lighter than the light-mode brand, so it reads against a dark surface. That flips the text on
+     it to dark: white would drop to 2.99:1. */
+  --primary: oklch(0.68 0.12 48);
+  --primary-foreground: oklch(0.16 0.012 var(--brand-hue));
+
+  --secondary: oklch(0.26 0.016 var(--brand-hue));
+  --secondary-foreground: var(--foreground);
+  --muted: var(--secondary);
+  --muted-foreground: oklch(0.72 0.015 var(--brand-hue));
+  --accent: oklch(0.3 0.02 var(--brand-hue));
+  --accent-foreground: var(--foreground);
+
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: var(--primary);
 }
 
 @layer base {
@@ -170,7 +194,8 @@
 }
 
 /* react-toastify ships its own palette; point it at the app tokens so toasts follow the theme. */
-:root {
+:root,
+.dark {
   --toastify-color-light: var(--background);
   --toastify-color-dark: var(--background);
   --toastify-text-color-light: var(--foreground);
