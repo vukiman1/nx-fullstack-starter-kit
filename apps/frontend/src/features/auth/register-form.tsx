@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
-import { Button } from '@/components/ui/button';
-import { FieldError } from '@/components/ui/field-error';
+import { Form } from '@/components/ui/form';
 import { FormError } from '@/components/ui/form-error';
-import { Input } from '@/components/ui/input';
+import { FormField } from '@/components/ui/form-field';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { PasswordInput } from '@/components/ui/password-input';
-import { Label } from '@/components/ui/label';
-import { ApiError } from '@/lib/api-error';
+import { useFormWithSubmitError } from '@/lib/use-form-with-submit-error';
 import { notify } from '@/lib/toast';
 import { authService } from '@/services/auth-service';
 import { registerFieldSchemas, registerSchema, type RegisterFormValues } from './schemas';
@@ -24,22 +22,15 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ onVerified }: RegisterFormProps) {
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
-  const form = useForm({
+  const { form, submitError } = useFormWithSubmitError<RegisterFormValues>({
     defaultValues: EMPTY_FORM,
-    validators: { onSubmit: registerSchema },
-    onSubmit: async ({ value }) => {
-      setSubmitError(null);
-      try {
-        const { email } = await authService.register(value);
-        setRegisteredEmail(email);
-      } catch (caught) {
-        setSubmitError(
-          caught instanceof ApiError ? caught.message : 'Could not create your account.',
-        );
-      }
+    schema: registerSchema,
+    fallbackError: 'Could not create your account.',
+    onSubmit: async (values) => {
+      const { email } = await authService.register(values);
+      setRegisteredEmail(email);
     },
   });
 
@@ -59,14 +50,7 @@ export function RegisterForm({ onVerified }: RegisterFormProps) {
   }
 
   return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        form.handleSubmit();
-      }}
-    >
+    <Form className="grid gap-4" onSubmit={form.handleSubmit}>
       <FormError message={submitError} />
 
       <form.Field
@@ -76,19 +60,7 @@ export function RegisterForm({ onVerified }: RegisterFormProps) {
           onSubmit: registerFieldSchemas.displayName,
         }}
         children={(field) => (
-          <div className="grid gap-2">
-            <Label htmlFor={field.name}>Your name</Label>
-            <Input
-              aria-invalid={field.state.meta.errors.length > 0}
-              autoComplete="name"
-              id={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              placeholder="Jane Doe"
-              value={field.state.value}
-            />
-            <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-          </div>
+          <FormField autoComplete="name" field={field} label="Your name" placeholder="Jane Doe" />
         )}
       />
 
@@ -99,20 +71,13 @@ export function RegisterForm({ onVerified }: RegisterFormProps) {
           onSubmit: registerFieldSchemas.email,
         }}
         children={(field) => (
-          <div className="grid gap-2">
-            <Label htmlFor={field.name}>Email</Label>
-            <Input
-              aria-invalid={field.state.meta.errors.length > 0}
-              autoComplete="email"
-              id={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              placeholder="you@example.com"
-              type="email"
-              value={field.state.value}
-            />
-            <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-          </div>
+          <FormField
+            autoComplete="email"
+            field={field}
+            label="Email"
+            placeholder="you@example.com"
+            type="email"
+          />
         )}
       />
 
@@ -123,18 +88,12 @@ export function RegisterForm({ onVerified }: RegisterFormProps) {
           onSubmit: registerFieldSchemas.password,
         }}
         children={(field) => (
-          <div className="grid gap-2">
-            <Label htmlFor={field.name}>Password</Label>
-            <PasswordInput
-              aria-invalid={field.state.meta.errors.length > 0}
-              autoComplete="new-password"
-              id={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              value={field.state.value}
-            />
-            <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-          </div>
+          <FormField
+            autoComplete="new-password"
+            control={PasswordInput}
+            field={field}
+            label="Password"
+          />
         )}
       />
 
@@ -145,29 +104,16 @@ export function RegisterForm({ onVerified }: RegisterFormProps) {
           onSubmit: registerFieldSchemas.confirmPassword,
         }}
         children={(field) => (
-          <div className="grid gap-2">
-            <Label htmlFor={field.name}>Confirm password</Label>
-            <PasswordInput
-              aria-invalid={field.state.meta.errors.length > 0}
-              autoComplete="new-password"
-              id={field.name}
-              onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
-              value={field.state.value}
-            />
-            <FieldError errors={field.state.meta.errors} id={`${field.name}-error`} />
-          </div>
+          <FormField
+            autoComplete="new-password"
+            control={PasswordInput}
+            field={field}
+            label="Confirm password"
+          />
         )}
       />
 
-      <form.Subscribe
-        selector={(state) => [state.canSubmit, state.isSubmitting] as const}
-        children={([canSubmit, isSubmitting]) => (
-          <Button disabled={!canSubmit} type="submit">
-            {isSubmitting ? 'Creating account...' : 'Create account'}
-          </Button>
-        )}
-      />
-    </form>
+      <SubmitButton form={form} label="Create account" pendingLabel="Creating account..." />
+    </Form>
   );
 }

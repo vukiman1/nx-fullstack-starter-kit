@@ -2,6 +2,7 @@ import { type ReactNode, useState } from 'react';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TextLink } from '@/components/ui/text-link';
 import { GoogleSignInButton } from './google-sign-in-button';
 
 interface PanelCopy {
@@ -67,13 +68,7 @@ export function AuthMethodPanel({ copy, renderEmailForm, onBack }: AuthMethodPan
 
       <p className="text-center text-sm text-muted-foreground">
         {copy.footer.question}{' '}
-        <button
-          className="font-semibold text-primary underline-offset-4 hover:underline"
-          onClick={copy.footer.onAction}
-          type="button"
-        >
-          {copy.footer.action}
-        </button>
+        <TextLink onClick={copy.footer.onAction}>{copy.footer.action}</TextLink>
       </p>
     </>
   );

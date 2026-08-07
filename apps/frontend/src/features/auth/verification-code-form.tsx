@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
 import { FormError } from '@/components/ui/form-error';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { ApiError } from '@/lib/api-error';
+import { TextLink } from '@/components/ui/text-link';
+import { errorMessage } from '@/lib/api-error';
 import { notify } from '@/lib/toast';
 
 const CODE_LENGTH = 6;
@@ -33,7 +35,7 @@ export function VerificationCodeForm({
     try {
       await onSubmit(value);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Could not check that code.');
+      setError(errorMessage(caught, 'Could not check that code.'));
       setCode('');
     } finally {
       setIsSubmitting(false);
@@ -58,13 +60,7 @@ export function VerificationCodeForm({
   };
 
   return (
-    <form
-      className="grid gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void submit(code);
-      }}
-    >
+    <Form className="grid gap-4" onSubmit={() => void submit(code)}>
       <p className="text-center text-sm text-muted-foreground">
         Enter the {CODE_LENGTH}-digit code sent to{' '}
         <span className="font-medium text-foreground">{sentTo}</span>.
@@ -100,15 +96,10 @@ export function VerificationCodeForm({
       </Button>
 
       {onResend && (
-        <button
-          className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline disabled:no-underline disabled:opacity-60"
-          disabled={isResending}
-          onClick={resend}
-          type="button"
-        >
+        <TextLink className="text-center" disabled={isResending} onClick={resend} tone="muted">
           {isResending ? 'Sending...' : 'Send another code'}
-        </button>
+        </TextLink>
       )}
-    </form>
+    </Form>
   );
 }
