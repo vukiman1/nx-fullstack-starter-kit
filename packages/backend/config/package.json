@@ -21,7 +21,7 @@
     ]
   },
   "dependencies": {
-    "config": "^4.4.2",
+    "config": "^5.0.0",
     "dotenv": "^17.4.2",
     "zod": "^4.4.3"
   }
