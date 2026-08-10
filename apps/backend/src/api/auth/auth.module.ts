@@ -4,6 +4,8 @@ import { AuthService } from './services/auth.service';
 import { SessionService } from './services/session.service';
 import { AuthAuditService } from './services/auth-audit.service';
 import { UserSessionService } from './services/user-session.service';
+import { SessionRevocationService } from './services/session-revocation.service';
+import { SessionCookieService } from './services/session-cookie.service';
 import { GeoIpService } from './services/geo-ip.service';
 import { CaptchaService } from './services/captcha.service';
 import { AuthUserController } from './controllers/auth.user.controller';
@@ -40,6 +42,8 @@ import { SocialAuthService } from './services/social/social-auth.service';
     SessionService,
     AuthAuditService,
     UserSessionService,
+    SessionRevocationService,
+    SessionCookieService,
     GeoIpService,
     CaptchaService,
     JwtUserStrategy,

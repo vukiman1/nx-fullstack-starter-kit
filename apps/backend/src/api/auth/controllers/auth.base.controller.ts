@@ -39,7 +39,7 @@ export const AuthBaseController = <Entity extends UserEntity>(
     @Throttle({ default: { limit: 5, ttl: 60_000 } })
     @ApiRefreshToken(userType)
     async refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
-      return this.authService.refreshToken(request, response, userType);
+      return this.authService.refreshToken(request, response);
     }
 
     @Get('me')

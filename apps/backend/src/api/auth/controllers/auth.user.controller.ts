@@ -10,7 +10,6 @@ import {
   Post,
   Req,
   Res,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,6 +19,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { TwoFactorAccountService } from '../services/two-factor-account.service';
 import { AuthBaseController } from './auth.base.controller';
+import { requireSessionJti } from '../session-request';
 import { ApiChangePassword } from '../auth.swagger';
 import { UserEntity } from '../../user/entities/user.entity';
 import { RegisterDto } from '../dto/register.dto';
@@ -107,11 +107,7 @@ export class AuthUserController extends AuthBaseController<UserEntity>(
     @Body() body: ChangePasswordDto,
     @Req() request: Request,
   ) {
-    const jti = request.sessionJti;
-    if (!jti) {
-      throw new UnauthorizedException();
-    }
-    return this.authService.changePassword(user, jti, body, request);
+    return this.authService.changePassword(user, requireSessionJti(request), body, request);
   }
 
   @Post('2fa/verify')
