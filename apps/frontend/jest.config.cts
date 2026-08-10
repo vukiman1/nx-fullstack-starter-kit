@@ -2,10 +2,12 @@ module.exports = {
   displayName: '@org/frontend',
   preset: '../../jest.preset.js',
   transform: {
-    '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
-    '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
+    '^(?!.*\\.(js|jsx|mjs|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
+    '^.+\\.(mjs|[tj]sx?)$': ['babel-jest', { presets: ['@nx/react/babel'] }],
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'mjs'],
+  // node-config v5 is ESM under a CJS entry; Node can require() it but Jest has to transpile it.
+  transformIgnorePatterns: ['node_modules/.pnpm/(?!config@)'],
   // Resolve the `@/` alias deterministically; without it, `@/` resolution leans on the
   // babel transform and breaks in the root multi-project jest run.
   moduleNameMapper: {
