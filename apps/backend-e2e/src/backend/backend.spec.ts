@@ -51,6 +51,43 @@ describe('Security headers (helmet)', () => {
   });
 });
 
+describe('Generic user CRUD', () => {
+  it.each([
+    ['get', '/api/user/all'],
+    ['post', '/api/user/create'],
+    ['patch', '/api/user/update/00000000-0000-0000-0000-000000000000'],
+    ['delete', '/api/user/delete/00000000-0000-0000-0000-000000000000'],
+  ])('should not route %s %s', async (method, path) => {
+    const res = await axios.request({
+      method,
+      url: path,
+      data: {},
+      validateStatus: () => true,
+    });
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('Request validation', () => {
+  it('should reject a body carrying a property the DTO does not declare', async () => {
+    const res = await axios.post(
+      '/api/auth/register',
+      {
+        email: 'whitelist-probe@example.com',
+        displayName: 'Probe',
+        password: 'Local1234',
+        confirmPassword: 'Local1234',
+        role: 'ADMIN',
+      },
+      { validateStatus: () => true },
+    );
+
+    expect(res.status).toBe(400);
+    expect(res.data.errors.role).toBe('property role should not exist');
+  });
+});
+
 describe('POST /api/auth/login', () => {
   it('should rate limit login attempts after 5 requests per minute', async () => {
     const login = () =>

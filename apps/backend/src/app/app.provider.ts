@@ -62,6 +62,8 @@ export const providers: Provider[] = [
   {
     provide: APP_PIPE,
     useValue: new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
       exceptionFactory,
     }),
   },
