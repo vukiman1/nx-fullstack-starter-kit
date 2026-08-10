@@ -1,6 +1,7 @@
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 
 import App from './app';
+import { router } from './router';
 
 // Without this the auth bootstrap issues a real request, which jsdom rejects as cross-origin at an
 // unpredictable moment — landing a toast in the middle of an unrelated assertion.
@@ -13,8 +14,12 @@ jest.mock('@/services/auth-service', () => ({
 }));
 
 describe('App', () => {
-  beforeEach(() => {
-    window.history.pushState({}, '', '/');
+  // The router is a module singleton, so a test that opens the auth modal leaves `?auth=` in its
+  // state for the next test. Navigating back while still mounted is the only reset the router honours.
+  afterEach(async () => {
+    await act(async () => {
+      await router.navigate({ to: '/', search: {} });
+    });
   });
 
   it('renders the home page header with auth actions', async () => {
