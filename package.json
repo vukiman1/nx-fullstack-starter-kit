@@ -150,7 +150,7 @@
     "class-validator": "^0.15.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "config": "^4.4.2",
+    "config": "^5.0.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "input-otp": "^1.4.2",
