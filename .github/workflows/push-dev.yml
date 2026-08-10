@@ -196,4 +196,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
+          # Must match pull-request.yml so PR analyses diff against the dev baseline instead of
+          # reporting every pre-existing alert as new.
+          category: trivy
         continue-on-error: true
