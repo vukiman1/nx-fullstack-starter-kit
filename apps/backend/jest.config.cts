@@ -25,9 +25,11 @@ module.exports = {
   testEnvironment: 'node',
   transform: {
     '^.+\\.tsx$': ['@swc/jest', swcTsxConfig],
-    '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
+    '^.+\\.m?[tj]s$': ['@swc/jest', swcJestConfig],
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'html'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'mjs', 'html'],
+  // node-config v5 is ESM under a CJS entry; Node can require() it but Jest has to transpile it.
+  transformIgnorePatterns: ['node_modules/.pnpm/(?!config@)'],
   testPathIgnorePatterns: ['/node_modules/', '<rootDir>/dist/'],
   coverageDirectory: 'test-output/jest/coverage',
 };
