@@ -21,10 +21,10 @@
     ]
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.28",
+    "@nestjs/common": "^11.1.29",
     "@nestjs/config": "^4.0.4",
     "@nestjs/typeorm": "^11.0.3",
-    "pg": "^8.22.0",
+    "pg": "^8.23.0",
     "typeorm": "^1.1.0"
   },
   "devDependencies": {
