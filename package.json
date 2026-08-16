@@ -117,7 +117,7 @@
     "jest-environment-node": "^30.4.1",
     "jest-util": "^30.4.1",
     "jiti": "2.7.0",
-    "jsdom": "~29.1.1",
+    "jsdom": "~30.0.1",
     "jsonc-eslint-parser": "^3.2.0",
     "lint-staged": "^17.3.0",
     "nx": "23.1.1",
