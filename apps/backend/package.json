@@ -176,7 +176,7 @@
     "typeorm": "^1.1.0"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.1.28",
+    "@nestjs/testing": "^11.1.29",
     "@types/express": "^5.0.6",
     "tsconfig-paths-webpack-plugin": "4.2.0"
   },
