@@ -19,12 +19,12 @@
   },
   "dependencies": {
     "@org/shared-contracts": "workspace:*",
-    "@sentry/react": "^10.69.0",
-    "@tanstack/react-query": "^5.101.4",
-    "@tanstack/react-query-devtools": "^5.101.4",
+    "@sentry/react": "^10.73.0",
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-query-devtools": "^5.102.8",
     "radix-ui": "^1.6.7",
     "react-toastify": "^11.1.0",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "rollup-plugin-visualizer": "^7.0.1"
