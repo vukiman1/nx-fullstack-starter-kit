@@ -27,6 +27,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "rollup-plugin-visualizer": "^7.0.1"
+    "rollup-plugin-visualizer": "^7.1.1"
   }
 }
