@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@org/backend-interfaces": "workspace:*",
-    "express": "5.2.1",
+    "express": "5.3.0",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
